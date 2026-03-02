@@ -1,0 +1,5 @@
+env.txt
+src/test.c
+region.exe
+region.o
+region.so
