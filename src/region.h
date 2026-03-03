@@ -10,6 +10,7 @@
 
 #ifndef REGION_NO_STRING
 #include <string.h>
+#define REGION_STRLEN strlen
 #define REGION_STRNCPY strncpy
 #define REGION_STRCPY strcpy
 #endif // REGION_NO_STRING
@@ -51,32 +52,31 @@ typedef enum {
     REGION_ERROR_KIND_NOT_ENOUGH_MEMORY
 } RegionErrorKind;
 
+// TODO: Remove the macros or redefine their sizes 
+// to be more efficient in terms of memory usage 
 #define REGION_ERROR_FILE_NAME_CAPACITY 64
 #define REGION_ERROR_FUNC_CAPACITY 64
 #define REGION_ERROR_DATA_CAPACITY 1024
 
 typedef struct {
+    
     char filename[REGION_ERROR_FILE_NAME_CAPACITY];
-    int line;
     char func[REGION_ERROR_FUNC_CAPACITY];
-    RegionErrorKind kind;
     char data[REGION_ERROR_DATA_CAPACITY];
+    int line;
+    RegionErrorKind kind;
 } RegionError;
 
-// TODO: Replace the static variable with a dynamic list for showing
-// multiple errors in a sequence if there are any
-static RegionError __region_error = 
-{
-    .filename = __FILE__,
-    .line = __LINE__,
-    .func = "<empty>",
-    .data = "",
-    .kind = REGION_ERROR_KIND_NOT_FOUND
-};
+#define REGION_ERRORS_ITEMS_CAPACITY 256
+typedef struct {
+    RegionError items[REGION_ERRORS_ITEMS_CAPACITY];
+    int size;
+} RegionErrors;
 
+static RegionErrors __region_errors = { .size = 0 };
 
 // ----- FUNCTION DECLARATIONS (PRIVATE) -----
-void __region_error_set_desc(const char *filename, int line, const char *func, RegionErrorKind kind);
+void __region_push_error(const char *filename, int line, const char *func, RegionErrorKind kind, char *data);
 Region *__region_alloc(size_t capacity, const char *filename, int line, const char *func);
 void *__region_alloc_item(Region *region, size_t size, const char *filename, int line, const char *func);
 
@@ -93,12 +93,24 @@ void region_free(Region **region);
 
 #ifdef REGION_IMPLEMENTATION
 
-void __region_error_set_desc(const char *filename, int line, const char *func, RegionErrorKind kind)
+void __region_push_error(const char *filename, int line, const char *func, RegionErrorKind kind, char *data)
 {
-    REGION_STRCPY(__region_error.filename, filename);
-    REGION_STRCPY(__region_error.func, func);
-    __region_error.line = line;
-    __region_error.kind = kind;
+    // TODO: Handle the region errors overflow by shifting all of the errors
+    // to the left and pushing the new ones at the end
+    if (__region_errors.size >= REGION_ERRORS_ITEMS_CAPACITY) return;
+
+    RegionError new_error = __region_errors.items[__region_errors.size];
+
+    new_error.line = line;
+    new_error.kind = kind;
+
+    if (filename) REGION_STRNCPY(new_error.filename, filename, REGION_STRLEN(filename));
+    if (func) REGION_STRNCPY(new_error.func, func, REGION_STRLEN(func));
+    if (data) REGION_STRNCPY(new_error.data, data, REGION_STRLEN(data));
+
+    __region_errors.items[__region_errors.size] = new_error;
+    __region_errors.size += 1;
+
 }
 
 Region *__region_alloc(size_t capacity, const char *filename, int line, const char *func)
@@ -106,7 +118,7 @@ Region *__region_alloc(size_t capacity, const char *filename, int line, const ch
     Region *region = (Region *)REGION_MALLOC(sizeof(Region));
 
     if (!region) {
-        __region_error_set_desc(filename, line, func, REGION_ERROR_KIND_INVALID_ARGUMENTS);
+        __region_push_error(filename, line, func, REGION_ERROR_KIND_NOT_ENOUGH_MEMORY, NULL);
         return NULL;
     }
 
@@ -114,7 +126,7 @@ Region *__region_alloc(size_t capacity, const char *filename, int line, const ch
     
     if (!region->data) {
         REGION_FREE(region);
-        __region_error_set_desc(filename, line, func, REGION_ERROR_KIND_NOT_ENOUGH_MEMORY);
+        __region_push_error(filename, line, func, REGION_ERROR_KIND_NOT_ENOUGH_MEMORY, NULL);
         return NULL;
     }
 
@@ -126,11 +138,28 @@ Region *__region_alloc(size_t capacity, const char *filename, int line, const ch
 
 void region_log_error()
 {
-    REGION_FPRINTF(REGION_STDERR, "[Region][ERROR](%s:%d:%s()): %s",
-        __region_error.filename,
-        __region_error.line,
-        __region_error.func,
-        __region_error.data);
+    if (__region_errors.size == 0) return;
+
+    RegionError last_error = __region_errors.items[__region_errors.size - 1];
+
+    if (last_error.kind == REGION_ERROR_KIND_NOT_FOUND) return;
+
+    REGION_FPRINTF(REGION_STDERR, "[Region][ERROR](%s:%d:%s()): ",
+        last_error.filename,
+        last_error.line,
+        last_error.func);
+
+    switch (last_error.kind)
+    {
+        case REGION_ERROR_KIND_INVALID_ARGUMENTS:
+            REGION_FPRINTF(REGION_STDERR, "Invalid arguments\n");
+            break;
+        case REGION_ERROR_KIND_NOT_ENOUGH_MEMORY:
+            REGION_FPRINTF(REGION_STDERR, "Not enough memory to allocate\n");
+            break;
+        default:
+            break;
+    }
 }
 
 void region_free(Region **region)
@@ -145,7 +174,7 @@ void region_free(Region **region)
 void *__region_alloc_item(Region *region, size_t size, const char *filename, int line, const char *func)
 {
     if (!region || size == 0) {
-        __region_error_set_desc(filename, line, func, REGION_ERROR_KIND_INVALID_ARGUMENTS);
+        __region_push_error(filename, line, func, REGION_ERROR_KIND_INVALID_ARGUMENTS, NULL);
         return NULL;
     }
 
