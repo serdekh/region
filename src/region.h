@@ -84,7 +84,8 @@ void *__region_alloc_item(Region *region, size_t size, const char *filename, int
 // ----- PUBLIC API -----
 void region_log_error();
 void region_free(Region **region);
-void region_reset(Region *region);
+
+#define region_reset(region) (region)->size = 0
 #define region_alloc(capacity) __region_alloc((capacity), __FILE__, __LINE__, __func__)
 #define region_alloc_item(region, size) __region_alloc_item((region), (size), __FILE__, __LINE__, __func__)
 
@@ -153,11 +154,6 @@ void *__region_alloc_item(Region *region, size_t size, const char *filename, int
     region->size += size;
 
     return result;
-}
-
-void region_reset(Region *region)
-{
-    region->size = 0;
 }
 
 #endif // REGION_IMPLEMENTATION
