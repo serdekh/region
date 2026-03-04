@@ -36,10 +36,11 @@
 // ----- DATA STRUCTS -----
 
 //TODO: Redefine the struct to hide the fields inside a macro
-typedef struct {
+typedef struct __Region {
     size_t capacity;
     size_t size;
     char *data;
+    struct __Region *next;
 } Region;
 
 // ----- DATA STRUCTS FOR ERRORS -----
@@ -59,7 +60,6 @@ typedef enum {
 #define REGION_ERROR_DATA_CAPACITY 1024
 
 typedef struct {
-    
     char filename[REGION_ERROR_FILE_NAME_CAPACITY];
     char func[REGION_ERROR_FUNC_CAPACITY];
     char data[REGION_ERROR_DATA_CAPACITY];
@@ -132,6 +132,9 @@ Region *__region_alloc(size_t capacity, const char *filename, int line, const ch
 
     region->capacity = capacity;
     region->size = 0;
+    region->next = NULL;
+
+    for (size_t i = 0; i < region->capacity; i++) region->data[i] = '\0';
 
     return region;
 }
@@ -166,9 +169,15 @@ void region_free(Region **region)
 {
     if (!region || !(*region)) return;
 
-    if ((*region)->data) REGION_FREE((*region)->data);
+    while (*region) {
+        Region *temp = (*region)->next;
 
-    REGION_FREE(*region);
+        if ((*region)->data) REGION_FREE((*region)->data);
+
+        REGION_FREE(*region);
+
+        *region = temp;
+    }
 }
 
 void *__region_alloc_item(Region *region, size_t size, const char *filename, int line, const char *func)
@@ -178,9 +187,25 @@ void *__region_alloc_item(Region *region, size_t size, const char *filename, int
         return NULL;
     }
 
-    void *result = region->data + region->size;
+    Region *current = region;
 
-    region->size += size;
+    while (current->size + size > current->capacity) {
+        if (!current->next) {
+            current->next = region_alloc(current->capacity * 2 + size);
+            if (!current->next) {
+                __region_push_error(filename, line, func, REGION_ERROR_KIND_NOT_ENOUGH_MEMORY, NULL);
+                return NULL;
+            }
+            current = current->next;
+            break;
+        }
+
+        current = current->next;
+    }
+
+    void *result = current->data + current->size;
+
+    current->size += size;
 
     return result;
 }
