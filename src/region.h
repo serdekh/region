@@ -34,6 +34,14 @@
 #define REGION_BOOL_FALSE false
 #endif // REGION_NO_STDBOOL
 
+#ifdef __cplusplus
+  #define REGION_EXTERN_C_BEGIN extern "C" {
+  #define REGION_EXTERN_C_END   }
+#else
+  #define REGION_EXTERN_C_BEGIN
+  #define REGION_EXTERN_C_END
+#endif
+
 // ----- DATA STRUCTS -----
 
 //TODO: Redefine the struct to hide the fields inside a macro
@@ -59,6 +67,8 @@ typedef struct {
     char func_name[32];
     char message[256];
 } RegionError;
+
+REGION_EXTERN_C_BEGIN
 
 // ----- FUNCTION DECLARATIONS (PRIVATE) -----
 void __region_set_error(RegionError *error, ErrorCode error_code, const char *filename, int line, const char *func);
@@ -201,5 +211,7 @@ void *__region_alloc_item(Region *region, size_t size, RegionError *error, const
 
     return result;
 }
+
+REGION_EXTERN_C_END
 
 #endif // REGION_IMPLEMENTATION
