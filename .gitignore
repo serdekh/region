@@ -1,5 +1,4 @@
 env.txt
 src/test.c
-region.exe
-region.o
-region.so
+.build
+src/main.c
