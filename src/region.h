@@ -44,11 +44,13 @@
 
 // ----- DATA STRUCTS -----
 
-//TODO: Redefine the struct to hide the fields inside a macro
+#define REGION_PRIVATE_CORE_FIELDS \
+    size_t capacity;               \
+    size_t size;                   \
+    char *data;                    \
+
 typedef struct __Region {
-    size_t capacity;
-    size_t size;
-    char *data;
+    REGION_PRIVATE_CORE_FIELDS
     struct __Region *next;
 } Region;
 
@@ -74,13 +76,13 @@ REGION_EXTERN_C_BEGIN
 void __region_set_error(RegionError *error, ErrorCode error_code, const char *filename, int line, const char *func);
 Region *__region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func);
 void *__region_alloc_item(Region *region, size_t size, RegionError *error, const char *filename, int line, const char *func);
-
+void __region_reset(Region *region);
 
 // ----- PUBLIC API -----
 void region_log_error(RegionError error);
 void region_free(Region **region);
 
-#define region_reset(region) (region)->size = 0
+#define region_reset(region) __region_reset(region)
 #define region_alloc(capacity, error) __region_alloc((capacity), (error), __FILE__, __LINE__, __func__)
 #define region_alloc_item(region, size, error) __region_alloc_item((region), (size), (error), __FILE__, __LINE__, __func__)
 
@@ -210,6 +212,13 @@ void *__region_alloc_item(Region *region, size_t size, RegionError *error, const
     current->size += size;
 
     return result;
+}
+
+void __region_reset(Region *region)
+{
+    for (Region *i = region; i; i = i->next) {
+        i->size = 0;
+    }
 }
 
 REGION_EXTERN_C_END
