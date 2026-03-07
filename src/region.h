@@ -36,7 +36,7 @@
 
 #ifdef __cplusplus
   #define REGION_EXTERN_C_BEGIN extern "C" {
-  #define REGION_EXTERN_C_END   }
+  #define REGION_EXTERN_C_END }
 #else
   #define REGION_EXTERN_C_BEGIN
   #define REGION_EXTERN_C_END
@@ -221,6 +221,6 @@ void __region_reset(Region *region)
     }
 }
 
-REGION_EXTERN_C_END
 
 #endif // REGION_IMPLEMENTATION
+REGION_EXTERN_C_END
