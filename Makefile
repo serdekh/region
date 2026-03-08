@@ -1,6 +1,7 @@
 BUILD := .build
 OBJ := $(BUILD)/obj
 BIN := $(BUILD)/bin
+TESTS := tests
 
 TARGET := $(BIN)/region
 
@@ -30,9 +31,18 @@ $(OBJ): | $(BUILD)
 $(BIN): | $(BUILD)
 	mkdir -p $(BIN)
 
+$(TESTS):
+	mkdir -p $(TESTS)
+$(TESTS)/bin:
+	mkdir -p $(TESTS)/bin
+
 clean:
 	rm -rf $(BUILD)
 
 build: $(OBJ)/region.o
 
 run: $(TARGET)
+	./$(TARGET)
+
+test: $(TESTS) $(OBJ)/region.o $(TESTS)/bin
+	gcc $(TESTS)/main.c $(OBJ)/region.o -o $(TESTS)/bin/test
