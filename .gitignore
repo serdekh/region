@@ -2,3 +2,4 @@ env.txt
 src/test.c
 .build
 src/main.c
+tests/bin
