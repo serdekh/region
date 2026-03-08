@@ -73,19 +73,19 @@ typedef struct {
 REGION_EXTERN_C_BEGIN
 
 // ----- FUNCTION DECLARATIONS (PRIVATE) -----
+void __region_log_error(RegionError error, FILE *out);
 void __region_set_error(RegionError *error, ErrorCode error_code, const char *filename, int line, const char *func);
 Region *__region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func);
 void *__region_alloc_item(Region *region, size_t size, RegionError *error, const char *filename, int line, const char *func);
 void __region_reset(Region *region);
 
 // ----- PUBLIC API -----
-void region_log_error(RegionError error);
 void region_free(Region **region);
 
 #define region_reset(region) __region_reset(region)
 #define region_alloc(capacity, error) __region_alloc((capacity), (error), __FILE__, __LINE__, __func__)
 #define region_alloc_item(region, size, error) __region_alloc_item((region), (size), (error), __FILE__, __LINE__, __func__)
-
+#define region_log_error(error) __region_log_error((error), REGION_STDOUT)
 // ----- * -----
 
 #ifdef REGION_IMPLEMENTATION
@@ -128,31 +128,31 @@ Region *__region_alloc(size_t capacity, RegionError *error, const char *filename
     return region;
 }
 
-void region_log_error(RegionError error)
+void __region_log_error(RegionError error, FILE *out)
 {
     if (error.code == REGION_ERROR_TYPE_NO_ERROR) return;
 
-    REGION_FPRINTF(REGION_STDERR, "[Region][ERROR](%s:%d:%s()): ",
+    REGION_FPRINTF(out, "[Region][ERROR](%s:%d:%s()): ",
         error.file_name,
         error.line,
         error.func_name);
 
     switch (error.code) {
         case REGION_ERROR_TYPE_INVALID_ARGUMENT:
-            REGION_FPRINTF(REGION_STDERR, "Invalid arguments.");
+            REGION_FPRINTF(out, "Invalid arguments.");
             break;
         case REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY:
-            REGION_FPRINTF(REGION_STDERR, "Not enough memory to allocate.");
+            REGION_FPRINTF(out, "Not enough memory to allocate.");
             break;
         default:
             break;
     }
 
     if (REGION_STRLEN(error.message) == 0) {
-        REGION_FPRINTF(REGION_STDERR, "\n");
+        REGION_FPRINTF(out, "\n");
     }
     else {
-        REGION_FPRINTF(REGION_STDERR, " %s.\n", error.message);
+        REGION_FPRINTF(out, " %s.\n", error.message);
     }
 }
 
