@@ -14,8 +14,8 @@ char *get_str_from_file(FILE *file)
     rewind(file); 
 
     char *buffer = malloc(size + 1); 
-    fread(buffer, 1, size + 1, file); 
-    buffer[size - 1] = '\0';
+    fread(buffer, 1, size, file); 
+    buffer[size] = '\0';
 
     return buffer;
 }
@@ -42,7 +42,7 @@ bool testfn__region_log_error()
     strcpy(error.message, "<TEST_ERROR_MESSAGE_APPENDIX>");
 
     // case 0: Invalid argument
-    const char *expected = "[Region][ERROR](<TEST_FILE_NAME>:0:<TEST_FUNC_NAME>()): Invalid arguments. <TEST_ERROR_MESSAGE_APPENDIX>.";
+    const char *expected = "[Region][ERROR](<TEST_FILE_NAME>:0:<TEST_FUNC_NAME>()): Invalid arguments. <TEST_ERROR_MESSAGE_APPENDIX>.\n";
 
     __region_log_error(error, TEST_OUT_STREAM);
 
