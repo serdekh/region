@@ -50,6 +50,20 @@ void print_test_failed(char *func_name, int case_n, const char *fmt, ...)
     va_end(args);
 }
 
+char *error_code_to_str(ErrorCode code)
+{
+    switch (code) {
+        case REGION_ERROR_TYPE_NO_ERROR:
+            return "No error";
+        case REGION_ERROR_TYPE_INVALID_ARGUMENT:
+            return "Invalid argument";
+        case REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY:
+            return "Not enough memory";
+        default:
+            return "Unreachable";
+    }
+}
+
 void print_test_passed(char *func_name, int case_n)
 {
     printf("[Region][Test][Passed]: for the function `%s` (case %d).\n",
@@ -148,6 +162,7 @@ bool testfn__region_log_error()
     bool case1 = testfn__region_log_error_case_1(); if (!case1) goto failed;
     bool case2 = testfn__region_log_error_case_2(); if (!case2) goto failed;
 
+    fprintf(stderr, "[Region][Test][Passed]: for the function `__region_log_error`\n");
     return true;
 
 failed:
@@ -155,26 +170,65 @@ failed:
     return false;   
 }
 
+bool testfn__region_alloc_case_0()
+{
+    //Region *__region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func);
+
+    RegionError error = {0};
+
+    Region *region = region_alloc(__SIZE_MAX__, &error);
+
+    if (error.code == REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY) {
+        LOG_TEST_PASSED("__region_alloc", 0);
+        return true;
+    }
+
+    LOG_TEST_FAILED("__region_alloc", 0, 
+        error_code_to_str(REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY), 
+        error_code_to_str(error.code));
+
+    if (region) free(region);
+    
+    return false;
+}
+
+bool testfn__region_alloc()
+{
+    bool case0 = testfn__region_alloc_case_0(); if (!case0) goto failed;
+
+    printf("[Region][Test][Passed]: for the function `__region_alloc`\n");
+    return true;
+
+failed:
+    fprintf(stderr, "[Region][Test][FAILED]: for the function `__region_alloc`\n");
+    return false;   
+}
+
 int main()
 {
+    int result = 0;
     TEST_OUT_STREAM = fopen("temp.txt", "w");
+
     if (!TEST_OUT_STREAM) {
         fprintf(stderr, "[Region][TEST][Error]: Couldn't create a temporary file for testing: %s\n", 
             strerror(ferror(TEST_OUT_STREAM)));
         return 1;
     }
 
-
-    if (testfn__region_log_error()) {
-        printf("[Region][Test][Passed]: for the function `__region_log_error`\n");
-    } else {
-        fclose(TEST_OUT_STREAM);
-        return 1;
+    if (!testfn__region_log_error()) {
+        result = 1; goto exiting;
     }
 
+    if (!testfn__region_alloc()) {
+        result = 1; goto exiting;
+    }
+    
     printf("[Region][Test]: All tests have passed!\n");
 
-    fclose(TEST_OUT_STREAM);
-    remove("temp.txt");
-    return 0;
+exiting:
+    if (TEST_OUT_STREAM) {
+        fclose(TEST_OUT_STREAM);
+        remove("temp.txt");
+    }
+    return result;
 }
