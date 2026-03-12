@@ -175,21 +175,51 @@ bool testfn__region_alloc_case_0()
     //Region *__region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func);
 
     RegionError error = {0};
-
+    
     Region *region = region_alloc(__SIZE_MAX__, &error);
-
+    
     if (error.code == REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY) {
         LOG_TEST_PASSED("__region_alloc", 0);
         return true;
     }
-
+    
     LOG_TEST_FAILED("__region_alloc", 0, 
         error_code_to_str(REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY), 
         error_code_to_str(error.code));
-
+        
     if (region) free(region);
     
     return false;
+}
+
+// void *__region_alloc_item(Region *region, size_t size, RegionError *error, const char *filename, int line, const char *func)
+bool testfn__region_alloc_item_case_0()
+{  
+    RegionError error = get_region_error_for_testing(0);
+    
+    __region_alloc_item(NULL, 1, &error, "<TEST_FILE_NAME>", 0, "<TEST_FUNC_NAME>");
+    __region_log_error(error, TEST_OUT_STREAM);
+    
+    const char *expected = "[Region][ERROR](<TEST_FILE_NAME>:0:<TEST_FUNC_NAME>()): Invalid arguments. The `region` holds a null reference.\n";
+    
+    fclose(TEST_OUT_STREAM);
+    TEST_OUT_STREAM = fopen("temp.txt", "r");
+
+    char *actual = get_str_from_file(TEST_OUT_STREAM);
+
+    
+    bool result = strcmp(expected, actual) == 0;
+    
+    result
+    ? LOG_TEST_PASSED("__region_alloc_item", 0)
+    : LOG_TEST_FAILED("__region_alloc_item", 0, expected, actual);
+    
+    fclose(TEST_OUT_STREAM);
+    TEST_OUT_STREAM = fopen("temp.txt", "w");
+
+    free(actual);
+
+    return result;
 }
 
 bool testfn__region_alloc()
@@ -201,6 +231,18 @@ bool testfn__region_alloc()
 
 failed:
     fprintf(stderr, "[Region][Test][FAILED]: for the function `__region_alloc`\n");
+    return false;   
+}
+
+bool testfn__region_alloc_item()
+{
+    bool case0 = testfn__region_alloc_item_case_0(); if (!case0) goto failed;
+
+    printf("[Region][Test][Passed]: for the function `__region_alloc_item`\n");
+    return true;
+
+failed:
+    fprintf(stderr, "[Region][Test][FAILED]: for the function `__region_alloc_item`\n");
     return false;   
 }
 
@@ -220,6 +262,10 @@ int main()
     }
 
     if (!testfn__region_alloc()) {
+        result = 1; goto exiting;
+    }
+
+    if (!testfn__region_alloc_item()) {
         result = 1; goto exiting;
     }
     
