@@ -3,3 +3,4 @@ src/test.c
 .build
 src/main.c
 tests/bin
+.vscode
