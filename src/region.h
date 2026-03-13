@@ -100,6 +100,14 @@ void __region_set_error(RegionError *error, ErrorCode error_code, const char *fi
 
 Region *__region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func)
 {
+    if (capacity == 0) {
+        if (error) {
+            __region_set_error(error, REGION_ERROR_TYPE_INVALID_ARGUMENT, filename, line, func);
+            REGION_SPRINTF(error->message, "The `region` cannot have `capacity` equal to zero.");
+        }
+        return NULL;
+    }
+
     Region *region = (Region *)REGION_MALLOC(sizeof(Region));
 
     if (!region) {
