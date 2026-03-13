@@ -5,19 +5,48 @@
 
 #include "../src/region.h"
 
-FILE *TEST_OUT_STREAM = NULL;
+#define TESTOUT_FILE_PATH "testout.txt"
+
+typedef struct {
+    const char *test_file_path;
+    FILE *out_stream;
+    RegionError error;
+    bool passed;
+} TestContext;
 
 char *get_str_from_file(FILE *file)
 {
     if (!file) return NULL; 
+
+    fclose(file);
+    file = fopen(TESTOUT_FILE_PATH, "r");
+
+    if (!file) {
+        fprintf(stderr, "[Region][Test][Error]: Could not create a temporary file stream: %s\n", strerror(errno));
+        exit(1);
+    }
     
     fseek(file, 0, SEEK_END); 
     size_t size = ftell(file); 
     rewind(file); 
 
     char *buffer = malloc(size + 1); 
+
+    if (!buffer) {
+        fprintf(stderr, "[Region][Test][Error]: Could not read a string from a temporary file stream: %s\n", strerror(errno));
+        exit(1);
+    }
+
     fread(buffer, 1, size, file); 
     buffer[size] = '\0';
+
+    fclose(file);
+    file = fopen(TESTOUT_FILE_PATH, "w");
+
+    if (!file) {
+        fprintf(stderr, "[Region][Test][Error]: Could not create a temporary file stream: %s\n", strerror(errno));
+        exit(1);
+    }
 
     return buffer;
 }
@@ -73,208 +102,186 @@ void print_test_passed(char *func_name, int case_n)
 #define LOG_TEST_FAILED(func_name, case_n, expected, actual) print_test_failed((func_name), 1, "\tExpected:\n\t\t`%s`\n\tBut got:\n\t\t`%s`\n", (expected), (actual))
 #define LOG_TEST_PASSED(func_name, case_n) print_test_passed((func_name), (case_n))
 
-bool testfn__region_log_error_case_0()
+TestContext get_test_context(ErrorCode code, const char *file_path)
 {
-    RegionError error = {0};
+    TestContext context = {0};
 
-    __region_log_error(error, TEST_OUT_STREAM);
+    if(!context.out_stream) context.out_stream = fopen(file_path, "w");
+
+    if (!context.out_stream) goto fatal;
+
+    context.error = get_region_error_for_testing(code);
+    context.test_file_path = file_path;
+    context.passed = true;
     
-    fseek(TEST_OUT_STREAM, 0, SEEK_END);
-    long error_message_length = ftell(TEST_OUT_STREAM);
+    return context;
+
+fatal:
+    fprintf(stderr, "[Region][Test][Error]: Could not initialize the test system: %s\n", strerror(errno));
+    exit(1);
+}
+
+TestContext testfn__region_log_error_case_0()
+{
+    TestContext context = get_test_context(0, TESTOUT_FILE_PATH);
+
+    __region_log_error(context.error, context.out_stream);
+    
+    fseek(context.out_stream, 0, SEEK_END);
+
+    long error_message_length = ftell(context.out_stream);
+
     if (error_message_length != 0) {
         char error_message_length_str[128];
         sprintf(error_message_length_str, "%ld", error_message_length);
         LOG_TEST_FAILED("__region_log_error", 0, "0", error_message_length_str);
-        return false;
+        context.passed = false;
+        return context;
     }
 
     LOG_TEST_PASSED("__region_log_error", 0);
-    return true;
+    return context;
 }
 
-bool testfn__region_log_error_case_1()
+TestContext testfn__region_log_error_case_1()
 {
-    RegionError error = get_region_error_for_testing(REGION_ERROR_TYPE_INVALID_ARGUMENT);
+    TestContext context = get_test_context(REGION_ERROR_TYPE_INVALID_ARGUMENT, TESTOUT_FILE_PATH);
 
     const char *expected = "[Region][ERROR](<TEST_FILE_NAME>:0:<TEST_FUNC_NAME>()): Invalid arguments. <TEST_ERROR_MESSAGE_APPENDIX>.\n";
 
-    __region_log_error(error, TEST_OUT_STREAM);
+    __region_log_error(context.error, context.out_stream);
 
-    fclose(TEST_OUT_STREAM);
-    TEST_OUT_STREAM = fopen("temp.txt", "r");
-
-    char *actual = get_str_from_file(TEST_OUT_STREAM);
-
-    if (!actual) {
-        fprintf(stderr, "[Region][Test][Error]: Couldn't read the contents of a temporary stream. Terminating...\n");
-        fclose(TEST_OUT_STREAM);
-        exit(1);
-    }
+    char *actual = get_str_from_file(context.out_stream);
 
     if (strcmp(expected, actual) != 0) {
         LOG_TEST_FAILED("__region_log_error", 1, expected, actual);
         free(actual);
-        return false;
+        context.passed = false;
+        return context;
     }
 
     free(actual);
-    fclose(TEST_OUT_STREAM);
-    TEST_OUT_STREAM = fopen("temp.txt", "w");
     LOG_TEST_PASSED("__region_log_error", 1);
-    return true;
+
+    return context;
 }
 
-bool testfn__region_log_error_case_2()
+TestContext testfn__region_log_error_case_2()
 {
-    RegionError error = get_region_error_for_testing(REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY);
+    TestContext context = get_test_context(REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, TESTOUT_FILE_PATH);
 
     const char *expected = "[Region][ERROR](<TEST_FILE_NAME>:0:<TEST_FUNC_NAME>()): Not enough memory to allocate. <TEST_ERROR_MESSAGE_APPENDIX>.\n";
 
-    __region_log_error(error, TEST_OUT_STREAM);
+    __region_log_error(context.error, context.out_stream);
 
-    fclose(TEST_OUT_STREAM);
-    TEST_OUT_STREAM = fopen("temp.txt", "r");
-
-    char *actual = get_str_from_file(TEST_OUT_STREAM);
-
-    if (!actual) {
-        fprintf(stderr, "[Region][Test][Error]: Couldn't read the contents of a temporary stream. Terminating...\n");
-        fclose(TEST_OUT_STREAM);
-        exit(1);
-    }
+    char *actual = get_str_from_file(context.out_stream);
 
     if (strcmp(expected, actual) != 0) {
         LOG_TEST_FAILED("__region_log_error", 2, expected, actual);
         free(actual);
-        return false;
+        context.passed = false;
+        return context;
     }
 
     free(actual);
-    fclose(TEST_OUT_STREAM);
-    TEST_OUT_STREAM = fopen("temp.txt", "w");
     LOG_TEST_PASSED("__region_log_error", 2);
-    return true;
+
+    return context;
 }
 
-bool testfn__region_log_error()
+bool testfn__region_log_error(TestContext *context)
 {   
-    bool case0 = testfn__region_log_error_case_0(); if (!case0) goto failed;
-    bool case1 = testfn__region_log_error_case_1(); if (!case1) goto failed;
-    bool case2 = testfn__region_log_error_case_2(); if (!case2) goto failed;
+    *context = testfn__region_log_error_case_0(); if (!context->passed) goto failed;
+    *context = testfn__region_log_error_case_1(); if (!context->passed) goto failed;
+    *context = testfn__region_log_error_case_2(); if (!context->passed) goto failed;
 
     fprintf(stderr, "[Region][Test][Passed]: for the function `__region_log_error`\n");
-    return true;
+    return context->passed;
 
 failed:
     fprintf(stderr, "[Region][Test][FAILED]: for the function `__region_log_error`\n");
-    return false;   
+    return context->passed;
 }
 
-bool testfn__region_alloc_case_0()
+TestContext testfn__region_alloc_case_0()
 {
-    //Region *__region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func);
-
-    RegionError error = {0};
+    TestContext context = get_test_context(0, TESTOUT_FILE_PATH);
     
-    Region *region = region_alloc(__SIZE_MAX__, &error);
+    Region *region = region_alloc(__SIZE_MAX__, &context.error);
     
-    if (error.code == REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY) {
+    if (context.error.code == REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY) {
         LOG_TEST_PASSED("__region_alloc", 0);
-        return true;
+        return context;
     }
     
     LOG_TEST_FAILED("__region_alloc", 0, 
         error_code_to_str(REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY), 
-        error_code_to_str(error.code));
+        error_code_to_str(context.error.code));
         
     if (region) free(region);
     
-    return false;
+    return context;
 }
 
-// void *__region_alloc_item(Region *region, size_t size, RegionError *error, const char *filename, int line, const char *func)
-bool testfn__region_alloc_item_case_0()
+TestContext testfn__region_alloc_item_case_0()
 {  
-    RegionError error = get_region_error_for_testing(0);
+    TestContext context = get_test_context(0, TESTOUT_FILE_PATH);
     
-    __region_alloc_item(NULL, 1, &error, "<TEST_FILE_NAME>", 0, "<TEST_FUNC_NAME>");
-    __region_log_error(error, TEST_OUT_STREAM);
+    __region_alloc_item(NULL, 1, &context.error, "<TEST_FILE_NAME>", 0, "<TEST_FUNC_NAME>");
+    __region_log_error(context.error, context.out_stream);
     
     const char *expected = "[Region][ERROR](<TEST_FILE_NAME>:0:<TEST_FUNC_NAME>()): Invalid arguments. The `region` holds a null reference.\n";
-    
-    fclose(TEST_OUT_STREAM);
-    TEST_OUT_STREAM = fopen("temp.txt", "r");
 
-    char *actual = get_str_from_file(TEST_OUT_STREAM);
-
+    char *actual = get_str_from_file(context.out_stream);
     
-    bool result = strcmp(expected, actual) == 0;
+    context.passed = strcmp(expected, actual) == 0;
     
-    result
+    context.passed
     ? LOG_TEST_PASSED("__region_alloc_item", 0)
     : LOG_TEST_FAILED("__region_alloc_item", 0, expected, actual);
-    
-    fclose(TEST_OUT_STREAM);
-    TEST_OUT_STREAM = fopen("temp.txt", "w");
 
     free(actual);
 
-    return result;
+    return context;
 }
 
-bool testfn__region_alloc()
-{
-    bool case0 = testfn__region_alloc_case_0(); if (!case0) goto failed;
+bool testfn__region_alloc(TestContext *context)
+{   
+    *context = testfn__region_alloc_case_0(); if (!context->passed) goto failed;
 
-    printf("[Region][Test][Passed]: for the function `__region_alloc`\n");
-    return true;
+    fprintf(stderr, "[Region][Test][Passed]: for the function `__region_alloc`\n");
+    return context->passed;
 
 failed:
     fprintf(stderr, "[Region][Test][FAILED]: for the function `__region_alloc`\n");
-    return false;   
+    return context->passed;
 }
 
-bool testfn__region_alloc_item()
-{
-    bool case0 = testfn__region_alloc_item_case_0(); if (!case0) goto failed;
+bool testfn__region_alloc_item(TestContext *context)
+{   
+    *context = testfn__region_alloc_item_case_0(); if (!context->passed) goto failed;
 
-    printf("[Region][Test][Passed]: for the function `__region_alloc_item`\n");
-    return true;
+    fprintf(stderr, "[Region][Test][Passed]: for the function `__region_alloc_item`\n");
+    return context->passed;
 
 failed:
     fprintf(stderr, "[Region][Test][FAILED]: for the function `__region_alloc_item`\n");
-    return false;   
+    return context->passed;
 }
+
 
 int main()
 {
-    int result = 0;
-    TEST_OUT_STREAM = fopen("temp.txt", "w");
+    TestContext context = {0};
 
-    if (!TEST_OUT_STREAM) {
-        fprintf(stderr, "[Region][TEST][Error]: Couldn't create a temporary file for testing: %s\n", 
-            strerror(ferror(TEST_OUT_STREAM)));
-        return 1;
-    }
-
-    if (!testfn__region_log_error()) {
-        result = 1; goto exiting;
-    }
-
-    if (!testfn__region_alloc()) {
-        result = 1; goto exiting;
-    }
-
-    if (!testfn__region_alloc_item()) {
-        result = 1; goto exiting;
-    }
+    if (!testfn__region_log_error(&context)) goto exiting;
+    if (!testfn__region_alloc(&context)) goto exiting;
+    if (!testfn__region_alloc_item(&context)) goto exiting;
     
     printf("[Region][Test]: All tests have passed!\n");
+    return 0;
 
 exiting:
-    if (TEST_OUT_STREAM) {
-        fclose(TEST_OUT_STREAM);
-        remove("temp.txt");
-    }
-    return result;
+    if (context.out_stream) fclose(context.out_stream);
+    return (int)context.passed;
 }
