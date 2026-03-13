@@ -245,6 +245,44 @@ TestContext testfn__region_alloc_item_case_0()
     return context;
 }
 
+TestContext testfn__region_alloc_item_case_1()
+{
+    TestContext context = get_test_context(0, TESTOUT_FILE_PATH);
+
+    Region *region = region_alloc(5 * sizeof(int), &context.error);
+
+    if (!region) {
+        fprintf(stderr, "[Region][Test][Error]: Couldn't allocate memory for testing. Stop.\n");
+        exit(1);
+    }
+
+    int *actual = (int*)(region->data);
+    
+    actual[0] = 1;
+    actual[1] = 2;
+    actual[2] = 3;
+    actual[3] = 4;
+    actual[4] = 5;
+
+    int expected[5] = {1,2,3,4,5};
+
+    for (int i = 0; i < 5; i++) {
+        if (actual[i] == expected[i]) continue;
+
+        char e[2];           char a[2];
+        sprintf(e, "%d", 1); sprintf(a, "%d", 1);
+
+        LOG_TEST_FAILED("__region_alloc_item", 1, e, a);
+        region_free(&region);
+        context.passed = false;
+        return context;
+    }
+
+    region_free(&region);
+    LOG_TEST_PASSED("__region_alloc_item", 1);
+    return context;
+}
+
 bool testfn__region_alloc(TestContext *context)
 {   
     *context = testfn__region_alloc_case_0(); if (!context->passed) goto failed;
@@ -260,6 +298,7 @@ failed:
 bool testfn__region_alloc_item(TestContext *context)
 {   
     *context = testfn__region_alloc_item_case_0(); if (!context->passed) goto failed;
+    *context = testfn__region_alloc_item_case_1(); if (!context->passed) goto failed;
 
     fprintf(stderr, "[Region][Test][Passed]: for the function `__region_alloc_item`\n");
     return context->passed;
