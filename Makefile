@@ -31,13 +31,6 @@ BIN := $(BUILD)/bin
 $(BIN): $(BUILD)
 	mkdir -p $(BIN)
 
-# The folders in which all the testing happens. $(TESTS)
-# is expected to contain a 'main.c' file. During the
-# build of the testing part, the binary subdirectory
-# is generated (if it does not exist). This folder is
-# referred as TESTS_BIN and it is where the executable
-# for the tests are stored.
-
 #  Testing is separated from the region. The library 
 # can be compiled without testing. But for the testing 
 # binary, the object file of the library is required which
@@ -48,9 +41,7 @@ TESTS := tests
 $(TESTS):
 	mkdir -p $(TESTS)
 
-TESTS_BIN := $(TESTS)/bin
-$(TESTS_BIN):
-	mkdir -p $(TESTS)/bin
+TESTS_BUILD := $(TESTS)/.build
 
 # -------------------- Files --------------------
 
@@ -87,7 +78,7 @@ help:
 
 # Removes the $(TESTS_BIN) and $(BUILD) folders and their contents.
 clean:
-	rm -rf $(BUILD) $(TESTS_BIN)
+	rm -rf $(BUILD) $(TESTS_BUILD)
 
 # Builds the object file of the library and puts it inside the
 # $(OBJ) subdirectory. During the build, the REGION_IMPLEMENTATION 
@@ -106,6 +97,5 @@ run: $(TARGET_BIN) $(TARGET_OBJ)
 # The object file is the one being tested. Upon the
 # successful compilation, the executable is placed in the
 # $(TESTS_BIN) subdirectory and it immidiately runs.
-test: $(TESTS) $(TESTS_BIN) $(TARGET_OBJ)
-	gcc $(TESTS)/main.c $(TARGET_OBJ) -o $(TESTS_BIN)/test
-	./$(TESTS_BIN)/test
+test:
+	make -C tests run
