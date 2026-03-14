@@ -90,7 +90,6 @@ build: $(TARGET_OBJ)
 # Builds the whole project (except the tests) and runs it upon 
 # successful compilation.
 run: $(TARGET_BIN) $(TARGET_OBJ)
-	make build
 	./$(TARGET_BIN)
 
 # Builds the tests and the object file if it's missing.

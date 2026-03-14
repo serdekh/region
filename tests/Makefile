@@ -23,6 +23,11 @@ MAIN_TARGET_OBJ = $(OBJ)/tester.o
 HELPERS_TARGET = $(SRC)/helpers.c
 HELPERS_TARGET_OBJ = $(OBJ)/helpers.o
 
+FUNCS = \
+	$(SRC)/__region_log_error.c \
+	$(SRC)/__region_alloc.c \
+	$(SRC)/__region_alloc_item.c \
+
 REGION_OBJ = ../.build/obj/region.o
 
 $(REGION_OBJ):
@@ -32,7 +37,7 @@ $(HELPERS_TARGET_OBJ): $(OBJ) $(HELPERS_TARGET) $(REGION_OBJ)
 	$(CC) $(CC_FLAGS) -c $(HELPERS_TARGET) -o $(HELPERS_TARGET_OBJ)
 
 $(MAIN_TARGET): $(HELPERS_TARGET_OBJ) $(BIN) $(REGION_OBJ)
-	$(CC) $(CC_FLAGS) $(MAIN_TARGET) $(HELPERS_TARGET_OBJ) $(REGION_OBJ) -o $(MAIN_TARGET_BIN)
+	$(CC) $(CC_FLAGS) $(MAIN_TARGET) $(HELPERS_TARGET_OBJ) $(FUNCS) $(REGION_OBJ) -o $(MAIN_TARGET_BIN)
 
 build: $(BUILD) $(OBJ) $(BIN) $(MAIN_TARGET) $(REGION_OBJ)
 
