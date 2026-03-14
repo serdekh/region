@@ -1,6 +1,4 @@
-env.txt
-src/test.c
 .build
+tests/.build
 src/main.c
-tests/bin
 .vscode
