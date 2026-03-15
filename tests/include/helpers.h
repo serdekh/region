@@ -9,7 +9,7 @@
 
 #include "../../src/region.h"
 
-#define TESTOUT_FILE_PATH "testout.txt"
+#define TESTOUT_FILE_PATH ".build/testout.txt"
 
 // Represents the data structure that the helpers and the
 // testing functions work with. It contains essential
