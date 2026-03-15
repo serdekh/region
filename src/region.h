@@ -9,6 +9,11 @@
 #define REGION_SPRINTF(...) sprintf(__VA_ARGS__)
 #endif // REGION_NO_STDIO
 
+#ifndef REGION_NO_STDINT
+#include <stdint.h>
+#define REGION_SIZE_MAX __SIZE_MAX__
+#endif // REGION_NO_STDINT
+
 #ifndef REGION_NO_STRING
 #include <string.h>
 #define REGION_STRLEN strlen
@@ -108,6 +113,14 @@ Region *__region_alloc(size_t capacity, RegionError *error, const char *filename
         return NULL;
     }
 
+    if (capacity > REGION_SIZE_MAX - sizeof(Region)) {
+        if (error) {
+            __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, filename, line, func);
+            REGION_SPRINTF(error->message, "The value of `capacity` is too large %zu", capacity);
+        }
+        return NULL;
+    }
+
     Region *region = (Region *)REGION_MALLOC(sizeof(Region));
 
     if (!region) {
@@ -166,17 +179,23 @@ void __region_log_error(RegionError error, FILE *out)
 
 void region_free(Region **region)
 {
-    if (!region || !(*region)) return;
+    if (!region || !*region)
+        return;
 
-    while (*region) {
-        Region *temp = (*region)->next;
+    Region *current = *region;
 
-        if ((*region)->data) REGION_FREE((*region)->data);
+    while (current) {
+        Region *next = current->next;
 
-        REGION_FREE(*region);
+        if (current->data)
+            REGION_FREE(current->data);
 
-        *region = temp;
+        REGION_FREE(current);
+
+        current = next;
     }
+
+    *region = NULL;
 }
 
 void *__region_alloc_item(Region *region, size_t size, RegionError *error, const char *filename, int line, const char *func)
@@ -188,10 +207,19 @@ void *__region_alloc_item(Region *region, size_t size, RegionError *error, const
         }
         return NULL;
     }
+
     if (size == 0) {
         if (error) {
             __region_set_error(error, REGION_ERROR_TYPE_INVALID_ARGUMENT, filename, line, func);
             REGION_SPRINTF(error->message, "The value of `size` cannot be equal to zero");
+        }
+        return NULL;
+    }
+
+    if (size > REGION_SIZE_MAX - sizeof(Region)) {
+        if (error) {
+            __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, filename, line, func);
+            REGION_SPRINTF(error->message, "The value of `size` is too large %zu", size);
         }
         return NULL;
     }
