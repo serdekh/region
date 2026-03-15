@@ -7,6 +7,7 @@ int main()
     if (!testfn__region_log_error(&context)) goto exiting;
     if (!testfn__region_alloc(&context)) goto exiting;
     if (!testfn__region_alloc_item(&context)) goto exiting;
+    if (!testfn__region_free(&context)) goto exiting;
 
     printf("[Region][Test]: All tests have passed!\n");
     return 0;
