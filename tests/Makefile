@@ -27,6 +27,7 @@ FUNCS = \
 	$(SRC)/__region_log_error.c \
 	$(SRC)/__region_alloc.c \
 	$(SRC)/__region_alloc_item.c \
+	$(SRC)/region_free.c
 
 REGION_OBJ = ../.build/obj/region.o
 
@@ -42,7 +43,7 @@ $(MAIN_TARGET): $(HELPERS_TARGET_OBJ) $(BIN) $(REGION_OBJ)
 build: $(BUILD) $(OBJ) $(BIN) $(MAIN_TARGET) $(REGION_OBJ)
 
 run: $(MAIN_TARGET)
-	./.build/bin/tester
+	valgrind -s --leak-check=full .build/bin/tester
 
 clean:
 	rm -rf $(BUILD) 
