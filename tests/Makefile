@@ -3,9 +3,13 @@ BUILD = .build
 BIN = $(BUILD)/bin
 OBJ = $(BUILD)/obj
 INCLUDE = include
+EXEC = $(BIN)/tester
 
 CC = gcc
 CC_FLAGS = -std=gnu99 -Wall -Wextra
+
+MEM_DBG = valgrind
+MEM_DBG_FLAGS = --quiet --leak-check=full --track-origins=yes
 
 $(SRC):
 	mkdir -p $(SRC) 
@@ -43,7 +47,17 @@ $(MAIN_TARGET): $(HELPERS_TARGET_OBJ) $(BIN) $(REGION_OBJ)
 build: $(BUILD) $(OBJ) $(BIN) $(MAIN_TARGET) $(REGION_OBJ)
 
 run: $(MAIN_TARGET)
-	valgrind -s --leak-check=full .build/bin/tester
+	@$(EXEC) > /dev/null 2>&1; status=$$?; \
+	if [ $$status -eq 0 ]; then \
+		$(MEM_DBG) $(MEM_DBG_FLAGS) --error-exitcode=1 $(EXEC) > $(BUILD)/temp 2>&1; \
+		if [ $$? -eq 0 ]; then \
+			echo "[Region][Test][PASSED]: All function and memory leaks tests have passed!"; \
+		else \
+			cat $(BUILD)/temp; \
+			echo "[Region][Test][FAILED]: Detected memory leaks"; \
+		fi; \
+		rm -f $(BUILD)/temp; \
+	fi
 
 clean:
 	rm -rf $(BUILD) 
