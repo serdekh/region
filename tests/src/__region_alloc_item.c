@@ -2,7 +2,7 @@
 
 TestContext testfn__region_alloc_item_case_0()
 {  
-    TestContext context = tctx_get(0, TESTOUT_FILE_PATH);
+    TestContext context = tctx_get(0, 0, TESTOUT_FILE_PATH);
     
     __region_alloc_item(NULL, 1, &context.error, "<TEST_FILE_NAME>", 0, "<TEST_FUNC_NAME>");
     __region_log_error(context.error, context.out_stream);
@@ -14,8 +14,8 @@ TestContext testfn__region_alloc_item_case_0()
     context.passed = strcmp(expected, actual) == 0;
     
     context.passed
-    ? LOG_TEST_PASSED("__region_alloc_item", 0)
-    : LOG_TEST_FAILED("__region_alloc_item", 0, expected, actual);
+    ? LOG_TEST_PASSED("__region_alloc_item", context)
+    : LOG_TEST_FAILED("__region_alloc_item", context, expected, actual);
 
     free(actual);
 
@@ -24,7 +24,7 @@ TestContext testfn__region_alloc_item_case_0()
 
 TestContext testfn__region_alloc_item_case_1()
 {
-    TestContext context = tctx_get(0, TESTOUT_FILE_PATH);
+    TestContext context = tctx_get(0, 1, TESTOUT_FILE_PATH);
 
     Region *region = region_alloc(5 * sizeof(int), &context.error);
 
@@ -49,20 +49,20 @@ TestContext testfn__region_alloc_item_case_1()
         char e[2];           char a[2];
         sprintf(e, "%d", 1); sprintf(a, "%d", 1);
 
-        LOG_TEST_FAILED("__region_alloc_item", 1, e, a);
+        LOG_TEST_FAILED("__region_alloc_item", context, e, a);
         region_free(&region);
         context.passed = false;
         return context;
     }
 
     region_free(&region);
-    LOG_TEST_PASSED("__region_alloc_item", 1);
+    LOG_TEST_PASSED("__region_alloc_item", context);
     return context;
 }
 
 TestContext testfn__region_alloc_item_case_2()
 {
-    TestContext context = tctx_get(0, TESTOUT_FILE_PATH);
+    TestContext context = tctx_get(0, 2, TESTOUT_FILE_PATH);
 
     Region *region = region_alloc(1, &context.error);
 
@@ -74,12 +74,12 @@ TestContext testfn__region_alloc_item_case_2()
     region_alloc_item(region, 10, &context.error);
 
     if (region->next) {
-        LOG_TEST_PASSED("__region_alloc_item", 2);
+        LOG_TEST_PASSED("__region_alloc_item", context);
         region_free(&region);
         return context;
     }
 
-    LOG_TEST_FAILED("__region_alloc_item", 2, "The value of the `next` field not to be NULL due to excessive capacity", "Nullable reference");
+    LOG_TEST_FAILED("__region_alloc_item", context, "The value of the `next` field not to be NULL due to excessive capacity", "Nullable reference");
     context.passed = false;
     region_free(&region);
     return context;

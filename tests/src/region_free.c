@@ -2,7 +2,7 @@
 
 TestContext testfn__region_free_case_0()
 {
-    TestContext context = tctx_get(0, TESTOUT_FILE_PATH);
+    TestContext context = tctx_get(0, 0, TESTOUT_FILE_PATH);
 
     Region *node_0 = region_alloc(1, &context.error);
     Region *node_1 = region_alloc(1, &context.error);
@@ -22,7 +22,7 @@ TestContext testfn__region_free_case_0()
     region_free(&node_0);
 
     if (node_0) {
-        LOG_TEST_FAILED("__region_free", 0, "All nodes to be freed.", "The head is still being allocated.");
+        LOG_TEST_FAILED("__region_free", context, "All nodes to be freed.", "The head is still being allocated.");
         context.passed = false;
     }
 

@@ -2,17 +2,17 @@
 
 TestContext testfn__region_alloc_case_0()
 {
-    TestContext context = tctx_get(0, TESTOUT_FILE_PATH);
+    TestContext context = tctx_get(0, 0, TESTOUT_FILE_PATH);
     
     Region *region = region_alloc(__SIZE_MAX__, &context.error);
     
     if (context.error.code == REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY) {
-        LOG_TEST_PASSED("__region_alloc", 0);
+        LOG_TEST_PASSED("__region_alloc", context);
         if (region) free(region);
         return context;
     }
     
-    LOG_TEST_FAILED("__region_alloc", 0, 
+    LOG_TEST_FAILED("__region_alloc", context, 
         error_code_to_str(REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY), 
         error_code_to_str(context.error.code));
         
@@ -24,7 +24,7 @@ TestContext testfn__region_alloc_case_0()
 
 TestContext testfn__region_alloc_case_1()
 {
-    TestContext context = tctx_get(0, TESTOUT_FILE_PATH);
+    TestContext context = tctx_get(0, 1, TESTOUT_FILE_PATH);
     
     region_alloc(0, &context.error);
     
@@ -35,14 +35,14 @@ TestContext testfn__region_alloc_case_1()
     char *actual = tctx_get_str_from_file(context);
 
     if (strcmp(expected, actual) != 0) {
-        LOG_TEST_FAILED("__region_alloc", 1, expected, actual);
+        LOG_TEST_FAILED("__region_alloc", context, expected, actual);
         free(actual);
         context.passed = false;
         return context;
     }
     
     free(actual);
-    LOG_TEST_PASSED("__region_alloc", 1);
+    LOG_TEST_PASSED("__region_alloc", context);
     return context;
 }
 

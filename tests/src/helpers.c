@@ -1,6 +1,6 @@
 #include "../include/helpers.h"
 
-TestContext tctx_get(ErrorCode code, const char *file_path)
+TestContext tctx_get(ErrorCode code, int current_case, const char *file_path)
 {
     TestContext context = {0};
 
@@ -10,6 +10,7 @@ TestContext tctx_get(ErrorCode code, const char *file_path)
 
     context.test_file_path = file_path;
     context.passed = true;
+    context.current_case = current_case;
     
     tctx_init_field_error(&context, code);
 
@@ -80,14 +81,14 @@ char *error_code_to_str(ErrorCode code)
     }
 }
 
-void log_test_failed(char *func_name, int case_n, const char *fmt, ...)
+void log_test_failed(char *func_name, TestContext context, const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
 
     fprintf(stderr,
         "[Region][Test][FAILED]: for the function `%s` (case %d):\n",
-        func_name, case_n);
+        func_name, context.current_case);
 
     vfprintf(stderr, fmt, args);
     fprintf(stderr, "\n");
@@ -96,8 +97,8 @@ void log_test_failed(char *func_name, int case_n, const char *fmt, ...)
 }
 
 
-void log_test_passed(char *func_name, int case_n)
+void log_test_passed(char *func_name, TestContext context)
 {
     printf("[Region][Test][Passed]: for the function `%s` (case %d).\n",
-        func_name, case_n);
+        func_name, context.current_case);
 }
