@@ -53,11 +53,15 @@
     size_t capacity;               \
     size_t size;                   \
     char *data;                    \
+    struct __Region *next;         \
 
 typedef struct __Region {
     REGION_PRIVATE_CORE_FIELDS
-    struct __Region *next;
 } Region;
+
+typedef struct __StackRegion {
+    REGION_PRIVATE_CORE_FIELDS
+} StackRegion;
 
 // ----- DATA STRUCTS FOR ERRORS -----
 
@@ -83,6 +87,13 @@ void __region_set_error(RegionError *error, ErrorCode error_code, const char *fi
 Region *__region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func);
 void *__region_alloc_item(Region *region, size_t size, RegionError *error, const char *filename, int line, const char *func);
 void __region_reset(Region *region);
+
+// Stack Region
+StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func);
+void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, const char *filename, int line, const char *func);
+void __stack_region_pop(StackRegion *stack, RegionError *error, const char *filename, int line, const char *func);
+void __stack_region_reset(StackRegion *stack);
+void __stack_region_free(StackRegion **stack);
 
 // ----- PUBLIC API -----
 void region_free(Region **region);
@@ -255,6 +266,57 @@ void __region_reset(Region *region)
     for (Region *i = region; i; i = i->next) {
         i->size = 0;
     }
+}
+
+StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func)
+{
+    return (StackRegion *)__region_alloc(capacity, error, filename, line, func);
+}
+
+void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, const char *filename, int line, const char *func)
+{
+    if (!stack) {
+        if (error) {
+            __region_set_error(error, REGION_ERROR_TYPE_INVALID_ARGUMENT, filename, line, func);
+            REGION_SPRINTF(error->message, "The `stack` pointer is equal to `NULL`");
+        }
+        return NULL;
+    }
+
+    size_t new_item = size + sizeof(size_t);
+
+    void *result = __region_alloc_item((Region *)stack, new_item, error, filename, line, func);
+
+    if (!result) return NULL;
+
+    *(size_t *)(result + size) = size;
+
+    //printf("size of the stack item: %d\n", sizeof(item));
+    return result;
+}
+
+void __stack_region_pop(StackRegion *stack, RegionError *error, const char *filename, int line, const char *func)
+{
+    if (!stack) {
+        if (error) {
+            __region_set_error(error, REGION_ERROR_TYPE_INVALID_ARGUMENT, filename, line, func);
+            REGION_SPRINTF(error->message, "The `stack` pointer is equal to `NULL`");
+        }
+        return;
+    }
+
+    size_t last_item_size = *(size_t *)(stack->data - sizeof(size_t));
+    stack->size -= last_item_size + sizeof(size_t);
+}
+
+void __stack_region_reset(StackRegion *stack)
+{
+    region_reset((Region *)stack);
+}
+
+void __stack_region_free(StackRegion **stack)
+{
+    region_free((Region **)stack);
 }
 
 
