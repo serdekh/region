@@ -60,7 +60,8 @@ typedef struct __Region {
 } Region;
 
 typedef struct __StackRegion {
-    REGION_PRIVATE_CORE_FIELDS
+    Region *frames;         // where the actual data resides
+    Region *frames_indexes; // the indexes where stack frames are located
 } StackRegion;
 
 // ----- DATA STRUCTS FOR ERRORS -----
@@ -91,7 +92,7 @@ void __region_reset(Region *region);
 // Stack Region
 StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func);
 void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, const char *filename, int line, const char *func);
-void __stack_region_pop(StackRegion *stack, RegionError *error, const char *filename, int line, const char *func);
+void *__stack_region_pop(StackRegion *stack, RegionError *error, const char *filename, int line, const char *func);
 void __stack_region_reset(StackRegion *stack);
 void __stack_region_free(StackRegion **stack);
 
@@ -270,7 +271,32 @@ void __region_reset(Region *region)
 
 StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func)
 {
-    return (StackRegion *)__region_alloc(capacity, error, filename, line, func);
+    StackRegion *stack = (StackRegion *)REGION_MALLOC(sizeof(StackRegion));
+
+    if (!stack) {
+        if (error) {
+            __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, filename, line, func);
+            REGION_SPRINTF(error->message, "Cannot allocate memory for a stack region (%zub)", sizeof(StackRegion));
+        }
+        return NULL;
+    }
+
+    stack->frames = __region_alloc(capacity, error, filename, line, func);
+
+    if (!stack->frames) {
+        REGION_FREE(stack);
+        return NULL;
+    }
+
+    stack->frames_indexes = __region_alloc(capacity, error, filename, line, func);
+
+    if (!stack->frames_indexes) {
+        REGION_FREE(stack->frames);
+        REGION_FREE(stack);
+        return NULL;
+    }
+
+    return stack;
 }
 
 void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, const char *filename, int line, const char *func)
@@ -283,40 +309,58 @@ void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, c
         return NULL;
     }
 
-    size_t new_item = size + sizeof(size_t);
+    size_t *new_frame_size = (size_t *)__region_alloc_item(stack->frames_indexes, sizeof(size_t), error, filename, line, func);
 
-    void *result = __region_alloc_item((Region *)stack, new_item, error, filename, line, func);
+    if (!new_frame_size) return NULL;
 
-    if (!result) return NULL;
+    void *new_frame = __region_alloc_item(stack->frames, size, error, filename, line, func);
+    
+    if (!new_frame) {
+        stack->frames_indexes->size -= sizeof(size_t);
+        return NULL;
+    }
 
-    *(size_t *)(result + size) = size;
+    *new_frame_size = size;
 
-    //printf("size of the stack item: %d\n", sizeof(item));
-    return result;
+    return new_frame;
 }
 
-void __stack_region_pop(StackRegion *stack, RegionError *error, const char *filename, int line, const char *func)
+void *__stack_region_pop(StackRegion *stack, RegionError *error, const char *filename, int line, const char *func)
 {
     if (!stack) {
         if (error) {
             __region_set_error(error, REGION_ERROR_TYPE_INVALID_ARGUMENT, filename, line, func);
             REGION_SPRINTF(error->message, "The `stack` pointer is equal to `NULL`");
         }
-        return;
+        return NULL;
     }
 
-    size_t last_item_size = *(size_t *)(stack->data - sizeof(size_t));
-    stack->size -= last_item_size + sizeof(size_t);
+    // pop the last frame's size
+    size_t last_frame_size = stack->frames_indexes->data[stack->frames_indexes->size - sizeof(size_t)];
+    stack->frames_indexes->size -= sizeof(size_t);
+
+    // pop the last item
+    stack->frames->size -= last_frame_size;
+
+    return stack->frames->data + stack->frames->size;
 }
 
 void __stack_region_reset(StackRegion *stack)
 {
-    region_reset((Region *)stack);
+    if (!stack) return;
+
+    region_reset((Region *)(stack->frames));
+    region_reset(stack->frames_indexes);
 }
 
 void __stack_region_free(StackRegion **stack)
 {
-    region_free((Region **)stack);
+    if (!stack || !(*stack)) return;
+
+    region_free(&(*stack)->frames);
+    region_free(&(*stack)->frames_indexes);
+
+    REGION_FREE(*stack);
 }
 
 
