@@ -64,6 +64,11 @@ typedef struct __StackRegion {
     Region *frames_indexes; // the indexes where stack frames are located
 } StackRegion;
 
+typedef enum {
+    REGION_RESET_OPTION_SOFT = 0,
+    REGION_RESET_OPTION_HARD = 1,
+} RegionResetOption;
+
 // ----- DATA STRUCTS FOR ERRORS -----
 
 typedef char ErrorCode;
@@ -87,19 +92,18 @@ void __region_log_error(RegionError error, FILE *out);
 void __region_set_error(RegionError *error, ErrorCode error_code, const char *filename, int line, const char *func);
 Region *__region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func);
 void *__region_alloc_item(Region *region, size_t size, RegionError *error, const char *filename, int line, const char *func);
-void __region_reset(Region *region);
 
 // Stack Region
 StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func);
 void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, const char *filename, int line, const char *func);
 void *__stack_region_pop(StackRegion *stack, RegionError *error, const char *filename, int line, const char *func);
-void __stack_region_reset(StackRegion *stack);
+void __stack_region_reset(StackRegion *stack, RegionResetOption option);
 void __stack_region_free(StackRegion **stack);
 
 // ----- PUBLIC API -----
 void region_free(Region **region);
+void region_reset(Region *region, RegionResetOption option);
 
-#define region_reset(region) __region_reset(region)
 #define region_alloc(capacity, error) __region_alloc((capacity), (error), __FILE__, __LINE__, __func__)
 #define region_alloc_item(region, size, error) __region_alloc_item((region), (size), (error), __FILE__, __LINE__, __func__)
 #define region_log_error(error) __region_log_error((error), REGION_STDOUT)
@@ -262,8 +266,13 @@ void *__region_alloc_item(Region *region, size_t size, RegionError *error, const
     return result;
 }
 
-void __region_reset(Region *region)
+void region_reset(Region *region, RegionResetOption option)
 {
+    if (option == REGION_RESET_OPTION_HARD) {
+        Region *second = region->next;
+        region_free(&second);
+    }
+
     for (Region *i = region; i; i = i->next) {
         i->size = 0;
     }
@@ -345,12 +354,12 @@ void *__stack_region_pop(StackRegion *stack, RegionError *error, const char *fil
     return stack->frames->data + stack->frames->size;
 }
 
-void __stack_region_reset(StackRegion *stack)
+void __stack_region_reset(StackRegion *stack, RegionResetOption option)
 {
     if (!stack) return;
 
-    region_reset((Region *)(stack->frames));
-    region_reset(stack->frames_indexes);
+    region_reset((Region *)(stack->frames), option);
+    region_reset(stack->frames_indexes, option);
 }
 
 void __stack_region_free(StackRegion **stack)
