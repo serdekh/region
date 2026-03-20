@@ -1,13 +1,17 @@
-#include "../include/funcs.h"
+#include  "../../include/test-functions/__region_alloc_item.h"
 
 TestContext testfn__region_alloc_item_case_0()
 {  
     TestContext context = tctx_get(0, 0, TESTOUT_FILE_PATH);
     
-    __region_alloc_item(NULL, 1, &context.error, "<TEST_FILE_NAME>", 0, "<TEST_FUNC_NAME>");
+    __region_alloc_item(NULL, 1, &context.error, TEST_CONTEXT_ERROR_DEFAULT_FILE_NAME, 0, TEST_CONTEXT_ERROR_DEFAULT_FUNC_NAME);
     __region_log_error(context.error, context.out_stream);
     
-    const char *expected = "[Region][ERROR](<TEST_FILE_NAME>:0:<TEST_FUNC_NAME>()): Invalid arguments. The `region` holds a null reference.\n";
+    const char *expected = "[Region][ERROR]("
+                            TEST_CONTEXT_ERROR_DEFAULT_FILE_NAME":"
+                            TEST_CONTEXT_ERROR_DEFAULT_LINE_STR":"
+                            TEST_CONTEXT_ERROR_DEFAULT_FUNC_NAME
+                            "()): Invalid arguments. The `region` holds a null reference.\n";
 
     char *actual = tctx_get_str_from_file(context);
     

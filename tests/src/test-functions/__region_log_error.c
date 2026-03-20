@@ -1,4 +1,4 @@
-#include "../include/__region_log_error.h"
+#include  "../../include/test-functions/__region_log_error.h"
 
 TestContext testfn__region_log_error_case_0()
 {
@@ -26,7 +26,11 @@ TestContext testfn__region_log_error_case_1()
 {
     TestContext context = tctx_get(REGION_ERROR_TYPE_INVALID_ARGUMENT, 1, TESTOUT_FILE_PATH);
 
-    const char *expected = "[Region][ERROR](<TEST_FILE_NAME>:0:<TEST_FUNC_NAME>()): Invalid arguments. <TEST_ERROR_MESSAGE_APPENDIX>.\n";
+    const char *expected = "[Region][ERROR]("
+                           TEST_CONTEXT_ERROR_DEFAULT_FILE_NAME":"
+                           TEST_CONTEXT_ERROR_DEFAULT_LINE_STR":"
+                           TEST_CONTEXT_ERROR_DEFAULT_FUNC_NAME"()): Invalid arguments. "
+                           TEST_CONTEXT_ERROR_DEFAULT_MESSAGE".\n";
 
     __region_log_error(context.error, context.out_stream);
 
@@ -49,7 +53,11 @@ TestContext testfn__region_log_error_case_2()
 {
     TestContext context = tctx_get(REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, 2, TESTOUT_FILE_PATH);
 
-    const char *expected = "[Region][ERROR](<TEST_FILE_NAME>:0:<TEST_FUNC_NAME>()): Not enough memory to allocate. <TEST_ERROR_MESSAGE_APPENDIX>.\n";
+    const char *expected = "[Region][ERROR]("
+                           TEST_CONTEXT_ERROR_DEFAULT_FILE_NAME":"
+                           TEST_CONTEXT_ERROR_DEFAULT_LINE_STR":"
+                           TEST_CONTEXT_ERROR_DEFAULT_FUNC_NAME"()): Not enough memory to allocate. "
+                           TEST_CONTEXT_ERROR_DEFAULT_MESSAGE".\n";
 
     __region_log_error(context.error, context.out_stream);
 

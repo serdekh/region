@@ -1,4 +1,4 @@
-#include "../include/__region_log_error.h"
+#include  "../../include/test-functions/__region_alloc.h"
 
 TestContext testfn__region_alloc_case_0()
 {
@@ -28,7 +28,10 @@ TestContext testfn__region_alloc_case_1()
     
     region_alloc(0, &context.error);
     
-    const char *expected = "[Region][ERROR](<TEST_FILE_NAME>:0:<TEST_FUNC_NAME>()): Invalid arguments. The `region` cannot have `capacity` equal to zero.\n";
+    const char *expected = "[Region][ERROR]("
+                           TEST_CONTEXT_ERROR_DEFAULT_FILE_NAME":"
+                           TEST_CONTEXT_ERROR_DEFAULT_LINE_STR":"
+                           TEST_CONTEXT_ERROR_DEFAULT_FUNC_NAME"()): Invalid arguments. The `region` cannot have `capacity` equal to zero.\n";
 
     __region_log_error(context.error, context.out_stream);
 

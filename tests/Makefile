@@ -27,12 +27,7 @@ MAIN_TARGET_OBJ = $(OBJ)/tester.o
 HELPERS_TARGET = $(SRC)/helpers.c
 HELPERS_TARGET_OBJ = $(OBJ)/helpers.o
 
-FUNCS = \
-	$(SRC)/__region_log_error.c \
-	$(SRC)/__region_alloc.c \
-	$(SRC)/__region_alloc_item.c \
-	$(SRC)/region_free.c
-
+FUNCS = $(wildcard $(SRC)/test-functions/*.c)
 REGION_OBJ = ../.build/obj/region.o
 
 $(REGION_OBJ):

@@ -11,6 +11,12 @@
 
 #define TESTOUT_FILE_PATH ".build/testout.txt"
 
+#define TEST_CONTEXT_ERROR_DEFAULT_LINE      0
+#define TEST_CONTEXT_ERROR_DEFAULT_LINE_STR  "0"
+#define TEST_CONTEXT_ERROR_DEFAULT_FILE_NAME "<file>"
+#define TEST_CONTEXT_ERROR_DEFAULT_FUNC_NAME "<func>"
+#define TEST_CONTEXT_ERROR_DEFAULT_MESSAGE   "<message>"
+
 // Represents the data structure that the helpers and the
 // testing functions work with. It contains essential
 // fields for managing the output stream for tests and

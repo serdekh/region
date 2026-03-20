@@ -60,11 +60,11 @@ fatal:
 void tctx_init_field_error(TestContext *context, ErrorCode code)
 {
     assert(context != NULL);
-    context->error.line = 0;
+    context->error.line = TEST_CONTEXT_ERROR_DEFAULT_LINE;
     context->error.code = code;
-    strcpy(context->error.file_name, "<TEST_FILE_NAME>");
-    strcpy(context->error.func_name, "<TEST_FUNC_NAME>");
-    strcpy(context->error.message, "<TEST_ERROR_MESSAGE_APPENDIX>");
+    strcpy(context->error.file_name, TEST_CONTEXT_ERROR_DEFAULT_FILE_NAME);
+    strcpy(context->error.func_name, TEST_CONTEXT_ERROR_DEFAULT_FUNC_NAME);
+    strcpy(context->error.message,   TEST_CONTEXT_ERROR_DEFAULT_MESSAGE);
 }
 
 char *error_code_to_str(ErrorCode code)
