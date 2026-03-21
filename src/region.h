@@ -79,24 +79,28 @@ typedef char ErrorCode;
 
 typedef struct {
     int line;
+    const char *file_name;
+    const char *func_name;
+} RegionLocation;
+
+typedef struct {
     ErrorCode code;
-    char file_name[256];
-    char func_name[32];
     char message[256];
+    RegionLocation location;
 } RegionError;
 
 REGION_EXTERN_C_BEGIN
 
 // ----- FUNCTION DECLARATIONS (PRIVATE) -----
 void __region_log_error(RegionError error, FILE *out);
-void __region_set_error(RegionError *error, ErrorCode error_code, const char *filename, int line, const char *func);
-Region *__region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func);
-void *__region_alloc_item(Region *region, size_t size, RegionError *error, const char *filename, int line, const char *func);
+void __region_set_error(RegionError *error, ErrorCode error_code, RegionLocation location);
+Region *__region_alloc(size_t capacity, RegionError *error, RegionLocation location);
+void *__region_alloc_item(Region *region, size_t size, RegionError *error, RegionLocation location);
 
 // Stack Region
-StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func);
-void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, const char *filename, int line, const char *func);
-void *__stack_region_pop(StackRegion *stack, RegionError *error, const char *filename, int line, const char *func);
+StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLocation location);
+void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, RegionLocation location);
+void *__stack_region_pop(StackRegion *stack, RegionError *error, RegionLocation location);
 void __stack_region_reset(StackRegion *stack, RegionResetOption option);
 void __stack_region_free(StackRegion **stack);
 
@@ -104,26 +108,27 @@ void __stack_region_free(StackRegion **stack);
 void region_free(Region **region);
 void region_reset(Region *region, RegionResetOption option);
 
-#define region_alloc(capacity, error) __region_alloc((capacity), (error), __FILE__, __LINE__, __func__)
-#define region_alloc_item(region, size, error) __region_alloc_item((region), (size), (error), __FILE__, __LINE__, __func__)
+#define region_alloc(capacity, error) __region_alloc((capacity), (error), ((RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}))
+#define region_alloc_item(region, size, error) __region_alloc_item((region), (size), (error), (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__})
 #define region_log_error(error) __region_log_error((error), REGION_STDOUT)
 // ----- * -----
 
 #ifdef REGION_IMPLEMENTATION
 
-void __region_set_error(RegionError *error, ErrorCode error_code, const char *filename, int line, const char *func)
+void __region_set_error(RegionError *error, ErrorCode error_code, RegionLocation location)
 {
-    error->line = line;
     error->code = error_code;
-    REGION_STRNCPY(error->file_name, filename, REGION_STRLEN(filename));
-    REGION_STRNCPY(error->func_name, func, REGION_STRLEN(func));
+    
+    error->location.line = location.line;
+    error->location.file_name = location.file_name;
+    error->location.func_name = location.func_name;
 }
 
-Region *__region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func)
+Region *__region_alloc(size_t capacity, RegionError *error, RegionLocation location)
 {
     if (capacity == 0) {
         if (error) {
-            __region_set_error(error, REGION_ERROR_TYPE_INVALID_ARGUMENT, filename, line, func);
+            __region_set_error(error, REGION_ERROR_TYPE_INVALID_ARGUMENT, location);
             REGION_SPRINTF(error->message, "The `region` cannot have `capacity` equal to zero.");
         }
         return NULL;
@@ -131,7 +136,7 @@ Region *__region_alloc(size_t capacity, RegionError *error, const char *filename
 
     if (capacity > REGION_SIZE_MAX - sizeof(Region)) {
         if (error) {
-            __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, filename, line, func);
+            __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, location);
             REGION_SPRINTF(error->message, "The value of `capacity` is too large %zu", capacity);
         }
         return NULL;
@@ -141,7 +146,7 @@ Region *__region_alloc(size_t capacity, RegionError *error, const char *filename
 
     if (!region) {
         if (error) {
-            __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, filename, line, func);
+            __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, location);
         }
         return NULL;
     }
@@ -151,7 +156,7 @@ Region *__region_alloc(size_t capacity, RegionError *error, const char *filename
     if (!region->data) {
         REGION_FREE(region);
         if (error) {
-            __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, filename, line, func);
+            __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, location);
         }
         return NULL;
     }
@@ -170,9 +175,9 @@ void __region_log_error(RegionError error, FILE *out)
     if (error.code == REGION_ERROR_TYPE_NO_ERROR) return;
 
     REGION_FPRINTF(out, "[Region][ERROR](%s:%d:%s()): ",
-        error.file_name,
-        error.line,
-        error.func_name);
+        error.location.file_name,
+        error.location.line,
+        error.location.func_name);
 
     switch (error.code) {
         case REGION_ERROR_TYPE_INVALID_ARGUMENT:
@@ -214,11 +219,11 @@ void region_free(Region **region)
     *region = NULL;
 }
 
-void *__region_alloc_item(Region *region, size_t size, RegionError *error, const char *filename, int line, const char *func)
+void *__region_alloc_item(Region *region, size_t size, RegionError *error, RegionLocation location)
 {
     if (!region) {
         if (error) {
-            __region_set_error(error, REGION_ERROR_TYPE_INVALID_ARGUMENT, filename, line, func);
+            __region_set_error(error, REGION_ERROR_TYPE_INVALID_ARGUMENT, location);
             REGION_SPRINTF(error->message, "The `region` holds a null reference");
         }
         return NULL;
@@ -226,7 +231,7 @@ void *__region_alloc_item(Region *region, size_t size, RegionError *error, const
 
     if (size == 0) {
         if (error) {
-            __region_set_error(error, REGION_ERROR_TYPE_INVALID_ARGUMENT, filename, line, func);
+            __region_set_error(error, REGION_ERROR_TYPE_INVALID_ARGUMENT, location);
             REGION_SPRINTF(error->message, "The value of `size` cannot be equal to zero");
         }
         return NULL;
@@ -234,7 +239,7 @@ void *__region_alloc_item(Region *region, size_t size, RegionError *error, const
 
     if (size > REGION_SIZE_MAX - sizeof(Region)) {
         if (error) {
-            __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, filename, line, func);
+            __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, location);
             REGION_SPRINTF(error->message, "The value of `size` is too large %zu", size);
         }
         return NULL;
@@ -247,7 +252,7 @@ void *__region_alloc_item(Region *region, size_t size, RegionError *error, const
             current->next = region_alloc(current->capacity * 2 + size, NULL);
             if (!current->next) {
                 if (error) {
-                    __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, filename, line, func);
+                    __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, location);
                     REGION_SPRINTF(error->message, ".\nWarning: The current `region` is not freed. Use `region_free` to avoid a memory leak");
                 }
                 return NULL;
@@ -278,26 +283,26 @@ void region_reset(Region *region, RegionResetOption option)
     }
 }
 
-StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, const char *filename, int line, const char *func)
+StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLocation location)
 {
     StackRegion *stack = (StackRegion *)REGION_MALLOC(sizeof(StackRegion));
 
     if (!stack) {
         if (error) {
-            __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, filename, line, func);
+            __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, location);
             REGION_SPRINTF(error->message, "Cannot allocate memory for a stack region (%zub)", sizeof(StackRegion));
         }
         return NULL;
     }
 
-    stack->frames = __region_alloc(capacity, error, filename, line, func);
+    stack->frames = __region_alloc(capacity, error, location);
 
     if (!stack->frames) {
         REGION_FREE(stack);
         return NULL;
     }
 
-    stack->frames_indexes = __region_alloc(capacity, error, filename, line, func);
+    stack->frames_indexes = __region_alloc(capacity, error, location);
 
     if (!stack->frames_indexes) {
         REGION_FREE(stack->frames);
@@ -308,21 +313,21 @@ StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, const cha
     return stack;
 }
 
-void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, const char *filename, int line, const char *func)
+void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, RegionLocation location)
 {
     if (!stack) {
         if (error) {
-            __region_set_error(error, REGION_ERROR_TYPE_INVALID_ARGUMENT, filename, line, func);
+            __region_set_error(error, REGION_ERROR_TYPE_INVALID_ARGUMENT, location);
             REGION_SPRINTF(error->message, "The `stack` pointer is equal to `NULL`");
         }
         return NULL;
     }
 
-    size_t *new_frame_size = (size_t *)__region_alloc_item(stack->frames_indexes, sizeof(size_t), error, filename, line, func);
+    size_t *new_frame_size = (size_t *)__region_alloc_item(stack->frames_indexes, sizeof(size_t), error, location);
 
     if (!new_frame_size) return NULL;
 
-    void *new_frame = __region_alloc_item(stack->frames, size, error, filename, line, func);
+    void *new_frame = __region_alloc_item(stack->frames, size, error, location);
     
     if (!new_frame) {
         stack->frames_indexes->size -= sizeof(size_t);
@@ -334,11 +339,11 @@ void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, c
     return new_frame;
 }
 
-void *__stack_region_pop(StackRegion *stack, RegionError *error, const char *filename, int line, const char *func)
+void *__stack_region_pop(StackRegion *stack, RegionError *error, RegionLocation location)
 {
     if (!stack) {
         if (error) {
-            __region_set_error(error, REGION_ERROR_TYPE_INVALID_ARGUMENT, filename, line, func);
+            __region_set_error(error, REGION_ERROR_TYPE_INVALID_ARGUMENT, location);
             REGION_SPRINTF(error->message, "The `stack` pointer is equal to `NULL`");
         }
         return NULL;

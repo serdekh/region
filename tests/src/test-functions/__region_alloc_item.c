@@ -4,7 +4,7 @@ TestContext testfn__region_alloc_item_case_0()
 {  
     TestContext context = tctx_get(0, 0, TESTOUT_FILE_PATH);
     
-    __region_alloc_item(NULL, 1, &context.error, TEST_CONTEXT_ERROR_DEFAULT_FILE_NAME, 0, TEST_CONTEXT_ERROR_DEFAULT_FUNC_NAME);
+    __region_alloc_item(NULL, 1, &context.error, context.error.location);
     __region_log_error(context.error, context.out_stream);
     
     const char *expected = "[Region][ERROR]("
