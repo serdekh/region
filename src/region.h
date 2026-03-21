@@ -101,16 +101,22 @@ void *__region_alloc_item(Region *region, size_t size, RegionError *error, Regio
 StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLocation location);
 void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, RegionLocation location);
 void *__stack_region_pop(StackRegion *stack, RegionError *error, RegionLocation location);
-void __stack_region_reset(StackRegion *stack, RegionResetOption option);
-void __stack_region_free(StackRegion **stack);
+void stack_region_reset(StackRegion *stack, RegionResetOption option);
+void stack_region_free(StackRegion **stack);
 
 // ----- PUBLIC API -----
 void region_free(Region **region);
 void region_reset(Region *region, RegionResetOption option);
 
-#define region_alloc(capacity, error) __region_alloc((capacity), (error), ((RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}))
-#define region_alloc_item(region, size, error) __region_alloc_item((region), (size), (error), (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__})
+#define REGION_GET_CURRENT_FILE_LOCATION (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}
+
+#define region_alloc(capacity, error) __region_alloc((capacity), (error), (REGION_GET_CURRENT_FILE_LOCATION))
+#define region_alloc_item(region, size, error) __region_alloc_item((region), (size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define region_log_error(error) __region_log_error((error), REGION_STDOUT)
+
+#define stack_region_alloc(capacity, error) __stack_region_alloc((capacity), (error), (REGION_GET_CURRENT_FILE_LOCATION))
+#define stack_region_push(stack, size, error) __stack_region_push((stack), (size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
+#define stack_region_pop(stack, error) __stack_region_pop((stack), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 // ----- * -----
 
 #ifdef REGION_IMPLEMENTATION
@@ -359,7 +365,7 @@ void *__stack_region_pop(StackRegion *stack, RegionError *error, RegionLocation 
     return stack->frames->data + stack->frames->size;
 }
 
-void __stack_region_reset(StackRegion *stack, RegionResetOption option)
+void stack_region_reset(StackRegion *stack, RegionResetOption option)
 {
     if (!stack) return;
 
@@ -367,7 +373,7 @@ void __stack_region_reset(StackRegion *stack, RegionResetOption option)
     region_reset(stack->frames_indexes, option);
 }
 
-void __stack_region_free(StackRegion **stack)
+void stack_region_free(StackRegion **stack)
 {
     if (!stack || !(*stack)) return;
 
