@@ -291,6 +291,22 @@ void region_reset(Region *region, RegionResetOption option)
 
 StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLocation location)
 {
+    if (capacity == 0) {
+        if (error) {
+            __region_set_error(error, REGION_ERROR_TYPE_INVALID_ARGUMENT, location);
+            REGION_SPRINTF(error->message, "The `StackRegion` cannot have `capacity` equal to zero.");
+        }
+        return NULL;
+    }
+
+    if (capacity > REGION_SIZE_MAX - sizeof(Region)) {
+        if (error) {
+            __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, location);
+            REGION_SPRINTF(error->message, "The value of `capacity` is too large %zu", capacity);
+        }
+        return NULL;
+    }
+
     StackRegion *stack = (StackRegion *)REGION_MALLOC(sizeof(StackRegion));
 
     if (!stack) {
@@ -336,7 +352,13 @@ void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, R
     void *new_frame = __region_alloc_item(stack->frames, size, error, location);
     
     if (!new_frame) {
-        stack->frames_indexes->size -= sizeof(size_t);
+        Region *last = stack->frames_indexes;
+
+        while (REGION_BOOL_TRUE) {
+            if (!last->next) break;
+        }
+
+        last->size -= sizeof(size_t);
         return NULL;
     }
 
