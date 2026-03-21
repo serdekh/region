@@ -24,6 +24,7 @@
 #ifndef REGION_NO_STDLIB
 #include <stdlib.h>
 #define REGION_MALLOC malloc
+#define REGION_REALLOC realloc
 #define REGION_FREE free
 #endif // REGION_NO_STDLIB
 
@@ -59,9 +60,15 @@ typedef struct __Region {
     REGION_PRIVATE_CORE_FIELDS
 } Region;
 
+typedef struct {
+    size_t *items;
+    size_t capacity;
+    size_t len;
+} Uints;
+
 typedef struct __StackRegion {
     Region *frames;         // where the actual data resides
-    Region *frames_indexes; // the indexes where stack frames are located
+    Uints frames_sizes; // the indexes where stack frames are located
 } StackRegion;
 
 typedef enum {
@@ -324,13 +331,21 @@ StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLoc
         return NULL;
     }
 
-    stack->frames_indexes = __region_alloc(capacity, error, location);
+    stack->frames_sizes.items = REGION_MALLOC(sizeof(size_t) * capacity);
 
-    if (!stack->frames_indexes) {
+    if (!stack->frames_sizes.items) {
+        if (error) {
+            __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, location);
+            REGION_SPRINTF(error->message, "Cannot allocate memory for a stack region (%zub)", sizeof(StackRegion) + sizeof(size_t) * capacity);
+        }
         REGION_FREE(stack->frames);
         REGION_FREE(stack);
         return NULL;
     }
+
+    for (size_t i = 0; i < capacity; i++) stack->frames_sizes.items[i] = 0;
+
+    stack->frames_sizes.len = 0;
 
     return stack;
 }
@@ -345,26 +360,30 @@ void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, R
         return NULL;
     }
 
-    size_t *new_frame_size = (size_t *)__region_alloc_item(stack->frames_indexes, sizeof(size_t), error, location);
+    if (stack->frames_sizes.len >= stack->frames_sizes.capacity) {
+        size_t new_capacity = (stack->frames_sizes.capacity == 0) ? 256 : stack->frames_sizes.capacity * 2;
 
-    if (!new_frame_size) return NULL;
-
-    void *new_frame = __region_alloc_item(stack->frames, size, error, location);
-    
-    if (!new_frame) {
-        Region *last = stack->frames_indexes;
-
-        while (REGION_BOOL_TRUE) {
-            if (!last->next) break;
+        size_t *new_items = REGION_REALLOC(stack->frames_sizes.items, new_capacity * sizeof(size_t));
+        
+        if (!new_items) {
+            if (error) {
+                __region_set_error(error, REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY, location);
+                REGION_SPRINTF(error->message, "Could not reallocate memory for the stack frames");
+            }
+            return NULL;
         }
 
-        last->size -= sizeof(size_t);
-        return NULL;
+        stack->frames_sizes.items = new_items;
+        stack->frames_sizes.capacity = new_capacity;
     }
 
-    *new_frame_size = size;
+    void *frame = __region_alloc_item(stack->frames, size, error, location);
 
-    return new_frame;
+    if (error->code != 0) return NULL;
+
+    stack->frames_sizes.items[stack->frames_sizes.len++] = size;
+    
+    return frame;
 }
 
 void *__stack_region_pop(StackRegion *stack, RegionError *error, RegionLocation location)
@@ -377,14 +396,20 @@ void *__stack_region_pop(StackRegion *stack, RegionError *error, RegionLocation 
         return NULL;
     }
 
-    // pop the last frame's size
-    size_t last_frame_size = stack->frames_indexes->data[stack->frames_indexes->size - sizeof(size_t)];
-    stack->frames_indexes->size -= sizeof(size_t);
+    if (stack->frames_sizes.len == 0 || !stack->frames) return NULL;
 
-    // pop the last item
-    stack->frames->size -= last_frame_size;
+    size_t last_frame_size = stack->frames_sizes.items[stack->frames_sizes.len - 1];
 
-    return stack->frames->data + stack->frames->size;
+    Region *last = stack->frames;
+
+    while (last) {
+        if (!last->next) break;
+        last = last->next;
+    }
+
+    last->size -= last_frame_size;
+
+    return (void*)(last->data + last->size);
 }
 
 void stack_region_reset(StackRegion *stack, RegionResetOption option)
@@ -392,16 +417,15 @@ void stack_region_reset(StackRegion *stack, RegionResetOption option)
     if (!stack) return;
 
     region_reset((Region *)(stack->frames), option);
-    region_reset(stack->frames_indexes, option);
+    stack->frames_sizes.len = 0;
 }
 
 void stack_region_free(StackRegion **stack)
 {
     if (!stack || !(*stack)) return;
 
-    region_free(&(*stack)->frames);
-    region_free(&(*stack)->frames_indexes);
-
+    region_free(&((*stack)->frames));
+    REGION_FREE((*stack)->frames_sizes.items);
     REGION_FREE(*stack);
 }
 
