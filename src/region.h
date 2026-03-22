@@ -103,8 +103,8 @@ static const char *region_error_code_as_strings[] = {
     "No error",
 
     // General
-    "Invalid argument",
-    "No free space",
+    "Invalid argument.",
+    "No free space.",
 
     // __region_alloc
     "Invalid argument: The value of `capacity` cannot equal to zero.",
@@ -130,18 +130,18 @@ typedef struct {
     RegionErrorCode code;
 } RegionError;
 
-#define REGION_SET_ERROR(error, error_code, location)          \
-    (error)->code = (error_code);                              \
-    (error)->location.line = (location).line;                  \
-    (error)->location.file_name = (location).file_name;        \
-    (error)->location.func_name = (location).func_name;        \
+#define REGION_SET_ERROR(error, error_code, location)            \
+    (error)->code = (error_code);                                \
+    (error)->location.line = (location).line;                    \
+    (error)->location.file_name = (location).file_name;          \
+    (error)->location.func_name = (location).func_name;          \
 
-#define REGION_LOG_ERROR_TO(error, out)                        \
+#define REGION_LOG_ERROR_TO(error, out)                          \
     REGION_FPRINTF((out), "[Region][ERROR](\"%s:%d:%s\"): %s\n", \
-        (error).location.file_name,                            \
-        (error).location.line,                                 \
-        (error).location.func_name,                            \
-        region_error_code_as_strings[(error).code]);           \
+        (error).location.file_name,                              \
+        (error).location.line,                                   \
+        (error).location.func_name,                              \
+        region_error_code_as_strings[(error).code]);             \
 
 #define REGION_LOG_ERROR(error) REGION_LOG_ERROR_TO((error), REGION_STDERR)
 #define REGION_NO_ERROR(error) (error).code == REGION_ERROR_CODE_NO_ERROR
