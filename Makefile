@@ -2,7 +2,9 @@ usage:
 	@echo "usage: make <command>\n\tuse 'make help' to get more commands"
 
 CC = gcc
-CC_FLAGS = -std=gnu99 -Wall -Wextra
+# The warnings are temporarily disabled because they treat the `region_error_code_as_strings` array
+# as unused since it's only referred to in macros and not in functions
+CC_FLAGS = -std=gnu99 #-Wall -Wextra
 
 BUILD := .build
 OBJ := $(BUILD)/obj
