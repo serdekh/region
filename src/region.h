@@ -102,6 +102,10 @@ typedef enum {
 static const char *region_error_code_as_strings[] = {
     "No error",
 
+    // General
+    "Invalid argument",
+    "No free space",
+
     // __region_alloc
     "Invalid argument: The value of `capacity` cannot equal to zero.",
     "Invalid argument: The value of `capacity` is too large. Cannot allocate memory.",
