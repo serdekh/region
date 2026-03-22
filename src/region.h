@@ -78,12 +78,6 @@ typedef enum {
 
 // ----- DATA STRUCTS FOR ERRORS -----
 
-typedef char ErrorCode;
-
-#define REGION_ERROR_TYPE_NO_ERROR          (ErrorCode)0
-#define REGION_ERROR_TYPE_INVALID_ARGUMENT  (ErrorCode)1
-#define REGION_ERROR_TYPE_NOT_ENOUGH_MEMORY (ErrorCode)2
-
 typedef enum {
     REGION_ERROR_CODE_NO_ERROR = 0,
 
