@@ -8,6 +8,7 @@ CC_FLAGS = -std=gnu99 #-Wall -Wextra
 
 BUILD := .build
 OBJ := $(BUILD)/obj
+SOBJ := $(BUILD)/obj
 BIN := $(BUILD)/bin
 
 TESTS := tests
@@ -16,6 +17,7 @@ TESTS_BUILD := $(TESTS)/.build
 TARGET_TAG := region
 TARGET_BIN := $(BIN)/$(TARGET_TAG)
 TARGET_OBJ := $(OBJ)/$(TARGET_TAG).o
+TARGET_SOBJ := $(SOBJ)/$(TARGET_TAG).so
 
 $(BUILD):
 	mkdir -p $(BUILD)
@@ -26,6 +28,9 @@ $(OBJ): $(BUILD)
 $(BIN): $(BUILD)
 	mkdir -p $(BIN)
 
+$(SOBJ): $(BUILD)
+	mkdir -p $(SOBJ)
+
 $(TESTS):
 	mkdir -p $(TESTS)
 
@@ -34,6 +39,10 @@ $(TARGET_BIN): $(TARGET_OBJ) $(BIN)
 
 $(TARGET_OBJ): src/region.h $(OBJ)
 	$(CC) $(CC_FLAGS) -DREGION_IMPLEMENTATION -x c -c src/region.h -o $(TARGET_OBJ)
+
+$(TARGET_SOBJ): src/region.h $(SOBJ)
+	$(CC) $(CC_FLAGS) -DREGION_IMPLEMENTATION -x c -c src/region.h -o $(TARGET_SOBJ)
+	$(CC) -shared -o $(TARGET_SOBJ) -DREGION_IMPLEMENTATION -x c -fPIC src/region.h
 
 help:
 	@echo "\tmake run   -- Builds the whole project"
@@ -52,6 +61,8 @@ clean:
 	rm -rf $(BUILD) $(TESTS_BUILD)
 
 build: $(TARGET_OBJ)
+
+build-shared: $(TARGET_SOBJ)
 
 run: $(TARGET_BIN) $(TARGET_OBJ)
 	./$(TARGET_BIN)
