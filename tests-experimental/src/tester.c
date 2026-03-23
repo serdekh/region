@@ -1,10 +1,13 @@
 #include <dlfcn.h>
 
+#include "../../src/region.h"
 #include "./include/shared.h"
 
 const TestContext *(*get_start)(void);
 const TestContext *(*get_end  )(void);
 
+// TODO: Extract this function into a separate file which can
+// be used by both the functions and the framework
 int load_and_test(const char *file_path)
 {
     void *handle = dlopen(file_path, RTLD_LAZY);
@@ -19,7 +22,7 @@ int load_and_test(const char *file_path)
     get_end   = dlsym(handle, "get_tests_end");
     
     for (const TestContext *t = get_start(); t < get_end(); ++t) {
-        int result = t->func();
+        bool result = t->func();
     
         if (result) {
             fprintf(stdout, "[Test][Fn: \"%s\"][Case: %zu]: Passed!\n", 
@@ -27,6 +30,8 @@ int load_and_test(const char *file_path)
         } else {
             fprintf(stderr, "[Test][Fn: \"%s\"][Case: %zu]: Failed...(%d)\n", 
                 t->func_name, t->case_number, result);
+            dlclose(handle);
+            exit(1);
         }
     }
     
@@ -36,8 +41,9 @@ int load_and_test(const char *file_path)
 
 int main()
 {
-    int add_result = load_and_test("./.build/obj/add.so"); if (add_result != 0) return 1;
-    int sub_result = load_and_test("./.build/obj/sub.so"); if (sub_result != 0) return 1;
+    int region_alloc_result = load_and_test("./.build/obj/__region_alloc.so"); 
+
+    if (region_alloc_result != 0) return 1;
 
     return 0;
 }

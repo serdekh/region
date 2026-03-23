@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <dlfcn.h>
 
 #define FUNCS_SO_FILE_PATH "./.build/obj/funcs.so"
 
@@ -11,8 +12,7 @@
 typedef struct {
     size_t case_number;
     const char *func_name;
-    int (*func)(void);
-    bool passed;
+    bool (*func)(void);
 } TestContext;
 
 #define EXPOSE(test_section_name)                           \
@@ -31,5 +31,4 @@ typedef struct {
         .case_number = num,                                 \
         .func_name = #f,                                    \
         .func = f,                                          \
-        .passed = false                                     \
     };                        
