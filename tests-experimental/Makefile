@@ -11,6 +11,8 @@ BIN = $(BUILD)/bin
 FRAMEWORK = $(SRC)/tester.c
 FRAMEWORK_EXEC = $(BIN)/tester
 
+REGION_SOBJ = ../.build/obj/region.so
+
 # TODO: Add a command that builds the region.so file automatically if it's missing
 
 $(BUILD):
@@ -22,7 +24,10 @@ $(OBJ): $(BUILD)
 $(BIN): $(BUILD)
 	mkdir -p $(BIN)
 
-build: $(OBJ)
+$(REGION_SOBJ):
+	make -C .. build-shared
+
+build: $(OBJ) $(REGION_SOBJ)
 	$(CC) -shared -o $(OBJ)/__region_alloc.so -fPIC $(FUNCS)/__region_alloc.c
 
 run: build $(BIN)
