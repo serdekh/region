@@ -3,17 +3,17 @@ CC = gcc
 SRC = src
 FUNCS = $(SRC)/funcs
 INCLUDE = $(SRC)/include
+TESTER = $(SRC)/tester
 
 BUILD = .build
 OBJ = $(BUILD)/obj
 BIN = $(BUILD)/bin
 
-FRAMEWORK = $(SRC)/tester.c
+FRAMEWORK_C = $(TESTER)/tester.c
+FRAMEWORK_H = $(TESTER)/tester.c
 FRAMEWORK_EXEC = $(BIN)/tester
 
 REGION_SOBJ = ../.build/obj/region.so
-
-# TODO: Add a command that builds the region.so file automatically if it's missing
 
 $(BUILD):
 	mkdir -p .build
@@ -28,10 +28,11 @@ $(REGION_SOBJ):
 	make -C .. build-shared
 
 build: $(OBJ) $(REGION_SOBJ)
-	$(CC) -shared -o $(OBJ)/__region_alloc.so -fPIC $(FUNCS)/__region_alloc.c
+	$(CC) -shared -o $(OBJ)/common.so -fPIC $(FUNCS)/common.c
+	$(CC) -shared -o $(OBJ)/__region_alloc.so -fPIC $(FUNCS)/__region_alloc.c $(OBJ)/common.so
 
 run: build $(BIN)
-	$(CC) $(FRAMEWORK) -o $(FRAMEWORK_EXEC) -ldl
+	$(CC) $(FRAMEWORK_C) $(SRC)/main.c -o $(FRAMEWORK_EXEC) -ldl
 	./$(FRAMEWORK_EXEC)
 
 clean:

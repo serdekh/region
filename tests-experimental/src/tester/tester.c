@@ -1,14 +1,9 @@
-#include <dlfcn.h>
-
-#include "../../src/region.h"
-#include "./include/shared.h"
+#include "./tester.h"
 
 const TestContext *(*get_start)(void);
 const TestContext *(*get_end  )(void);
 
-// TODO: Extract this function into a separate file which can
-// be used by both the functions and the framework
-int load_and_test(const char *file_path)
+bool load_and_test(const char *file_path)
 {
     void *handle = dlopen(file_path, RTLD_LAZY);
     
@@ -36,14 +31,5 @@ int load_and_test(const char *file_path)
     }
     
     dlclose(handle);
-    return 0;
-}
-
-int main()
-{
-    int region_alloc_result = load_and_test("./.build/obj/__region_alloc.so"); 
-
-    if (region_alloc_result != 0) return 1;
-
     return 0;
 }
