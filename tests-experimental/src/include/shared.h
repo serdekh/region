@@ -15,20 +15,22 @@ typedef struct {
     bool (*func)(void);
 } TestContext;
 
-#define EXPOSE(test_section_name)                           \
-    extern const TestContext __start_##test_section_name[]; \
-    extern const TestContext __stop_##test_section_name[];  \
-    const TestContext *get_tests_start(void) {              \
-        return __start_##test_section_name;                 \
-    }                                                       \
-    const TestContext *get_tests_end(void) {                \
-        return __stop_##test_section_name;                  \
-    }                                                                                                 
+#define EXPOSE(test_section_name)                              \
+    extern const TestContext __start_##test_section_name[];    \
+    extern const TestContext __stop_##test_section_name[];     \
+    __attribute__((visibility("default")))                     \
+    const TestContext *get_tests_start(void) {                 \
+        return __start_##test_section_name;                    \
+    }                                                          \
+    __attribute__((visibility("default")))                     \
+    const TestContext *get_tests_end(void) {                   \
+        return __stop_##test_section_name;                     \
+    }
 
-#define REGISTER_TEST(f, num)                               \
-    static const TestContext test_##func                    \
-    __attribute__((section(TEST_SECTION), used)) = {        \
-        .case_number = num,                                 \
-        .func_name = #f,                                    \
-        .func = f,                                          \
+#define REGISTER_TEST(f, num)                                                       \
+    static const TestContext test_##f                                               \
+    __attribute__((section(TEST_SECTION), used, aligned(sizeof(void*)))) = {        \
+        .case_number = num,                                                         \
+        .func_name = #f,                                                            \
+        .func = f,                                                                  \
     };                        

@@ -1,8 +1,5 @@
 #include "./tester.h"
 
-const TestContext *(*get_start)(void);
-const TestContext *(*get_end  )(void);
-
 bool load_and_test(const char *file_path)
 {
     void *handle = dlopen(file_path, RTLD_LAZY);
@@ -13,10 +10,10 @@ bool load_and_test(const char *file_path)
         return 1;
     }
     
-    get_start = dlsym(handle, "get_tests_start");
-    get_end   = dlsym(handle, "get_tests_end");
-    
-    for (const TestContext *t = get_start(); t < get_end(); ++t) {
+    const TestContext *(*get_start)(void) = dlsym(handle, "get_tests_start");
+    const TestContext *(*get_end  )(void) = dlsym(handle, "get_tests_end");
+
+    for (const TestContext *t = get_start(); t < get_end(); t++) {
         bool result = t->func();
     
         if (result) {
