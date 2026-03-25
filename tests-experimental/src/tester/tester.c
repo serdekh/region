@@ -7,7 +7,7 @@ bool load_and_test(const char *file_path)
     if (!handle) {
         fprintf(stderr, "[Test][Error]: Could not load a dynamic executable (%s): %s\n",
             file_path, dlerror());
-        return 1;
+        return false;
     }
     
     const TestContext *(*get_start)(void) = dlsym(handle, "get_tests_start");
@@ -28,5 +28,5 @@ bool load_and_test(const char *file_path)
     }
     
     dlclose(handle);
-    return 0;
+    return true;
 }

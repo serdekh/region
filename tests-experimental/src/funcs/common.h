@@ -6,6 +6,7 @@
 #define REGION_SHARED_OBJECT_FILE_PATH "../.build/obj/region.so"
 
 typedef Region*(*FuncPtr_region_alloc)(size_t, RegionError*, RegionLocation);
+typedef void *(*FuncPtr_region_alloc_item)(Region *region, size_t size, RegionError *error, RegionLocation location);
 
 extern void *_RegionHandle;
 

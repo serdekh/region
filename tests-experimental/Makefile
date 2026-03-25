@@ -30,6 +30,7 @@ $(REGION_SOBJ):
 build: $(OBJ) $(REGION_SOBJ)
 	$(CC) -shared -o $(OBJ)/common.so -fPIC $(FUNCS)/common.c
 	$(CC) -shared -o $(OBJ)/__region_alloc.so -fPIC $(FUNCS)/__region_alloc.c $(OBJ)/common.so
+	$(CC) -shared -o $(OBJ)/__region_alloc_item.so -fPIC $(FUNCS)/__region_alloc_item.c $(OBJ)/common.so
 
 run: build $(BIN)
 	$(CC) $(FRAMEWORK_C) $(SRC)/main.c -o $(FRAMEWORK_EXEC) -ldl
