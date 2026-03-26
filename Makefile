@@ -68,4 +68,4 @@ run: $(TARGET_BIN) $(TARGET_OBJ)
 	./$(TARGET_BIN)
 
 test:
-	make -C tests-experimental run
+	make -C tests run
