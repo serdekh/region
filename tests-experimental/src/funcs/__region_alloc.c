@@ -11,26 +11,38 @@ void try_init_test_fn()
     fn = try_get_symbol(SYMBOL_FN_REGION_ALLOC);
 }
 
-bool region_alloc_case_1() 
+TestResult region_alloc_case_1() 
 {
     try_init_test_fn();
 
     RegionError error = {0};
+    TestResult result = {0};
 
     fn(0, &error, REGION_GET_CURRENT_FILE_LOCATION);
 
-    return error.code == REGION_ERROR_CODE_EINVAL_REGION_ALLOC_SMALL_CAPACITY;
+    INT_TO_STR(result.expected, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_SMALL_CAPACITY);
+    INT_TO_STR(result.actual, error.code);
+
+    result.success = error.code == REGION_ERROR_CODE_EINVAL_REGION_ALLOC_SMALL_CAPACITY;
+
+    return result;
 }
 
-bool region_alloc_case_2() 
+TestResult region_alloc_case_2() 
 {
     try_init_test_fn();
 
     RegionError error = {0};
+    TestResult result = {0};
 
-    fn(__SIZE_MAX__, &error, REGION_GET_CURRENT_FILE_LOCATION);
+    fn(SIZE_MAX, &error, REGION_GET_CURRENT_FILE_LOCATION);
 
-    return error.code == REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY;
+    INT_TO_STR(result.expected, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY);
+    INT_TO_STR(result.actual, error.code);
+
+    result.success = error.code == REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY;
+
+    return result;
 }
 
 REGISTER_TEST(region_alloc_case_1, 1);

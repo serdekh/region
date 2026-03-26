@@ -9,11 +9,21 @@
 #define TEST_SECTION_TOKEN tests
 #define TEST_SECTION "tests"
 
+#define TEST_RESULT_MAX_STRING_SIZE 256
+
+typedef struct {
+    char actual[TEST_RESULT_MAX_STRING_SIZE];
+    char expected[TEST_RESULT_MAX_STRING_SIZE];
+    bool success;
+} TestResult;
+
 typedef struct {
     size_t case_number;
     const char *func_name;
-    bool (*func)(void);
+    TestResult (*func)(void);
 } TestContext;
+
+#define INT_TO_STR(to, n) sprintf((to), "%d", n)
 
 #define EXPOSE(test_section_name)                              \
     extern const TestContext __start_##test_section_name[];    \

@@ -14,14 +14,14 @@ bool load_and_test(const char *file_path)
     const TestContext *(*get_end  )(void) = dlsym(handle, "get_tests_end");
 
     for (const TestContext *t = get_start(); t < get_end(); t++) {
-        bool result = t->func();
+        TestResult result = t->func();
     
-        if (result) {
+        if (result.success) {
             fprintf(stdout, "[Test][Fn: \"%s\"][Case: %zu]: Passed!\n", 
                 t->func_name, t->case_number);
         } else {
-            fprintf(stderr, "[Test][Fn: \"%s\"][Case: %zu]: Failed...(%d)\n", 
-                t->func_name, t->case_number, result);
+            fprintf(stderr, "[Test][Fn: \"%s\"][Case: %zu]: Failed\n\tExpected:\n\t\t`%s`\n\tBut got:\n\t\t`%s`\n", 
+                t->func_name, t->case_number, result.expected, result.actual);
             dlclose(handle);
             exit(1);
         }
