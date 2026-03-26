@@ -7,13 +7,10 @@
 
 int main()
 {
-    bool region_alloc_result = load_and_test(SO_REGION_ALLOC);           if (!region_alloc_result) goto fatal;
-    bool region_alloc_item_result = load_and_test(SO_REGION_ALLOC_ITEM); if (!region_alloc_item_result) goto fatal;
+    try_load_and_test(SO_REGION_ALLOC);
+    try_load_and_test(SO_REGION_ALLOC_ITEM);
 
-    fprintf(stdout, "[Test][Passed] All tests have passed\n");
+    printf("[Test][Passed] All tests have passed\n");
+
     return 0;
-
-fatal:
-    fprintf(stderr, "[Test][Failed]: Not all functions have passed the tests\n");
-    return 1;
 }
