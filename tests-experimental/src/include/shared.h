@@ -25,6 +25,11 @@ typedef struct {
 
 #define INT_TO_STR(to, n) sprintf((to), "%d", n)
 
+#define TEST_RESULT_WRITE_INT(result, e, a)        \
+    INT_TO_STR((result).expected, (e));                 \
+    INT_TO_STR((result).actual, (a));                     \
+    (result).success = (e) == (a);                 \
+
 #define EXPOSE(test_section_name)                              \
     extern const TestContext __start_##test_section_name[];    \
     extern const TestContext __stop_##test_section_name[];     \

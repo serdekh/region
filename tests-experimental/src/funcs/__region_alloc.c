@@ -20,10 +20,7 @@ TestResult region_alloc_case_1()
 
     fn(0, &error, REGION_GET_CURRENT_FILE_LOCATION);
 
-    INT_TO_STR(result.expected, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_SMALL_CAPACITY);
-    INT_TO_STR(result.actual, error.code);
-
-    result.success = error.code == REGION_ERROR_CODE_EINVAL_REGION_ALLOC_SMALL_CAPACITY;
+    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_SMALL_CAPACITY, error.code);
 
     return result;
 }
@@ -37,10 +34,7 @@ TestResult region_alloc_case_2()
 
     fn(SIZE_MAX, &error, REGION_GET_CURRENT_FILE_LOCATION);
 
-    INT_TO_STR(result.expected, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY);
-    INT_TO_STR(result.actual, error.code);
-
-    result.success = error.code == REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY;
+    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY, error.code);
 
     return result;
 }
