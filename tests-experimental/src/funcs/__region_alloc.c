@@ -2,24 +2,33 @@
 
 #define SYMBOL_FN_REGION_ALLOC "__region_alloc"
 
+FuncPtr_region_alloc fn = NULL;
+
+void try_init_test_fn()
+{
+    try_get_region_handle();
+    
+    fn = try_get_symbol(SYMBOL_FN_REGION_ALLOC);
+}
+
 bool region_alloc_case_1() 
 {
-    FuncPtr_region_alloc fptr_region_alloc = try_get_symbol(SYMBOL_FN_REGION_ALLOC);
+    try_init_test_fn();
 
     RegionError error = {0};
 
-    fptr_region_alloc(0, &error, REGION_GET_CURRENT_FILE_LOCATION);
+    fn(0, &error, REGION_GET_CURRENT_FILE_LOCATION);
 
     return error.code == REGION_ERROR_CODE_EINVAL_REGION_ALLOC_SMALL_CAPACITY;
 }
 
 bool region_alloc_case_2() 
 {
-    FuncPtr_region_alloc fptr_region_alloc = try_get_symbol(SYMBOL_FN_REGION_ALLOC);
+    try_init_test_fn();
 
     RegionError error = {0};
 
-    fptr_region_alloc(__SIZE_MAX__, &error, REGION_GET_CURRENT_FILE_LOCATION);
+    fn(__SIZE_MAX__, &error, REGION_GET_CURRENT_FILE_LOCATION);
 
     return error.code == REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY;
 }

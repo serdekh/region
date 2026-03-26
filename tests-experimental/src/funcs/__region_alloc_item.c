@@ -2,11 +2,18 @@
 
 #define SYMBOL_FN_REGION_ALLOC_ITEM "__region_alloc_item"
 
-bool test_region_alloc_item_case_1()
+FuncPtr_region_alloc_item fn = NULL;
+
+void try_init_test_fn()
 {
     try_get_region_handle();
+    
+    fn = try_get_symbol(SYMBOL_FN_REGION_ALLOC_ITEM);
+}
 
-    FuncPtr_region_alloc_item fn = try_get_symbol(SYMBOL_FN_REGION_ALLOC_ITEM);
+bool test_region_alloc_item_case_1()
+{
+    try_init_test_fn();
 
     RegionError error = {0};
 
@@ -17,9 +24,7 @@ bool test_region_alloc_item_case_1()
 
 bool test_region_alloc_item_case_2()
 {
-    try_get_region_handle();
-
-    FuncPtr_region_alloc_item fn = try_get_symbol(SYMBOL_FN_REGION_ALLOC_ITEM);
+    try_init_test_fn();
     
     Region r = {0};
     RegionError error = {0};
@@ -31,9 +36,7 @@ bool test_region_alloc_item_case_2()
 
 bool test_region_alloc_item_case_3()
 {
-    try_get_region_handle();
-
-    FuncPtr_region_alloc_item fn = try_get_symbol(SYMBOL_FN_REGION_ALLOC_ITEM);
+    try_init_test_fn();
     
     Region r = {0};
     RegionError error = {0};
