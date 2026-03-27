@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../include/shared.h"
-#include "../../../src/region.h"
+#include "../../include/shared.h"
+#include "../../../../src/region.h"
 
 #define REGION_SHARED_OBJECT_FILE_PATH "../.build/obj/region.so"
 

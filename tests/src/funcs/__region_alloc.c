@@ -1,4 +1,4 @@
-#include "common.h"
+#include "./common/common.h"
 
 #define SYMBOL_FN_REGION_ALLOC "__region_alloc"
 
