@@ -27,10 +27,18 @@ $(BIN): $(BUILD)
 $(REGION_SOBJ):
 	make -C .. build-shared
 
-build: $(OBJ) $(REGION_SOBJ)
-	$(CC) -shared -o $(OBJ)/common.so -fPIC $(FUNCS)/common/common.c
-	$(CC) -shared -o $(OBJ)/__region_alloc.so -fPIC $(FUNCS)/__region_alloc.c $(OBJ)/common.so
-	$(CC) -shared -o $(OBJ)/__region_alloc_item.so -fPIC $(FUNCS)/__region_alloc_item.c $(OBJ)/common.so
+FUNCS_SRCS := $(shell find $(FUNCS) -name '*.c')
+FUNCS_SRCS := $(filter-out $(FUNCS)/common/common.c,$(FUNCS_SRCS))
+
+FUNCS_SOS := $(patsubst $(FUNCS)/%.c,$(OBJ)/%.so,$(FUNCS_SRCS))
+
+build: $(OBJ) $(OBJ)/common.so $(FUNCS_SOS) $(REGION_SOBJ)
+
+$(OBJ)/common.so: $(FUNCS)/common/common.c
+	$(CC) -shared -fPIC -o $@ $<
+
+$(OBJ)/%.so: $(FUNCS)/%.c $(OBJ)/common.so
+	$(CC) -shared -fPIC -o $@ $< $(OBJ)/common.so
 
 run: build $(BIN)
 	$(CC) $(FRAMEWORK_C) $(SRC)/main.c -o $(FRAMEWORK_EXEC) -ldl
