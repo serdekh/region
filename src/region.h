@@ -91,11 +91,11 @@ typedef enum {
     REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION,   // Failed to allocate the `Region` struct.
     REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY, // Failed to allocate `capacity` bytes into the `Region->data` field.
 
-    // __region_alloc_item
-    REGION_ERROR_CODE_EINVAL_REGION_ALLOC_ITEM_NO_REGION,    // The pointer to the `Region` struct equals to `NULL`.
-    REGION_ERROR_CODE_EINVAL_REGION_ALLOC_ITEM_SMALL_SIZE,   // The `size` argument equals to zero.
-    REGION_ERROR_CODE_EINVAL_REGION_ALLOC_ITEM_LARGE_SIZE,   // The `size` argument equals to `__SIZE_MAX__`.
-    REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_ITEM_MALLOC_REGION // Failed to allocate the `Region` struct for a new item.
+    // __region_push
+    REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION,    // The pointer to the `Region` struct equals to `NULL`.
+    REGION_ERROR_CODE_EINVAL_REGION_PUSH_SMALL_SIZE,   // The `size` argument equals to zero.
+    REGION_ERROR_CODE_EINVAL_REGION_PUSH_LARGE_SIZE,   // The `size` argument equals to `__SIZE_MAX__`.
+    REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION // Failed to allocate the `Region` struct for a new item.
 
 } RegionErrorCode;
 
@@ -112,7 +112,7 @@ static const char *region_error_code_as_strings[] = {
     "No free space: Failed to allocate a `Region` struct.",
     "No free space: Failed to allocate `capacity` bytes into the `Region` struct.",
 
-    // __region_alloc_item
+    // __region_push
     "Invalid argument: The value of `region` cannot equal to `NULL`.",
     "Invalid argument: The value of `size` cannot equal to zero.",
     "Invalid argument: The value of `size` is too large. Cannot allocate memory.",
@@ -152,7 +152,7 @@ REGION_EXTERN_C_BEGIN
 // ----- FUNCTION DECLARATIONS (PRIVATE) -----
 
 Region *__region_alloc(size_t capacity, RegionError *error, RegionLocation location);
-void *__region_alloc_item(Region *region, size_t size, RegionError *error, RegionLocation location);
+void *__region_push(Region *region, size_t size, RegionError *error, RegionLocation location);
 
 // Stack Region
 StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLocation location);
@@ -168,7 +168,7 @@ void region_reset(Region *region, RegionResetOption option);
 #define REGION_GET_CURRENT_FILE_LOCATION (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}
 
 #define region_alloc(capacity, error) __region_alloc((capacity), (error), (REGION_GET_CURRENT_FILE_LOCATION))
-#define region_alloc_item(region, size, error) __region_alloc_item((region), (size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
+#define region_push(region, size, error) __region_push((region), (size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 
 #define stack_region_alloc(capacity, error) __stack_region_alloc((capacity), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define stack_region_push(stack, size, error) __stack_region_push((stack), (size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
@@ -242,25 +242,25 @@ void region_free(Region **region)
     *region = NULL;
 }
 
-void *__region_alloc_item(Region *region, size_t size, RegionError *error, RegionLocation location)
+void *__region_push(Region *region, size_t size, RegionError *error, RegionLocation location)
 {
     if (!region) {
         if (error) {
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_ITEM_NO_REGION, location);
+            REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION, location);
         }
         return NULL;
     }
 
     if (size == 0) {
         if (error) {
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_ITEM_SMALL_SIZE, location);
+            REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_SMALL_SIZE, location);
         }
         return NULL;
     }
 
     if (size > REGION_SIZE_MAX - sizeof(Region)) {
         if (error) {
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_ITEM_LARGE_SIZE, location);
+            REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_LARGE_SIZE, location);
         }
         return NULL;
     }
@@ -272,7 +272,7 @@ void *__region_alloc_item(Region *region, size_t size, RegionError *error, Regio
             current->next = region_alloc(current->capacity * 2 + size, NULL);
             if (!current->next) {
                 if (error) {
-                    REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_ITEM_MALLOC_REGION, location);
+                    REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION, location);
                 }
                 return NULL;
             }
@@ -377,7 +377,7 @@ void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, R
         stack->frames_sizes.capacity = new_capacity;
     }
 
-    void *frame = __region_alloc_item(stack->frames, size, error, location);
+    void *frame = __region_push(stack->frames, size, error, location);
 
     if (error->code != 0) return NULL;
 
