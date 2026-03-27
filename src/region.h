@@ -19,6 +19,7 @@
 #define REGION_STRLEN strlen
 #define REGION_STRNCPY strncpy
 #define REGION_STRCPY strcpy
+#define REGION_MEMCPY memcpy
 #endif // REGION_NO_STRING
 
 #ifndef REGION_NO_STDLIB
@@ -92,11 +93,14 @@ typedef enum {
     REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY, // Failed to allocate `capacity` bytes into the `Region->data` field.
 
     // __region_push
-    REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION,    // The pointer to the `Region` struct equals to `NULL`.
-    REGION_ERROR_CODE_EINVAL_REGION_PUSH_SMALL_SIZE,   // The `size` argument equals to zero.
-    REGION_ERROR_CODE_EINVAL_REGION_PUSH_LARGE_SIZE,   // The `size` argument equals to `__SIZE_MAX__`.
-    REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION // Failed to allocate the `Region` struct for a new item.
+    REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION,     // The pointer to the `Region` struct equals to `NULL`.
+    REGION_ERROR_CODE_EINVAL_REGION_PUSH_SMALL_SIZE,    // The `size` argument equals to zero.
+    REGION_ERROR_CODE_EINVAL_REGION_PUSH_LARGE_SIZE,    // The `size` argument equals to `__SIZE_MAX__`.
+    REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION, // Failed to allocate the `Region` struct for a new item.
 
+    // __region_shrink_capacity
+    REGION_ERROR_CODE_EINVAL_REGION_SHRINK_CAPACITY_NO_REGION, // The pointer to the `Region` struct equals to `NULL`.
+    REGION_ERROR_CODE_ENOMEM_REGION_SHRINK_CAPACITY_MALLOC,    // Failed to allocate memory for the `data` field.
 } RegionErrorCode;
 
 static const char *region_error_code_as_strings[] = {
@@ -117,6 +121,10 @@ static const char *region_error_code_as_strings[] = {
     "Invalid argument: The value of `size` cannot equal to zero.",
     "Invalid argument: The value of `size` is too large. Cannot allocate memory.",
     "No free space: Failed to allocate a `Region` struct for a new item.",
+
+    // __region_shrink_capacity
+    "Invalid argument: The value of `region` cannot equal to `NULL`.",
+    "No free space: Failed to allocate a new shrinked buffer.",
 };
 
 typedef struct {
@@ -153,6 +161,7 @@ REGION_EXTERN_C_BEGIN
 
 Region *__region_alloc(size_t capacity, RegionError *error, RegionLocation location);
 void *__region_push(Region *region, size_t size, RegionError *error, RegionLocation location);
+void __region_shrink_capacity(Region *region, RegionError *error, RegionLocation location);
 
 // Stack Region
 StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLocation location);
@@ -169,6 +178,7 @@ void region_reset(Region *region, RegionResetOption option);
 
 #define region_alloc(capacity, error) __region_alloc((capacity), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define region_push(region, size, error) __region_push((region), (size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
+#define region_shrink_capacity(region, error) __region_shrink_capacity((region), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 
 #define stack_region_alloc(capacity, error) __stack_region_alloc((capacity), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define stack_region_push(stack, size, error) __stack_region_push((stack), (size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
@@ -300,6 +310,33 @@ void region_reset(Region *region, RegionResetOption option)
     for (Region *i = region; i; i = i->next) {
         i->size = 0;
     }
+}
+
+void __region_shrink_capacity(Region *region, RegionError *error, RegionLocation location)
+{
+    if (!region) {
+        if (error) {
+            REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_SHRINK_CAPACITY_NO_REGION, location);
+        }
+        return;
+    }
+
+    if (region->size == region->capacity || region->size == 0) return;
+
+    char *shrinked_buffer = (char *)REGION_MALLOC(sizeof(char) * region->size);
+
+    if (!shrinked_buffer) {
+        if (error) {
+            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_SHRINK_CAPACITY_MALLOC, location);
+            return;
+        }
+    }
+
+    REGION_MEMCPY(shrinked_buffer, region->data, region->size);
+    REGION_FREE(region->data);
+
+    region->capacity = region->size;
+    region->data = shrinked_buffer;
 }
 
 StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLocation location)
