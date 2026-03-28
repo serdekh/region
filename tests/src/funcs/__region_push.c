@@ -1,7 +1,5 @@
 #include "./common/common.h"
 
-#define SYMBOL_FN_REGION_PUSH "__region_push"
-
 FuncPtr_region_push fn = NULL;
 
 void try_init_test_fn()

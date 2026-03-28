@@ -1,7 +1,5 @@
 #include "./common/common.h"
 
-#define SYMBOL_FN_REGION_ALLOC "__region_alloc"
-
 FuncPtr_region_alloc fn = NULL;
 
 void try_init_test_fn()
