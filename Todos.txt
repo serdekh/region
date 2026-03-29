@@ -1,15 +1,17 @@
 - Daily tasks:
 
 - (Done) -
-    1: Implement testing for the new function `__region_shrink_capacity`
+   1: Implement testing for the new function `__region_shrink_capacity`
+   2: Embed the size of a new item inside the stack region as it was initially designed
 
 1: Immitate a malloc failure in test functions
-2: Embed the size of a new item inside the stack region as it was initially designed
-   2.1 Implement testing for the stack functions
+2.1: Implement testing for the stack functions
 3: Add other functions and tests for them such as:
     3.1 `region_merge` to merge all the existing nodes inside one with a combined capacity
     3.2 `region_clone` to clone (heap) a region along with its nodes 
     3.3 `region_to_array` to allocate a dynamic array and copy the data from the region
+4: Implement a system that maps small opcodes into complete error messages by
+   grouping related errors and marking them using bits inside a word
 
 - Big tasks (Should be Implemented as soon as all the daily tasks are complete)
 
