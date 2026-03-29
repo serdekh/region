@@ -192,6 +192,7 @@ void __region_shrink_capacity(Region *region, RegionError *error, RegionLocation
 // Stack Region
 StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLocation location);
 void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, RegionLocation location);
+void *__stack_region_peek(StackRegion *stack, RegionError *error, RegionLocation location);
 void *__stack_region_pop(StackRegion *stack, RegionError *error, RegionLocation location);
 
 // ----- PUBLIC API -----
@@ -206,6 +207,7 @@ void region_reset(Region *region, RegionResetOption option);
 
 #define stack_region_alloc(capacity, error) __stack_region_alloc((capacity), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define stack_region_push(stack, size, error) __stack_region_push((stack), (size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
+#define stack_region_peek(stack, error) __stack_region_peek((stack), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define stack_region_pop(stack, error) __stack_region_pop((stack), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define stack_region_reset(stack, option) region_reset((Region *)(stack), (option))
 #define stack_region_free(stack) region_free((Region **)(stack))
@@ -404,6 +406,24 @@ void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, R
     stack->count += 1;
 
     return frame;
+}
+
+void *__stack_region_peek(StackRegion *stack, RegionError *error, RegionLocation location)
+{
+    if (!stack) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_NO_STACK_REGION, location);
+        return NULL;
+    }
+
+    if (stack->count == 0) return NULL;
+
+    void *last_frame_end = stack->data + stack->size;
+
+    size_t last_frame_size = *(size_t *)(last_frame_end - sizeof(size_t));
+
+    void *last_frame_start = last_frame_end - sizeof(size_t) - last_frame_size;
+
+    return last_frame_start;
 }
 
 void *__stack_region_pop(StackRegion *stack, RegionError *error, RegionLocation location)
