@@ -10,11 +10,14 @@
 #define SYMBOL_FN_REGION_SHRINK_CAPACITY "__region_shrink_capacity"
 #define SYMBOL_FN_REGION_FREE "region_free"
 
+#define SYMBOL_FN_STACK_REGION_ALLOC "__stack_region_alloc"
 
 typedef Region*(*FuncPtr_region_alloc)(size_t, RegionError*, RegionLocation);
 typedef void *(*FuncPtr_region_push)(Region *region, size_t size, RegionError *error, RegionLocation location);
 typedef void (*FuncPtr_region_shrink_capacity)(Region *region, RegionError *error, RegionLocation location);
 typedef void (*FuncPtr_region_free)(Region **region);
+
+typedef StackRegion *(*FuncPtr_stack_region_alloc)(size_t capacity, RegionError *error, RegionLocation location);
 
 extern void *_RegionHandle;
 
