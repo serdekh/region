@@ -4,6 +4,10 @@
     1: Implement testing for the new function `__region_shrink_capacity`
     2: Embed the size of a new item inside the stack region as it was initially designed
     2.1.1: Implement tests for the `__stack_region_alloc` function
+    -
+    -
+    5: Make the tester be able to read all shared objects within a directory instead of hardcoding 
+      the names inside the main file.
 
 1: Immitate a malloc failure in test functions
 2.1: Implement testing for the stack functions
@@ -22,8 +26,6 @@
     3.9 `stack_region_rotate` to shift the last three elements on top of the stack in a specified direction
 4: Implement a system that maps small opcodes into complete error messages by
    grouping related errors and marking them using bits inside a word
-5: Make the tester be able to read all shared objects within a directory instead of hardcoding 
-   the names inside the main file.
 
 - Big tasks (Should be Implemented as soon as all the daily tasks are complete)
 
