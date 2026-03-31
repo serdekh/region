@@ -15,9 +15,11 @@ TESTS := tests
 TESTS_BUILD := $(TESTS)/.build
 
 TARGET_TAG := region
+TARGET_TEST_TAG := $(TARGET_TAG)-test
 TARGET_BIN := $(BIN)/$(TARGET_TAG)
 TARGET_OBJ := $(OBJ)/$(TARGET_TAG).o
 TARGET_SOBJ := $(SOBJ)/$(TARGET_TAG).so
+TARGET_TEST_SOBJ := $(SOBJ)/$(TARGET_TEST_TAG).so
 
 $(BUILD):
 	mkdir -p $(BUILD)
@@ -44,6 +46,10 @@ $(TARGET_SOBJ): src/region.h $(SOBJ)
 	$(CC) $(CC_FLAGS) -DREGION_IMPLEMENTATION -x c -c src/region.h -o $(TARGET_SOBJ)
 	$(CC) -shared -o $(TARGET_SOBJ) -DREGION_IMPLEMENTATION -x c -fPIC src/region.h
 
+$(TARGET_TEST_SOBJ): src/region.h $(SOBJ)
+	$(CC) -shared $(CC_FLAGS) -DREGION_IMPLEMENTATION -DREGION_TEST_IMPLEMENTATION -x c src/region.h -o $(TARGET_TEST_SOBJ)
+	$(CC) -shared -o $(TARGET_SOBJ) -DREGION_IMPLEMENTATION -DREGION_TEST_IMPLEMENTATION -x c -fPIC src/region.h
+
 help:
 	@echo "\tmake run   -- Builds the whole project"
 	@echo "\t              1. Creates the '.build' folder"
@@ -63,6 +69,8 @@ clean:
 build: $(TARGET_OBJ)
 
 build-shared: $(TARGET_SOBJ)
+
+build-shared-test: $(TARGET_TEST_SOBJ)
 
 run: $(TARGET_BIN) $(TARGET_OBJ)
 	./$(TARGET_BIN)
