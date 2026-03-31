@@ -13,7 +13,7 @@ FRAMEWORK_C = $(TESTER)/tester.c
 FRAMEWORK_H = $(TESTER)/tester.c
 FRAMEWORK_EXEC = $(BIN)/tester
 
-REGION_SOBJ = ../.build/obj/region.so
+REGION_SOBJ = ../.build/obj/region-test.so
 
 $(BUILD):
 	mkdir -p .build
@@ -25,7 +25,7 @@ $(BIN): $(BUILD)
 	mkdir -p $(BIN)
 
 $(REGION_SOBJ):
-	make -C .. build-shared
+	make -C .. build-shared-test
 
 FUNCS_SRCS := $(shell find $(FUNCS) -name '*.c')
 FUNCS_SRCS := $(filter-out $(FUNCS)/common/common.c,$(FUNCS_SRCS))
