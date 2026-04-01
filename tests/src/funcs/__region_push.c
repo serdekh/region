@@ -53,8 +53,42 @@ TestResult test_region_push_case_3()
     return result;
 }
 
+#define TEST_REGION_PUSH_CASE_4_CAPACITY 10
+
+TestResult test_region_push_case_4()
+{
+    try_init_test_fn();
+    
+    RegionError error = {0};
+    TestResult result = {0};
+
+    FuncPtr_region_alloc __region_alloc = try_get_symbol(SYMBOL_FN_REGION_ALLOC);
+    FuncPtr_region_free region_free = try_get_symbol(SYMBOL_FN_REGION_FREE);
+
+    Region *r = __region_alloc(TEST_REGION_PUSH_CASE_4_CAPACITY, &error, REGION_GET_CURRENT_FILE_LOCATION);
+
+    if (!r) {
+        REGION_LOG_ERROR(error);
+        fprintf(stderr, "[Test][Error]: Could not allocate memory to perform a test for the __region_push function. Stop.\n");
+        exit(1);
+    }
+
+    set_available_memory(0);
+
+    fn(r, TEST_REGION_PUSH_CASE_4_CAPACITY * 2, &error, REGION_GET_CURRENT_FILE_LOCATION);
+
+    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION, error.code);
+
+    region_free(&r);
+
+    set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
+
+    return result;
+}
+
 REGISTER_TEST(test_region_push_case_1, 1);
 REGISTER_TEST(test_region_push_case_2, 2);
 REGISTER_TEST(test_region_push_case_3, 3);
+REGISTER_TEST(test_region_push_case_4, 4);
 
 EXPOSE(tests)
