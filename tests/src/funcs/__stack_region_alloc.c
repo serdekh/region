@@ -37,6 +37,47 @@ TestResult test_stack_region_alloc_case_2()
     return result;
 }
 
+#define TEST_STACK_REGION_CAPACITY 1
+
+TestResult test_stack_region_alloc_case_3()
+{
+    try_init_test_fn();
+
+    TestResult result = {0};
+    RegionError error = {0};
+
+    set_available_memory(sizeof(StackRegion) / 2);
+
+    fn(TEST_STACK_REGION_CAPACITY, &error, REGION_GET_CURRENT_FILE_LOCATION);
+
+    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION, error.code);
+
+    set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
+
+    return result;
+}
+
+TestResult test_stack_region_alloc_case_4()
+{
+    try_init_test_fn();
+
+    TestResult result = {0};
+    RegionError error = {0};
+
+    set_available_memory(sizeof(StackRegion));
+
+    fn(TEST_STACK_REGION_CAPACITY, &error, REGION_GET_CURRENT_FILE_LOCATION);
+
+    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_CAPACITY, error.code);
+
+    set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
+
+    return result;
+}
+
 REGISTER_TEST(test_stack_region_alloc_case_1, 1);
 REGISTER_TEST(test_stack_region_alloc_case_2, 2);
+REGISTER_TEST(test_stack_region_alloc_case_3, 3);
+REGISTER_TEST(test_stack_region_alloc_case_4, 4);
+
 EXPOSE(tests);
