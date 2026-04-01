@@ -1,23 +1,19 @@
 - Daily tasks:
 
-1: Immitate a malloc failure in test functions
-   1.1: Implement malloc failure tests for the `__stack_region_alloc` function
-2: Implement testing for the stack functions
-   2.1: Implement tests for the `__stack_region_push` function
-   2.2: Implement tests for the `__stack_region_peek` function
-   2.3: Implement tests for the `__stack_region_pop` function
-3: Add other functions and tests for them such as:
-   3.1 `region_collect` to get an array where each index corresponds to a node within a region
-   3.2 `region_merge` to merge all the existing nodes into one with capacity combined
-   3.3 `region_clone` to clone (heap) a region along with its nodes 
-   3.4 `region_to_array` to allocate a dynamic array and copy the data from the region
-   3.5 `stack_region_peek_at` to get a pointer to a frame at a specific index
-   3.6 `stack_region_peek_at_over` to get a pointer to a frame before the last one
-   3.7 `stack_region_swap` to swap the last two frames on top of the stack
-   3.8 `stack_region_pop_for` to pop an `n` number of frames
-   3.9 `stack_region_rotate` to shift the last three elements on top of the stack in a specified direction
-4: Implement a system that maps small opcodes into complete error messages by
-   grouping related errors and marking them using bits inside a word
+1: Implement testing for the stack functions
+   1.1: Implement tests for the `__stack_region_push` function
+   1.2: Implement tests for the `__stack_region_peek` function
+   1.3: Implement tests for the `__stack_region_pop` function
+2: Add other functions and tests for them such as:
+   2.1 `region_collect` to get an array where each index corresponds to a node within a region
+   2.2 `region_merge` to merge all the existing nodes into one with capacity combined
+   2.3 `region_clone` to clone (heap) a region along with its nodes 
+   2.4 `region_to_array` to allocate a dynamic array and copy the data from the region
+   2.5 `stack_region_peek_at` to get a pointer to a frame at a specific index
+   2.6 `stack_region_peek_at_over` to get a pointer to a frame before the last one
+   2.7 `stack_region_swap` to swap the last two frames on top of the stack
+   2.8 `stack_region_pop_for` to pop an `n` number of frames
+   2.9 `stack_region_rotate` to shift the last three elements on top of the stack in a specified direction
 
 - Big tasks (Should be Implemented as soon as all the daily tasks are complete)
 
