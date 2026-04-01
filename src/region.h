@@ -134,7 +134,8 @@ typedef enum {
     // __stack_region_alloc
     REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_SMALL_CAPACITY,  // The value of `capacity` cannot equal to zero.
     REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_LARGE_CAPACITY,  // The value of `capacity` is too large.
-    REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_NO_STACK_REGION, // Failed to allocate the `StackRegion` struct. 
+    REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION,   // Failed to allocate the `StackRegion` struct.
+    REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_CAPACITY, // Failed to allocate `capacity` bytes into the `StackRegion->data` field.
 
     // __stack_region_push
     REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_NO_STACK_REGION, // The pointer to the `Region` struct equals to `NULL`.
@@ -397,7 +398,7 @@ StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLoc
     StackRegion *stack = (StackRegion *)REGION_MALLOC(sizeof(Region) + sizeof(size_t));
 
     if (!stack) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_NO_STACK_REGION, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION, location);
         return NULL;
     }
 
@@ -405,7 +406,7 @@ StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLoc
     
     if (!stack->data) {
         REGION_FREE(stack);
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_NO_STACK_REGION, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_CAPACITY, location);
         return NULL;
     }
 
