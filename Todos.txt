@@ -1,8 +1,7 @@
 - Daily tasks:
 
 1: Implement testing for the stack functions
-   1.1: Implement tests for the `__stack_region_peek` function
-   1.2: Implement tests for the `__stack_region_pop` function
+   1.1: Implement tests for the `__stack_region_pop` function
 2: Add other functions and tests for them such as:
    2.1 `region_collect` to get an array where each index corresponds to a node within a region
    2.2 `region_merge` to merge all the existing nodes into one with capacity combined
