@@ -94,7 +94,6 @@ typedef enum {
     {
         if (capacity > __test_available_memory) return NULL;
 
-        // Overflow
         if (__test_available_memory - capacity > __test_available_memory) {
             __test_available_memory = 0;
             return NULL;
@@ -427,13 +426,22 @@ void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, R
         return NULL;
     }
 
+    if (size == 0) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_SMALL_SIZE, location);
+        return NULL;
+    }
+
+    if (size == REGION_SIZE_MAX || size + sizeof(size_t) < size) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_LARGE_SIZE, location);
+        return NULL;
+    }
+
     size_t frame_size = size + sizeof(size_t);
 
     void *frame = __region_push((Region *)stack, frame_size, error, location);
 
     if (!frame) {
-        if (error) error->code += 
-            REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_NO_STACK_REGION - REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION;
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION, location);
         return NULL;
     }
 
