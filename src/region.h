@@ -1,4 +1,3 @@
-// ----- HEADERS -----
 #ifndef REGION_NO_STDIO
 #include <stdio.h>
 #define REGION_STDIN stdin
@@ -142,6 +141,9 @@ typedef enum {
     REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_LARGE_SIZE,      // The `size` argument equals to `__SIZE_MAX__`.
     REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION,   // Failed to allocate the `Region` struct for a new item.
 
+    // __stack_region_peek
+    REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_NO_STACK_REGION, // The pointer to the `StackRegion` struct equals to `NULL`.
+
     // __stack_region_pop
     REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_NO_STACK_REGION, // The pointer to the `Region` struct equals to `NULL`.
 
@@ -281,7 +283,7 @@ Region *__region_alloc(size_t capacity, RegionError *error, RegionLocation locat
     region->size = 0;
     region->next = NULL;
 
-    for (size_t i = 0; i < region->capacity; i++) region->data[i] = '\0';
+    REGION_MEMCPY(region->data, "\0", region->capacity);
 
     return region;
 }
@@ -455,13 +457,19 @@ void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, R
 void *__stack_region_peek(StackRegion *stack, RegionError *error, RegionLocation location)
 {
     if (!stack) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_NO_STACK_REGION, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_NO_STACK_REGION, location);
         return NULL;
     }
 
     if (stack->count == 0) return NULL;
 
-    void *last_frame_end = stack->data + stack->size;
+    Region *last_node = (Region *)stack;
+
+    while (last_node->next != NULL) {
+        last_node = last_node->next;
+    }
+
+    void *last_frame_end = last_node->data + last_node->size;
 
     size_t last_frame_size = *(size_t *)(last_frame_end - sizeof(size_t));
 
