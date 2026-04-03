@@ -487,14 +487,20 @@ void *__stack_region_pop(StackRegion *stack, RegionError *error, RegionLocation 
 
     if (stack->count == 0) return NULL;
 
-    void *last_frame_end = stack->data + stack->size;
+    Region *last_node = (Region *)stack;
+
+    while (last_node->next != NULL && last_node->size > 0) {
+        last_node = last_node->next;
+    }
+
+    void *last_frame_end = last_node->data + last_node->size;
 
     size_t last_frame_size = *(size_t *)(last_frame_end - sizeof(size_t));
 
     void *last_frame_start = last_frame_end - sizeof(size_t) - last_frame_size;
 
-    (stack->count)--;
-    (stack->size) -= (last_frame_size + sizeof(size_t));
+    ((StackRegion *)(last_node))->count--;
+    ((StackRegion *)(last_node))->size -= (last_frame_size + sizeof(size_t));
 
     return last_frame_start;
 }
