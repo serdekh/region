@@ -129,7 +129,12 @@ typedef enum {
     REGION_ERROR_CODE_EINVAL_REGION_SHRINK_CAPACITY_NO_REGION, // The pointer to the `Region` struct equals to `NULL`.
     REGION_ERROR_CODE_ENOMEM_REGION_SHRINK_CAPACITY_MALLOC,    // Failed to allocate memory for the `data` field.
 
-    // __region_get_last_node
+    // __region_collect
+    REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_REGION,         // The pointer to the `Region` struct equals to `NULL`.
+    REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_COLLECTED_SIZE, // The pointer to the `collected_size` argument equals to `NULL`.
+    REGION_ERROR_CODE_ENOMEM_REGION_COLLECT_MALLOC_COLLECTION, // Failed to allocate memory for the array collection.
+
+    // region_get_last_node
     REGION_ERROR_CODE_EINVAL_REGION_GET_LAST_NODE_NO_REGION,   // The pointer to the `Region` struct equals to `NULL`.
 
     // __stack_region_alloc
@@ -175,7 +180,12 @@ static const char *region_error_code_as_strings[] = {
     "Invalid argument: The value of `region` cannot equal to `NULL`.",
     "No free space: Failed to allocate a new shrinked buffer.",
 
-    // __region_get_last_node
+    // __region_collect
+    "Invalid argument: The value of `region` cannot equal to `NULL`",
+    "Invalid argument: The value of `collected_size` cannot equal to `NULL`", 
+    "No free space: Failed to allocate an array to collect all the nodes in the `region`", 
+
+    // region_get_last_node
     "Invalid argument: the value of `region` cannot equal to `NULL`",
 
     // __stack_region_alloc
@@ -231,6 +241,7 @@ REGION_EXTERN_C_BEGIN
 Region *__region_alloc(size_t capacity, RegionError *error, RegionLocation location);
 void *__region_push(Region *region, size_t size, RegionError *error, RegionLocation location);
 void __region_shrink_capacity(Region *region, RegionError *error, RegionLocation location);
+Region **__region_collect(Region *region, size_t *collected_size, RegionError *error, RegionLocation location);
 
 // Stack Region
 StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLocation location);
@@ -248,6 +259,7 @@ Region *region_get_last_node(Region *region, RegionError *error, RegionLocation 
 #define region_alloc(capacity, error) __region_alloc((capacity), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define region_push(region, size, error) __region_push((region), (size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define region_shrink_capacity(region, error) __region_shrink_capacity((region), (error), (REGION_GET_CURRENT_FILE_LOCATION))
+#define region_collect(region, collected_size, error) __region_collect((region), (collected_size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 
 #define stack_region_alloc(capacity, error) __stack_region_alloc((capacity), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define stack_region_push(stack, size, error) __stack_region_push((stack), (size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
@@ -389,6 +401,43 @@ void __region_shrink_capacity(Region *region, RegionError *error, RegionLocation
 
     region->capacity = region->size;
     region->data = shrinked_buffer;
+}
+
+Region **__region_collect(Region *region, size_t *collected_size, RegionError *error, RegionLocation location)
+{
+    if (!region) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_REGION, location);
+        return NULL;
+    }
+
+    if (!collected_size) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_COLLECTED_SIZE, location);
+        return NULL;
+    }
+
+    size_t nodes_count = 0;
+
+    for (Region *t = region; t; t = t->next) {
+        nodes_count++;
+    }
+
+    Region **collection = (Region **)REGION_MALLOC(sizeof(Region *) * nodes_count);
+
+    if (!collection) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_COLLECT_MALLOC_COLLECTION, location);
+        return NULL;
+    }
+
+    *collected_size = nodes_count;
+
+    nodes_count = 0;
+
+    for (Region *t = region; t; t = t->next) {
+        collection[nodes_count] = t;
+        nodes_count++;
+    }
+
+    return collection;
 }
 
 Region *region_get_last_node(Region *region, RegionError *error, RegionLocation location)
