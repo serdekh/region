@@ -486,7 +486,7 @@ void *__stack_region_peek(StackRegion *stack, RegionError *error, RegionLocation
 
     Region *last_node = (Region *)stack;
 
-    while (last_node->next != NULL) {
+    while (last_node->next != NULL && (last_node->next)-> size > 0) {
         last_node = last_node->next;
     }
 
