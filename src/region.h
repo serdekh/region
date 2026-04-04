@@ -129,6 +129,9 @@ typedef enum {
     REGION_ERROR_CODE_EINVAL_REGION_SHRINK_CAPACITY_NO_REGION, // The pointer to the `Region` struct equals to `NULL`.
     REGION_ERROR_CODE_ENOMEM_REGION_SHRINK_CAPACITY_MALLOC,    // Failed to allocate memory for the `data` field.
 
+    // __region_get_last_node
+    REGION_ERROR_CODE_EINVAL_REGION_GET_LAST_NODE_NO_REGION,   // The pointer to the `Region` struct equals to `NULL`.
+
     // __stack_region_alloc
     REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_SMALL_CAPACITY,  // The value of `capacity` cannot equal to zero.
     REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_LARGE_CAPACITY,  // The value of `capacity` is too large.
@@ -171,6 +174,9 @@ static const char *region_error_code_as_strings[] = {
     // __region_shrink_capacity
     "Invalid argument: The value of `region` cannot equal to `NULL`.",
     "No free space: Failed to allocate a new shrinked buffer.",
+
+    // __region_get_last_node
+    "Invalid argument: the value of `region` cannot equal to `NULL`",
 
     // __stack_region_alloc
     "Invalid argument: The value of `capacity` cannot equal to zero.",
@@ -235,6 +241,7 @@ void *__stack_region_pop(StackRegion *stack, RegionError *error, RegionLocation 
 // ----- PUBLIC API -----
 void region_free(Region **region);
 void region_reset(Region *region, RegionResetOption option);
+Region *region_get_last_node(Region *region, RegionError *error, RegionLocation location);
 
 #define REGION_GET_CURRENT_FILE_LOCATION (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}
 
@@ -382,6 +389,20 @@ void __region_shrink_capacity(Region *region, RegionError *error, RegionLocation
 
     region->capacity = region->size;
     region->data = shrinked_buffer;
+}
+
+Region *region_get_last_node(Region *region, RegionError *error, RegionLocation location)
+{
+    if (!region) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_GET_LAST_NODE_NO_REGION, location);
+        return NULL;
+    }
+
+    Region *last_node = region;
+
+    while (last_node->next != NULL) last_node = last_node->next;
+
+    return last_node;
 }
 
 StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLocation location)
