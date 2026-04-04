@@ -23,12 +23,18 @@ typedef struct {
     TestResult (*func)(void);
 } TestContext;
 
-#define INT_TO_STR(to, n) sprintf((to), "%d", n)
+#define FMT_TO_STR(destination, fmt, value) sprintf((destination), (fmt), (value))
 
-#define TEST_RESULT_WRITE_INT(result, e, a)                    \
-    INT_TO_STR((result).expected, (e));                        \
-    INT_TO_STR((result).actual, (a));                          \
-    (result).success = (e) == (a);                             \
+#define INT_TO_STR(to, n) FMT_TO_STR((to), "%d", (n))
+#define PTR_TO_STR(to, p) FMT_TO_STR((to), "%p", (n))
+
+#define TEST_RESULT_WRITE_FMT(result, fmt, e, a) \
+    FMT_TO_STR((result).expected, (fmt), (e));   \
+    FMT_TO_STR((result).actual, (fmt), (a));     \
+    (result).success = (e) == (a);               \
+
+#define TEST_RESULT_WRITE_INT(result, e, a) TEST_RESULT_WRITE_FMT((result), "%d", (e), (a))
+#define TEST_RESULT_WRITE_PTR(result, e, a) TEST_RESULT_WRITE_FMT((result), "%p", (e), (a))
 
 #define GET_TESTS_START_STR   "get_tests_start"
 #define GET_TESTS_END_STR   "get_tests_end"
