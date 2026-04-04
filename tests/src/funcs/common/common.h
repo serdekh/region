@@ -8,6 +8,8 @@
 #define SYMBOL_FN_REGION_ALLOC "__region_alloc"
 #define SYMBOL_FN_REGION_PUSH "__region_push"
 #define SYMBOL_FN_REGION_SHRINK_CAPACITY "__region_shrink_capacity"
+#define SYMBOL_FN_REGION_COLLECT "__region_collect"
+
 #define SYMBOL_FN_REGION_FREE "region_free"
 #define SYMBOL_FN_REGION_GET_LAST_NODE "region_get_last_node"
 
@@ -22,6 +24,8 @@
 typedef Region*(*FuncPtr_region_alloc)(size_t, RegionError*, RegionLocation);
 typedef void *(*FuncPtr_region_push)(Region *region, size_t size, RegionError *error, RegionLocation location);
 typedef void (*FuncPtr_region_shrink_capacity)(Region *region, RegionError *error, RegionLocation location);
+typedef Region **(*FuncPtr_region_collect)(Region *region, size_t *collected_size, RegionError *error, RegionLocation location);
+
 typedef void (*FuncPtr_region_free)(Region **region);
 typedef Region *(*FuncPtr_region_get_last_node)(Region *region, RegionError *error, RegionLocation location);
 
