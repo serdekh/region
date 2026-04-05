@@ -134,6 +134,11 @@ typedef enum {
     REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_COLLECTED_SIZE, // The pointer to the `collected_size` argument equals to `NULL`.
     REGION_ERROR_CODE_ENOMEM_REGION_COLLECT_MALLOC_COLLECTION, // Failed to allocate memory for the array collection.
 
+    // __region_clone
+    REGION_ERROR_CODE_EINVAL_REGION_CLONE_NO_REGION,   // The pointer to the `Region` struct equals to `NULL`.
+    REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_ROOT, // Failed to allocate the root region provided as an argument.
+    REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_NODE, // Failed to allocate a node from the source region.
+
     // region_get_last_node
     REGION_ERROR_CODE_EINVAL_REGION_GET_LAST_NODE_NO_REGION,   // The pointer to the `Region` struct equals to `NULL`.
 
@@ -184,6 +189,11 @@ static const char *region_error_code_as_strings[] = {
     "Invalid argument: The value of `region` cannot equal to `NULL`",
     "Invalid argument: The value of `collected_size` cannot equal to `NULL`", 
     "No free space: Failed to allocate an array to collect all the nodes in the `region`", 
+
+    // __region_clone
+    "Invalid argument: The value of `region` cannot equal to `NULL`",
+    "No free space: Failed to clone the `region` argument",
+    "No free space: Failed to clone a node from the `region` argument",
 
     // region_get_last_node
     "Invalid argument: the value of `region` cannot equal to `NULL`",
@@ -242,6 +252,7 @@ Region *__region_alloc(size_t capacity, RegionError *error, RegionLocation locat
 void *__region_push(Region *region, size_t size, RegionError *error, RegionLocation location);
 void __region_shrink_capacity(Region *region, RegionError *error, RegionLocation location);
 Region **__region_collect(Region *region, size_t *collected_size, RegionError *error, RegionLocation location);
+Region *__region_clone(Region *region, RegionError *error, RegionLocation location);
 
 // Stack Region
 StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLocation location);
@@ -260,6 +271,7 @@ Region *region_get_last_node(Region *region, RegionError *error, RegionLocation 
 #define region_push(region, size, error) __region_push((region), (size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define region_shrink_capacity(region, error) __region_shrink_capacity((region), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define region_collect(region, collected_size, error) __region_collect((region), (collected_size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
+#define region_clone(region, error) __region_clone((region), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 
 #define stack_region_alloc(capacity, error) __stack_region_alloc((capacity), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define stack_region_push(stack, size, error) __stack_region_push((stack), (size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
@@ -438,6 +450,48 @@ Region **__region_collect(Region *region, size_t *collected_size, RegionError *e
     }
 
     return collection;
+}
+
+Region *__region_clone(Region *region, RegionError *error, RegionLocation location)
+{
+    if (!region) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_CLONE_NO_REGION, location);
+        return NULL;
+    }
+
+    Region *clone = region_alloc(region->capacity, NULL);
+
+    if (!clone) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_ROOT, location);
+        return NULL;
+    }
+
+    clone->capacity = region->capacity;
+    clone->size = region->size;
+
+    REGION_MEMCPY(clone->data, region->data, region->size);
+
+    Region *clone_i = clone;
+
+    for (Region *t = region->next; t; t = t->next) {
+        Region *node = region_alloc(t->capacity, NULL);
+
+        if (!node) {
+            region_free(&clone);
+            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_NODE, location);
+            return NULL;
+        }
+
+        node->capacity = t->capacity;
+        node->size = t->size;
+
+        REGION_MEMCPY(node->data, t->data, t->size);
+
+        clone_i->next = node;
+        clone_i = clone_i->next;
+    }
+
+    return clone;
 }
 
 Region *region_get_last_node(Region *region, RegionError *error, RegionLocation location)
