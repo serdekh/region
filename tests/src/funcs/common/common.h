@@ -10,6 +10,7 @@
 #define SYMBOL_FN_REGION_SHRINK_CAPACITY "__region_shrink_capacity"
 #define SYMBOL_FN_REGION_COLLECT "__region_collect"
 #define SYMBOL_FN_REGION_CLONE "__region_clone"
+#define SYMBOL_FN_REGION_MERGE "__region_merge"
 
 #define SYMBOL_FN_REGION_FREE "region_free"
 #define SYMBOL_FN_REGION_GET_LAST_NODE "region_get_last_node"
@@ -35,6 +36,7 @@ typedef StackRegion *(*FuncPtr_stack_region_alloc)(size_t capacity, RegionError 
 typedef void *(*FuncPtr_stack_region_push)(StackRegion *stack, size_t size, RegionError *error, RegionLocation location);
 typedef void *(*FuncPtr_stack_region_peek)(StackRegion *stack, RegionError *error, RegionLocation location);
 typedef void *(*FuncPtr_stack_region_pop)(StackRegion *stack, RegionError *error, RegionLocation location);
+typedef Region *(*FuncPtr_region_merge)(Region *region, RegionMergeOption option, RegionError *error, RegionLocation location);
 
 typedef void (*FuncPtr_test_set_available_memory)(size_t value);
 typedef size_t (*FuncPtr_test_get_available_memory)();
