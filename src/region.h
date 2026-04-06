@@ -73,6 +73,11 @@ typedef enum {
     REGION_RESET_OPTION_HARD = 1,
 } RegionResetOption;
 
+typedef enum {
+    REGION_MERGE_OPTION_DEFAULT,
+    REGION_MERGE_OPTION_CONDENSE
+} RegionMergeOption;
+
 #define REGION_TEST_AVAILABLE_MEMORY_DEFAULT 2048
 
 #ifdef REGION_TEST_IMPLEMENTATION
@@ -139,6 +144,11 @@ typedef enum {
     REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_ROOT, // Failed to allocate the root region provided as an argument.
     REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_NODE, // Failed to allocate a node from the source region.
 
+    // __region_merge
+    REGION_ERROR_CODE_EINVAL_REGION_MERGE_NO_REGION,         // The pointer to the `Region` struct equals to `NULL`.
+    REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_COLLECTION, // Failed to allocate a temporary buffer to store nodes' references.
+    REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_REGION,     // Failed to allocate a region with combined capacity.
+
     // region_get_last_node
     REGION_ERROR_CODE_EINVAL_REGION_GET_LAST_NODE_NO_REGION,   // The pointer to the `Region` struct equals to `NULL`.
 
@@ -186,14 +196,19 @@ static const char *region_error_code_as_strings[] = {
     "No free space: Failed to allocate a new shrinked buffer.",
 
     // __region_collect
-    "Invalid argument: The value of `region` cannot equal to `NULL`",
-    "Invalid argument: The value of `collected_size` cannot equal to `NULL`", 
-    "No free space: Failed to allocate an array to collect all the nodes in the `region`", 
+    "Invalid argument: The value of `region` cannot equal to `NULL`.",
+    "Invalid argument: The value of `collected_size` cannot equal to `NULL`.", 
+    "No free space: Failed to allocate an array to collect all the nodes in the `region`.", 
 
     // __region_clone
-    "Invalid argument: The value of `region` cannot equal to `NULL`",
-    "No free space: Failed to clone the `region` argument",
-    "No free space: Failed to clone a node from the `region` argument",
+    "Invalid argument: The value of `region` cannot equal to `NULL`.",
+    "No free space: Failed to clone the `region` argument.",
+    "No free space: Failed to clone a node from the `region` argument.",
+
+    // __region_merge
+    "Invalid argument: The value of `region` cannot equal to `NULL`.",
+    "No free space: Failed to allocate a temporary buffer to store a collection of `region`'s nodes.",
+    "No free space: Failed to allocate a region with the combined capacity",
 
     // region_get_last_node
     "Invalid argument: the value of `region` cannot equal to `NULL`",
@@ -253,6 +268,7 @@ void *__region_push(Region *region, size_t size, RegionError *error, RegionLocat
 void __region_shrink_capacity(Region *region, RegionError *error, RegionLocation location);
 Region **__region_collect(Region *region, size_t *collected_size, RegionError *error, RegionLocation location);
 Region *__region_clone(Region *region, RegionError *error, RegionLocation location);
+Region *__region_merge(Region *region, RegionMergeOption option, RegionError *error, RegionLocation location);
 
 // Stack Region
 StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLocation location);
@@ -272,6 +288,7 @@ Region *region_get_last_node(Region *region, RegionError *error, RegionLocation 
 #define region_shrink_capacity(region, error) __region_shrink_capacity((region), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define region_collect(region, collected_size, error) __region_collect((region), (collected_size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define region_clone(region, error) __region_clone((region), (error), (REGION_GET_CURRENT_FILE_LOCATION))
+#define region_merge(region, option, error) __region_merge((region), (option), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 
 #define stack_region_alloc(capacity, error) __stack_region_alloc((capacity), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define stack_region_push(stack, size, error) __stack_region_push((stack), (size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
@@ -279,6 +296,7 @@ Region *region_get_last_node(Region *region, RegionError *error, RegionLocation 
 #define stack_region_pop(stack, error) __stack_region_pop((stack), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define stack_region_reset(stack, option) region_reset((Region *)(stack), (option))
 #define stack_region_free(stack) region_free((Region **)(stack))
+
 // ----- * -----
 
 #ifdef REGION_IMPLEMENTATION
@@ -492,6 +510,55 @@ Region *__region_clone(Region *region, RegionError *error, RegionLocation locati
     }
 
     return clone;
+}
+
+Region *__region_merge(Region *region, RegionMergeOption option, RegionError *error, RegionLocation location)
+{
+    if (!region) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_MERGE_NO_REGION, location);
+        return NULL;
+    }
+
+    size_t collected_size = 0;
+    Region **collection = region_collect(region, &collected_size, NULL);
+
+    if (!collection) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_COLLECTION, location);
+        return NULL;
+    }
+
+    size_t merged_capacity = 0;
+
+    for (size_t i = 0; i < collected_size; i++) {
+        if (option == REGION_MERGE_OPTION_DEFAULT) {
+            merged_capacity += collection[i]->capacity;
+        } else {
+            merged_capacity += collection[i]->size;
+        }
+    }
+
+    Region *merged_region = region_alloc(merged_capacity, NULL);
+
+    if (!merged_region) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_REGION, location);
+        REGION_FREE(collection);
+        return NULL;
+    }
+
+    size_t characters_read = 0;
+
+    for (size_t i = 0; i < collected_size; i++) {
+        size_t to_read = option == REGION_MERGE_OPTION_DEFAULT ? collection[i]->capacity : collection[i]->size;
+
+        if (to_read == 0) continue;
+  
+        REGION_MEMCPY(merged_region->data + characters_read, collection[i]->data, to_read);
+
+        characters_read += to_read;   
+    }
+
+    REGION_FREE(collection);
+    return merged_region;
 }
 
 Region *region_get_last_node(Region *region, RegionError *error, RegionLocation location)
