@@ -25,7 +25,7 @@
 
 typedef Region*(*FuncPtr_region_alloc)(size_t, RegionError*, RegionLocation);
 typedef void *(*FuncPtr_region_push)(Region *region, size_t size, RegionError *error, RegionLocation location);
-typedef void (*FuncPtr_region_shrink_capacity)(Region *region, RegionError *error, RegionLocation location);
+typedef void (*FuncPtr_region_shrink_capacity)(Region *region, RegionShrinkCapacityOption option, RegionError *error, RegionLocation location);
 typedef Region **(*FuncPtr_region_collect)(Region *region, size_t *collected_size, RegionError *error, RegionLocation location);
 typedef Region *(*FuncPtr_region_clone)(Region *region, RegionError *error, RegionLocation location);
 
