@@ -78,6 +78,11 @@ typedef enum {
     REGION_MERGE_OPTION_CONDENSE
 } RegionMergeOption;
 
+typedef enum {
+    REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT,
+    REGION_SHRINK_CAPACITY_OPTION_ALL
+} RegionShrinkCapacityOption;
+
 #define REGION_TEST_AVAILABLE_MEMORY_DEFAULT 2048
 
 #ifdef REGION_TEST_IMPLEMENTATION
@@ -265,7 +270,7 @@ REGION_EXTERN_C_BEGIN
 
 Region *__region_alloc(size_t capacity, RegionError *error, RegionLocation location);
 void *__region_push(Region *region, size_t size, RegionError *error, RegionLocation location);
-void __region_shrink_capacity(Region *region, RegionError *error, RegionLocation location);
+void __region_shrink_capacity(Region *region, RegionShrinkCapacityOption option, RegionError *error, RegionLocation location);
 Region **__region_collect(Region *region, size_t *collected_size, RegionError *error, RegionLocation location);
 Region *__region_clone(Region *region, RegionError *error, RegionLocation location);
 Region *__region_merge(Region *region, RegionMergeOption option, RegionError *error, RegionLocation location);
@@ -285,7 +290,7 @@ Region *region_get_last_node(Region *region, RegionError *error, RegionLocation 
 
 #define region_alloc(capacity, error) __region_alloc((capacity), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define region_push(region, size, error) __region_push((region), (size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
-#define region_shrink_capacity(region, error) __region_shrink_capacity((region), (error), (REGION_GET_CURRENT_FILE_LOCATION))
+#define region_shrink_capacity(region, option, error) __region_shrink_capacity((region), (option), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define region_collect(region, collected_size, error) __region_collect((region), (collected_size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define region_clone(region, error) __region_clone((region), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define region_merge(region, option, error) __region_merge((region), (option), (error), (REGION_GET_CURRENT_FILE_LOCATION))
@@ -410,13 +415,8 @@ void region_reset(Region *region, RegionResetOption option)
     }
 }
 
-void __region_shrink_capacity(Region *region, RegionError *error, RegionLocation location)
+void __region_shrink_capacity_helper(Region *region, RegionShrinkCapacityOption option, RegionError *error, RegionLocation location)
 {
-    if (!region) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_SHRINK_CAPACITY_NO_REGION, location);
-        return;
-    }
-
     if (region->size == region->capacity || region->size == 0) return;
 
     char *shrinked_buffer = (char *)REGION_MALLOC(sizeof(char) * region->size);
@@ -431,6 +431,27 @@ void __region_shrink_capacity(Region *region, RegionError *error, RegionLocation
 
     region->capacity = region->size;
     region->data = shrinked_buffer;
+
+    return;
+}
+
+void __region_shrink_capacity(Region *region, RegionShrinkCapacityOption option, RegionError *error, RegionLocation location)
+{
+    if (!region) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_SHRINK_CAPACITY_NO_REGION, location);
+        return;
+    }
+
+    if (option == REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT) {
+        __region_shrink_capacity_helper(region, option, error, location);
+        return;
+    }
+
+    for (Region *t = region; t; t = t->next) {
+        __region_shrink_capacity_helper(t, option, error, location);
+            
+        if (error->code != REGION_ERROR_CODE_NO_ERROR) return;
+    }
 }
 
 Region **__region_collect(Region *region, size_t *collected_size, RegionError *error, RegionLocation location)
