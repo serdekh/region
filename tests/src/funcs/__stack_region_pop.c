@@ -35,13 +35,13 @@ TestResult test_stack_region_pop_case_2()
     RegionError error = {0};
 
     FuncPtr_region_free region_free = try_get_symbol(SYMBOL_FN_REGION_FREE);
+    FuncPtr_stack_region_free stack_region_free = try_get_symbol(SYMBOL_FN_STACK_REGION_FREE);
 
     FuncPtr_stack_region_alloc __stack_region_alloc = try_get_symbol(SYMBOL_FN_STACK_REGION_ALLOC);
     FuncPtr_stack_region_push __stack_region_push = try_get_symbol(SYMBOL_FN_STACK_REGION_PUSH);
-
+    
     StackRegion *stack = stack_region_alloc(TEST_STACK_REGION_POP_CAPACITY, &error); UNWRAP_IF_ERROR;
 
-    
     stack_region_push(stack, sizeof(int), &error); UNWRAP_IF_ERROR;
     stack_region_push(stack, sizeof(int), &error); UNWRAP_IF_ERROR;
     
@@ -54,7 +54,7 @@ TestResult test_stack_region_pop_case_2()
     return result;
 
 fatal:
-    if (stack) stack_region_free(stack);
+    if (stack) stack_region_free(&stack);
     if (_RegionHandle) dlclose(_RegionHandle);
     REGION_LOG_ERROR(error);
     fprintf(stderr, "[Test][Error]: Failed to perform a test for the `__stack_region_pop` function. Stop.\n");

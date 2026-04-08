@@ -32,6 +32,7 @@ TestResult test_stack_region_push_case_2()
     TestResult result = {0};
     RegionError error = {0};
 
+    FuncPtr_stack_region_free stack_region_free = try_get_symbol(SYMBOL_FN_STACK_REGION_FREE);
     FuncPtr_stack_region_alloc __stack_region_alloc = try_get_symbol(SYMBOL_FN_STACK_REGION_ALLOC);
     FuncPtr_region_free region_free = try_get_symbol(SYMBOL_FN_REGION_FREE);
 
@@ -59,6 +60,7 @@ TestResult test_stack_region_push_case_3()
     TestResult result = {0};
     RegionError error = {0};
 
+    FuncPtr_stack_region_free stack_region_free = try_get_symbol(SYMBOL_FN_STACK_REGION_FREE);
     FuncPtr_stack_region_alloc __stack_region_alloc = try_get_symbol(SYMBOL_FN_STACK_REGION_ALLOC);
     FuncPtr_region_free region_free = try_get_symbol(SYMBOL_FN_REGION_FREE);
 
@@ -86,6 +88,7 @@ TestResult test_stack_region_push_case_4()
     TestResult result = {0};
     RegionError error = {0};
 
+    FuncPtr_stack_region_free stack_region_free = try_get_symbol(SYMBOL_FN_STACK_REGION_FREE);
     FuncPtr_stack_region_alloc __stack_region_alloc = try_get_symbol(SYMBOL_FN_STACK_REGION_ALLOC);
     FuncPtr_region_free region_free = try_get_symbol(SYMBOL_FN_REGION_FREE);
 
@@ -99,7 +102,7 @@ TestResult test_stack_region_push_case_4()
 
     set_available_memory(TEST_STACK_REGION_CAPACITY / 2);
 
-    fn(stack, TEST_STACK_REGION_CAPACITY, &error, REGION_GET_CURRENT_FILE_LOCATION);
+    fn(stack, TEST_STACK_REGION_CAPACITY * 2, &error, REGION_GET_CURRENT_FILE_LOCATION);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION, error.code);
 
