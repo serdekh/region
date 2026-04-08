@@ -51,8 +51,6 @@
   #define REGION_EXTERN_C_END
 #endif
 
-// ----- DATA STRUCTS -----
-
 #define REGION_PRIVATE_CORE_FIELDS \
     size_t capacity;               \
     size_t size;                   \
@@ -65,7 +63,6 @@ typedef struct __Region {
 
 typedef struct __StackRegion {
     REGION_PRIVATE_CORE_FIELDS
-    size_t count; // The amount of items on the stack
 } StackRegion;
 
 typedef enum {
@@ -283,6 +280,7 @@ void *__stack_region_pop(StackRegion *stack, RegionError *error, RegionLocation 
 
 // ----- PUBLIC API -----
 void region_free(Region **region);
+void stack_region_free(StackRegion **stack);
 void region_reset(Region *region, RegionResetOption option);
 Region *region_get_last_node(Region *region, RegionError *error, RegionLocation location);
 
@@ -300,7 +298,9 @@ Region *region_get_last_node(Region *region, RegionError *error, RegionLocation 
 #define stack_region_peek(stack, error) __stack_region_peek((stack), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define stack_region_pop(stack, error) __stack_region_pop((stack), (error), (REGION_GET_CURRENT_FILE_LOCATION))
 #define stack_region_reset(stack, option) region_reset((Region *)(stack), (option))
-#define stack_region_free(stack) region_free((Region **)(stack))
+
+#define stack_region_get_ref_count(stack) (size_t *)((stack)->data - sizeof(size_t))
+#define stack_region_get_count(stack) *(stack_region_get_ref_count(stack))
 
 // ----- * -----
 
@@ -607,63 +607,59 @@ StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLoc
         REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_LARGE_CAPACITY, location);
         return NULL;
     }
-
-    StackRegion *stack = (StackRegion *)REGION_MALLOC(sizeof(Region) + sizeof(size_t));
-
-    if (!stack) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION, location);
-        return NULL;
-    }
-
-    stack->data = (char *)REGION_MALLOC(sizeof(char) * capacity);
     
-    if (!stack->data) {
-        REGION_FREE(stack);
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_CAPACITY, location);
-        return NULL;
+    Region *stack = __region_alloc(capacity + sizeof(size_t), error, location);
+    
+    if (error->code == REGION_ERROR_CODE_NO_ERROR) {
+        size_t *count = (size_t *)stack->data;
+        *count = 0;
+        stack->data += sizeof(size_t);
+        return (StackRegion *)stack;
     }
 
-    stack->capacity = capacity;
-    stack->size = 0;
-    stack->count = 0;
-    stack->next = NULL;
+    switch (error->code) {
+        case REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION:
+            error->code = REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION; break;
 
-    REGION_MEMCPY(stack->data, "\0", stack->capacity);
-
-    return stack;
+        case REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY:
+            error->code = REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_CAPACITY; break;
+        
+        default: break;
+    }
+    
+    return NULL;
 }
 
 void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, RegionLocation location)
 {
-    if (!stack) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_NO_STACK_REGION, location);
-        return NULL;
-    }
-
     if (size == 0) {
         REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_SMALL_SIZE, location);
         return NULL;
     }
-
-    if (size == REGION_SIZE_MAX || size + sizeof(size_t) < size) {
+    if (size + sizeof(size_t) < size) {
         REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_LARGE_SIZE, location);
         return NULL;
     }
 
-    size_t frame_size = size + sizeof(size_t);
+    void *frame = __region_push((Region *)stack, size + sizeof(size_t), error, location);
 
-    void *frame = __region_push((Region *)stack, frame_size, error, location);
-
-    if (!frame) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION, location);
-        return NULL;
+    if (error->code == REGION_ERROR_CODE_NO_ERROR) {
+        *stack_region_get_ref_count(stack) += 1;
+        *(size_t *)(frame + size) = size;
+        return frame;
     }
 
-    *(size_t *)(frame + size) = size;
+    switch (error->code) {
+        case REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION:
+            error->code = REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_NO_STACK_REGION; break;
 
-    stack->count += 1;
+        case REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION:
+            error->code = REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION; break;
 
-    return frame;
+        default: break;
+    }
+
+    return NULL;
 }
 
 void *__stack_region_peek(StackRegion *stack, RegionError *error, RegionLocation location)
@@ -673,11 +669,11 @@ void *__stack_region_peek(StackRegion *stack, RegionError *error, RegionLocation
         return NULL;
     }
 
-    if (stack->count == 0) return NULL;
+    if (stack_region_get_count(stack) == 0) return NULL;
 
     Region *last_node = (Region *)stack;
 
-    while (last_node->next != NULL && (last_node->next)-> size > 0) {
+    while (last_node->next != NULL && (last_node->next)->size > 0) {
         last_node = last_node->next;
     }
 
@@ -697,7 +693,7 @@ void *__stack_region_pop(StackRegion *stack, RegionError *error, RegionLocation 
         return NULL;
     }
 
-    if (stack->count == 0) return NULL;
+    if (stack_region_get_count(stack) == 0) return NULL;
 
     Region *last_node = (Region *)stack;
 
@@ -711,10 +707,19 @@ void *__stack_region_pop(StackRegion *stack, RegionError *error, RegionLocation 
 
     void *last_frame_start = last_frame_end - sizeof(size_t) - last_frame_size;
 
-    ((StackRegion *)(last_node))->count--;
-    ((StackRegion *)(last_node))->size -= (last_frame_size + sizeof(size_t));
+    *stack_region_get_ref_count(stack) += 1;
+    (last_node)->size -= (last_frame_size + sizeof(size_t));
 
     return last_frame_start;
+}
+
+void stack_region_free(StackRegion **stack)
+{
+    if (!stack || !(*stack)) return;
+
+    (*stack)->data -= sizeof(size_t);
+
+    region_free((Region **)stack);
 }
 
 #endif // REGION_IMPLEMENTATION
