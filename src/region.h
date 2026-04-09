@@ -242,14 +242,10 @@ typedef struct {
     RegionErrorCode code;
 } RegionError;
 
-#define REGION_SET_ERROR(error, error_code, location)                \
-    if ((error)) {                                                   \
-        (error)->code = (error_code);                                \
-        (error)->location.line = (location).line;                    \
-        (error)->location.file_name = (location).file_name;          \
-        (error)->location.func_name = (location).func_name;          \
-    }                                                                \
-
+#define REGION_SET_ERROR(error, error_code) if ((error)) (error)->code = (error_code);        
+#define REGION_GET_CURRENT_FILE_LOCATION (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}
+#define REGION_ERROR_INIT_LOCATION(error) (error)->location = REGION_GET_CURRENT_FILE_LOCATION                        
+                                                      
 #define REGION_LOG_ERROR_TO(error, out)                          \
     REGION_FPRINTF((out), "[Region][ERROR](\"%s:%d:%s\"): %s\n", \
         (error).location.file_name,                              \
@@ -258,70 +254,60 @@ typedef struct {
         region_error_code_as_strings[(error).code]);             \
 
 #define REGION_LOG_ERROR(error) REGION_LOG_ERROR_TO((error), REGION_STDERR)
+
 #define REGION_NO_ERROR(error) (error).code == REGION_ERROR_CODE_NO_ERROR
-#define REGION_ERROR(error) !(REGION_NO_ERROR((error)))
+#define REGION_ERROR(error)    (error).code != REGION_ERROR_CODE_NO_ERROR
 
 REGION_EXTERN_C_BEGIN
 
-// ----- FUNCTION DECLARATIONS (PRIVATE) -----
+// Region
+Region *region_alloc(size_t capacity, RegionError *error);
+Region *region_clone(Region *region, RegionError *error);
+Region *region_merge(Region *region, RegionMergeOption option, RegionError *error);
+Region *region_get_last_node(Region *region, RegionError *error);
 
-Region *__region_alloc(size_t capacity, RegionError *error, RegionLocation location);
-void *__region_push(Region *region, size_t size, RegionError *error, RegionLocation location);
-void __region_shrink_capacity(Region *region, RegionShrinkCapacityOption option, RegionError *error, RegionLocation location);
-Region **__region_collect(Region *region, size_t *collected_size, RegionError *error, RegionLocation location);
-Region *__region_clone(Region *region, RegionError *error, RegionLocation location);
-Region *__region_merge(Region *region, RegionMergeOption option, RegionError *error, RegionLocation location);
+Region **region_collect(Region *region, size_t *collected_size, RegionError *error);
+
+void *region_push(Region *region, size_t size, RegionError *error);
+
+void region_reset(Region *region, RegionResetOption option);
+void region_free(Region **region);
+void region_shrink_capacity(Region *region, RegionShrinkCapacityOption option, RegionError *error);
 
 // Stack Region
-StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLocation location);
-void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, RegionLocation location);
-void *__stack_region_peek(StackRegion *stack, RegionError *error, RegionLocation location);
-void *__stack_region_pop(StackRegion *stack, RegionError *error, RegionLocation location);
+StackRegion *stack_region_alloc(size_t capacity, RegionError *error);
 
-// ----- PUBLIC API -----
-void region_free(Region **region);
+void *stack_region_push(StackRegion *stack, size_t size, RegionError *error);
+void *stack_region_peek(StackRegion *stack, RegionError *error);
+void *stack_region_pop(StackRegion *stack, RegionError *error);
+
 void stack_region_free(StackRegion **stack);
-void region_reset(Region *region, RegionResetOption option);
-Region *region_get_last_node(Region *region, RegionError *error, RegionLocation location);
 
-#define REGION_GET_CURRENT_FILE_LOCATION (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}
+#define STACK_REGION_CACHE_COUNT_SIZE sizeof(size_t)
 
-#define region_alloc(capacity, error) __region_alloc((capacity), (error), (REGION_GET_CURRENT_FILE_LOCATION))
-#define region_push(region, size, error) __region_push((region), (size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
-#define region_shrink_capacity(region, option, error) __region_shrink_capacity((region), (option), (error), (REGION_GET_CURRENT_FILE_LOCATION))
-#define region_collect(region, collected_size, error) __region_collect((region), (collected_size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
-#define region_clone(region, error) __region_clone((region), (error), (REGION_GET_CURRENT_FILE_LOCATION))
-#define region_merge(region, option, error) __region_merge((region), (option), (error), (REGION_GET_CURRENT_FILE_LOCATION))
-
-#define stack_region_alloc(capacity, error) __stack_region_alloc((capacity), (error), (REGION_GET_CURRENT_FILE_LOCATION))
-#define stack_region_push(stack, size, error) __stack_region_push((stack), (size), (error), (REGION_GET_CURRENT_FILE_LOCATION))
-#define stack_region_peek(stack, error) __stack_region_peek((stack), (error), (REGION_GET_CURRENT_FILE_LOCATION))
-#define stack_region_pop(stack, error) __stack_region_pop((stack), (error), (REGION_GET_CURRENT_FILE_LOCATION))
-#define stack_region_reset(stack, option) region_reset((Region *)(stack), (option))
-
-#define stack_region_get_ref_count(stack) (size_t *)((stack)->data - sizeof(size_t))
+#define stack_region_get_ref_count(stack) (size_t *)((stack)->data - STACK_REGION_CACHE_COUNT_SIZE)
 #define stack_region_get_count(stack) *(stack_region_get_ref_count(stack))
 
 // ----- * -----
 
 #ifdef REGION_IMPLEMENTATION
 
-Region *__region_alloc(size_t capacity, RegionError *error, RegionLocation location)
+Region *region_alloc(size_t capacity, RegionError *error)
 {
     if (capacity == 0) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_SMALL_CAPACITY, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_SMALL_CAPACITY);
         return NULL;
     }
 
     if (capacity > REGION_SIZE_MAX - sizeof(Region)) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY);
         return NULL;
     }
 
     Region *region = (Region *)REGION_MALLOC(sizeof(Region));
 
     if (!region) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION);
         return NULL;
     }
 
@@ -329,7 +315,7 @@ Region *__region_alloc(size_t capacity, RegionError *error, RegionLocation locat
     
     if (!region->data) {
         REGION_FREE(region);
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY);
         return NULL;
     }
 
@@ -363,20 +349,20 @@ void region_free(Region **region)
     *region = NULL;
 }
 
-void *__region_push(Region *region, size_t size, RegionError *error, RegionLocation location)
+void *region_push(Region *region, size_t size, RegionError *error)
 {
     if (!region) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION);
         return NULL;
     }
 
     if (size == 0) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_SMALL_SIZE, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_SMALL_SIZE);
         return NULL;
     }
 
     if (size > REGION_SIZE_MAX - sizeof(Region)) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_LARGE_SIZE, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_LARGE_SIZE);
         return NULL;
     }
 
@@ -386,7 +372,7 @@ void *__region_push(Region *region, size_t size, RegionError *error, RegionLocat
         if (!current->next) {
             current->next = region_alloc(current->capacity * 2 + size, NULL);
             if (!current->next) {
-                REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION, location);
+                REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION);
                 return NULL;
             }
             current = current->next;
@@ -415,14 +401,14 @@ void region_reset(Region *region, RegionResetOption option)
     }
 }
 
-void __region_shrink_capacity_helper(Region *region, RegionShrinkCapacityOption option, RegionError *error, RegionLocation location)
+void __region_shrink_capacity_helper(Region *region, RegionShrinkCapacityOption option, RegionError *error)
 {
     if (region->size == region->capacity || region->size == 0) return;
 
     char *shrinked_buffer = (char *)REGION_MALLOC(sizeof(char) * region->size);
 
     if (!shrinked_buffer) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_SHRINK_CAPACITY_MALLOC, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_SHRINK_CAPACITY_MALLOC);
         return;
     }
 
@@ -435,34 +421,34 @@ void __region_shrink_capacity_helper(Region *region, RegionShrinkCapacityOption 
     return;
 }
 
-void __region_shrink_capacity(Region *region, RegionShrinkCapacityOption option, RegionError *error, RegionLocation location)
+void region_shrink_capacity(Region *region, RegionShrinkCapacityOption option, RegionError *error)
 {
     if (!region) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_SHRINK_CAPACITY_NO_REGION, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_SHRINK_CAPACITY_NO_REGION);
         return;
     }
 
     if (option == REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT) {
-        __region_shrink_capacity_helper(region, option, error, location);
+        __region_shrink_capacity_helper(region, option, error);
         return;
     }
 
     for (Region *t = region; t; t = t->next) {
-        __region_shrink_capacity_helper(t, option, error, location);
+        __region_shrink_capacity_helper(t, option, error);
             
         if (error->code != REGION_ERROR_CODE_NO_ERROR) return;
     }
 }
 
-Region **__region_collect(Region *region, size_t *collected_size, RegionError *error, RegionLocation location)
+Region **region_collect(Region *region, size_t *collected_size, RegionError *error)
 {
     if (!region) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_REGION, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_REGION);
         return NULL;
     }
 
     if (!collected_size) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_COLLECTED_SIZE, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_COLLECTED_SIZE);
         return NULL;
     }
 
@@ -475,7 +461,7 @@ Region **__region_collect(Region *region, size_t *collected_size, RegionError *e
     Region **collection = (Region **)REGION_MALLOC(sizeof(Region *) * nodes_count);
 
     if (!collection) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_COLLECT_MALLOC_COLLECTION, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_COLLECT_MALLOC_COLLECTION);
         return NULL;
     }
 
@@ -491,17 +477,17 @@ Region **__region_collect(Region *region, size_t *collected_size, RegionError *e
     return collection;
 }
 
-Region *__region_clone(Region *region, RegionError *error, RegionLocation location)
+Region *region_clone(Region *region, RegionError *error)
 {
     if (!region) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_CLONE_NO_REGION, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_CLONE_NO_REGION);
         return NULL;
     }
 
     Region *clone = region_alloc(region->capacity, NULL);
 
     if (!clone) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_ROOT, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_ROOT);
         return NULL;
     }
 
@@ -517,7 +503,7 @@ Region *__region_clone(Region *region, RegionError *error, RegionLocation locati
 
         if (!node) {
             region_free(&clone);
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_NODE, location);
+            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_NODE);
             return NULL;
         }
 
@@ -533,10 +519,10 @@ Region *__region_clone(Region *region, RegionError *error, RegionLocation locati
     return clone;
 }
 
-Region *__region_merge(Region *region, RegionMergeOption option, RegionError *error, RegionLocation location)
+Region *region_merge(Region *region, RegionMergeOption option, RegionError *error)
 {
     if (!region) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_MERGE_NO_REGION, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_MERGE_NO_REGION);
         return NULL;
     }
 
@@ -544,7 +530,7 @@ Region *__region_merge(Region *region, RegionMergeOption option, RegionError *er
     Region **collection = region_collect(region, &collected_size, NULL);
 
     if (!collection) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_COLLECTION, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_COLLECTION);
         return NULL;
     }
 
@@ -561,7 +547,7 @@ Region *__region_merge(Region *region, RegionMergeOption option, RegionError *er
     Region *merged_region = region_alloc(merged_capacity, NULL);
 
     if (!merged_region) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_REGION, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_REGION);
         REGION_FREE(collection);
         return NULL;
     }
@@ -582,10 +568,10 @@ Region *__region_merge(Region *region, RegionMergeOption option, RegionError *er
     return merged_region;
 }
 
-Region *region_get_last_node(Region *region, RegionError *error, RegionLocation location)
+Region *region_get_last_node(Region *region, RegionError *error)
 {
     if (!region) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_GET_LAST_NODE_NO_REGION, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_GET_LAST_NODE_NO_REGION);
         return NULL;
     }
 
@@ -596,76 +582,82 @@ Region *region_get_last_node(Region *region, RegionError *error, RegionLocation 
     return last_node;
 }
 
-StackRegion *__stack_region_alloc(size_t capacity, RegionError *error, RegionLocation location)
+StackRegion *stack_region_alloc(size_t capacity, RegionError *error)
 {
     if (capacity == 0) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_SMALL_CAPACITY, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_SMALL_CAPACITY);
         return NULL;
     }
 
     if (capacity > REGION_SIZE_MAX - sizeof(StackRegion)) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_LARGE_CAPACITY, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_LARGE_CAPACITY);
         return NULL;
     }
     
-    Region *stack = __region_alloc(capacity + sizeof(size_t), error, location);
+    RegionError local_error = {0};
+    Region *stack = region_alloc(capacity + STACK_REGION_CACHE_COUNT_SIZE, &local_error);
     
-    if (error->code == REGION_ERROR_CODE_NO_ERROR) {
+    if (REGION_NO_ERROR(local_error)) {
         size_t *count = (size_t *)stack->data;
         *count = 0;
-        stack->data += sizeof(size_t);
+        stack->data += STACK_REGION_CACHE_COUNT_SIZE; 
         return (StackRegion *)stack;
     }
 
-    switch (error->code) {
+    switch (local_error.code) {
         case REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION:
-            error->code = REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION; break;
+            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION); break;
 
         case REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY:
-            error->code = REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_CAPACITY; break;
+            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_CAPACITY); break;
         
-        default: break;
+        default:
+            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM); break;
     }
     
     return NULL;
 }
 
-void *__stack_region_push(StackRegion *stack, size_t size, RegionError *error, RegionLocation location)
+void *stack_region_push(StackRegion *stack, size_t size, RegionError *error)
 {
     if (size == 0) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_SMALL_SIZE, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_SMALL_SIZE);
         return NULL;
     }
+
     if (size + sizeof(size_t) < size) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_LARGE_SIZE, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_LARGE_SIZE);
         return NULL;
     }
 
-    void *frame = __region_push((Region *)stack, size + sizeof(size_t), error, location);
+    RegionError local_error = {0};
 
-    if (error->code == REGION_ERROR_CODE_NO_ERROR) {
+    void *frame = region_push((Region *)stack, size + sizeof(size_t), &local_error);
+
+    if (REGION_NO_ERROR(local_error)) {
         *stack_region_get_ref_count(stack) += 1;
         *(size_t *)(frame + size) = size;
         return frame;
     }
 
-    switch (error->code) {
+    switch (local_error.code) {
         case REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION:
-            error->code = REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_NO_STACK_REGION; break;
+            REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_NO_STACK_REGION); break;
 
         case REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION:
-            error->code = REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION; break;
+            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION); break;
 
-        default: break;
+        default: 
+            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM); break;
     }
 
     return NULL;
 }
 
-void *__stack_region_peek(StackRegion *stack, RegionError *error, RegionLocation location)
+void *stack_region_peek(StackRegion *stack, RegionError *error)
 {
     if (!stack) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_NO_STACK_REGION, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_NO_STACK_REGION);
         return NULL;
     }
 
@@ -686,10 +678,10 @@ void *__stack_region_peek(StackRegion *stack, RegionError *error, RegionLocation
     return last_frame_start;
 }
 
-void *__stack_region_pop(StackRegion *stack, RegionError *error, RegionLocation location)
+void *stack_region_pop(StackRegion *stack, RegionError *error)
 {
     if (!stack) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_NO_STACK_REGION, location);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_NO_STACK_REGION);
         return NULL;
     }
 
