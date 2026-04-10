@@ -1,17 +1,14 @@
 - Daily tasks:
 
-1: Complete refactoring the removal of the `RegionLocation` struct 
-   from the function parameters in the testing system.
-2: Add other functions and tests for them such as:
-   2.1 `region_to_array` to allocate a dynamic array and copy the data from the region
-   2.2 `stack_region_peek_at` to get a pointer to a frame at a specific index
-   2.3 `stack_region_peek_at_over` to get a pointer to a frame before the last one
-   2.4 `stack_region_swap` to swap the last two frames on top of the stack
-   2.5 `stack_region_pop_for` to pop an `n` number of frames
-   2.6 `stack_region_rotate` to shift the last three elements on top of the stack in a specified direction
-3: Clean up the testing infrastructure
-   3.1: Make the logic (function usage, namings, error reports...) more consistent
-   3.2: Refactor Makefile to be less hardcoded
+1: Add other functions and tests for them such as:
+   1.1 `stack_region_peek_at` to get a pointer to a frame at a specific index
+   1.2 `stack_region_peek_at_over` to get a pointer to a frame before the last one
+   1.3 `stack_region_swap` to swap the last two frames on top of the stack
+   1.4 `stack_region_pop_for` to pop an `n` number of frames
+   1.5 `stack_region_rotate` to shift the last three elements on top of the stack in a specified direction
+2: Clean up the testing infrastructure
+   2.1: Make the logic (function usage, namings, error reports...) more consistent
+   2.2: Refactor Makefile to be less hardcoded
 
 - Big tasks (Should be Implemented as soon as all the daily tasks are complete)
 
