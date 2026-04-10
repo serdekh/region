@@ -2,7 +2,7 @@
 
 FuncPtr_region_clone fn = NULL;
 
-#define test_fn(region, error) fn((region), (error), (REGION_GET_CURRENT_FILE_LOCATION))
+#define REGION_TEST_REGION_CLONE_STATIC_DATA "Hello from tests!"
 
 void try_init_test_fn()
 {
@@ -17,7 +17,7 @@ TestResult test_region_clone_case_1()
     RegionError error = {0};
     TestResult result = {0};
 
-    test_fn(NULL, &error);
+    fn(NULL, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_CLONE_NO_REGION, error.code);
 
@@ -34,7 +34,7 @@ TestResult test_region_clone_case_2()
 
     set_available_memory(sizeof(Region *) / 2);
 
-    test_fn(&region, &error);
+    fn(&region, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_ROOT, error.code);
 
@@ -56,7 +56,7 @@ TestResult test_region_clone_case_3()
 
     set_available_memory(sizeof(root) + root.capacity);
 
-    test_fn(&root, &error); 
+    fn(&root, &error); 
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_NODE, error.code);
 
@@ -64,9 +64,6 @@ TestResult test_region_clone_case_3()
 
     return result;
 }
-
-#define REGION_TEST_REGION_CLONE_STATIC_DATA "Hello from tests!"
-#define UNWRAP if(REGION_ERROR(error)) goto fatal
 
 TestResult test_region_clone_case_4()
 {
@@ -85,7 +82,7 @@ TestResult test_region_clone_case_4()
     region.capacity = region.size = static_data_len;
     region.data = REGION_TEST_REGION_CLONE_STATIC_DATA;
 
-    clone = test_fn(&region, &error); UNWRAP;
+    clone = fn(&region, &error); UNWRAP;
 
     memcpy(result.actual, clone->data, TEST_RESULT_MAX_STRING_SIZE);
     memcpy(result.expected, REGION_TEST_REGION_CLONE_STATIC_DATA, TEST_RESULT_MAX_STRING_SIZE);

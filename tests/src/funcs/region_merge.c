@@ -1,7 +1,13 @@
 #include "common/common.h"
 
 FuncPtr_region_merge fn = NULL;
-#define test_fn(region, option, error) fn((region), (option), (error), REGION_GET_CURRENT_FILE_LOCATION)
+
+#define TEST_REGION_MERGE_CAPACITY 1
+#define TEST_REGION_MERGE_CASE_4_RVALUE_INT1 19
+#define TEST_REGION_MERGE_CASE_4_RVALUE_INT2 88
+#define TEST_REGION_MERGE_CASE_5_RVALUE_INT1 765
+#define TEST_REGION_MERGE_CASE_5_RVALUE_INT2 555
+#define TEST_REGION_MERGE_CASE_5_GARBAGE_SPACE 5
 
 void try_init_test_fn()
 {
@@ -16,7 +22,7 @@ TestResult test_region_merge_case_1()
     RegionError error = {0};
     TestResult result = {0};
 
-    test_fn(NULL, 0, &error);
+    fn(NULL, 0, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_MERGE_NO_REGION, error.code);
 
@@ -33,7 +39,7 @@ TestResult test_region_merge_case_2()
 
     set_available_memory(0);
 
-    test_fn(&region, 0, &error);
+    fn(&region, 0, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_COLLECTION, error.code);
 
@@ -41,8 +47,6 @@ TestResult test_region_merge_case_2()
 
     return result;
 }
-
-#define TEST_REGION_MERGE_CAPACITY 1
 
 TestResult test_region_merge_case_3()
 {
@@ -54,7 +58,7 @@ TestResult test_region_merge_case_3()
 
     set_available_memory(TEST_REGION_MERGE_CAPACITY + sizeof(Region **));
 
-    test_fn(&region, 0, &error);
+    fn(&region, 0, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_REGION, error.code);
 
@@ -62,11 +66,6 @@ TestResult test_region_merge_case_3()
 
     return result;
 }
-
-#define UNWRAP if (REGION_ERROR(error)) goto fatal;
-
-#define TEST_REGION_MERGE_CASE_4_RVALUE_INT1 19
-#define TEST_REGION_MERGE_CASE_4_RVALUE_INT2 88
 
 TestResult test_region_merge_case_4()
 {
@@ -79,8 +78,8 @@ TestResult test_region_merge_case_4()
     Region *second = NULL;
     Region *merged = NULL;
 
-    FuncPtr_region_alloc __region_alloc = try_get_symbol(SYMBOL_FN_REGION_ALLOC);
     FuncPtr_region_free region_free = try_get_symbol(SYMBOL_FN_REGION_FREE);
+    FuncPtr_region_alloc region_alloc = try_get_symbol(SYMBOL_FN_REGION_ALLOC);
 
     first =  region_alloc(sizeof(int), &error); UNWRAP;
     second = region_alloc(sizeof(int), &error); UNWRAP;
@@ -90,7 +89,7 @@ TestResult test_region_merge_case_4()
 
     first->next = second;
 
-    merged = test_fn(first, REGION_MERGE_OPTION_DEFAULT, &error); UNWRAP;
+    merged = fn(first, REGION_MERGE_OPTION_DEFAULT, &error); UNWRAP;
 
     if (!(result.success = *(int *)(merged->data) != TEST_REGION_MERGE_CASE_4_RVALUE_INT1)) {
         TEST_RESULT_WRITE_INT(result, TEST_REGION_MERGE_CASE_4_RVALUE_INT1, *(int *)(merged->data));
@@ -121,10 +120,6 @@ fatal:
     exit(1);
 }
 
-#define TEST_REGION_MERGE_CASE_5_RVALUE_INT1 765
-#define TEST_REGION_MERGE_CASE_5_RVALUE_INT2 555
-#define TEST_REGION_MERGE_CASE_5_GARBAGE_SPACE 5
-
 TestResult test_region_merge_case_5()
 {
     try_init_test_fn();
@@ -136,9 +131,9 @@ TestResult test_region_merge_case_5()
     Region *second = NULL;
     Region *merged = NULL;
 
-    FuncPtr_region_alloc __region_alloc = try_get_symbol(SYMBOL_FN_REGION_ALLOC);
-    FuncPtr_region_push __region_push = try_get_symbol(SYMBOL_FN_REGION_PUSH);
-    FuncPtr_region_free region_free = try_get_symbol(SYMBOL_FN_REGION_FREE);
+    FuncPtr_region_push  region_push  = try_get_symbol(SYMBOL_FN_REGION_PUSH);
+    FuncPtr_region_free  region_free  = try_get_symbol(SYMBOL_FN_REGION_FREE);
+    FuncPtr_region_alloc region_alloc = try_get_symbol(SYMBOL_FN_REGION_ALLOC);
 
     first  = region_alloc(sizeof(int) + TEST_REGION_MERGE_CASE_5_GARBAGE_SPACE, &error); UNWRAP;
     second = region_alloc(sizeof(int) + TEST_REGION_MERGE_CASE_5_GARBAGE_SPACE, &error); UNWRAP;
@@ -151,7 +146,7 @@ TestResult test_region_merge_case_5()
 
     first->next = second;
 
-    merged = test_fn(first, REGION_MERGE_OPTION_CONDENSE, &error); UNWRAP;
+    merged = fn(first, REGION_MERGE_OPTION_CONDENSE, &error); UNWRAP;
 
     if (!(result.success = *(int *)(merged->data) != TEST_REGION_MERGE_CASE_5_RVALUE_INT1)) {
         TEST_RESULT_WRITE_INT(result, TEST_REGION_MERGE_CASE_5_RVALUE_INT1, *(int *)(merged->data));

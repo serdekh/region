@@ -16,7 +16,7 @@ TestResult region_alloc_case_1()
     RegionError error = {0};
     TestResult result = {0};
 
-    fn(0, &error, REGION_GET_CURRENT_FILE_LOCATION);
+    fn(0, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_SMALL_CAPACITY, error.code);
 
@@ -30,7 +30,7 @@ TestResult region_alloc_case_2()
     RegionError error = {0};
     TestResult result = {0};
 
-    fn(SIZE_MAX, &error, REGION_GET_CURRENT_FILE_LOCATION);
+    fn(SIZE_MAX, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY, error.code);
 
@@ -44,10 +44,9 @@ TestResult region_alloc_case_3()
     RegionError error = {0};
     TestResult result = {0};
 
-    // Emulate a system that cannot allocate a complete Region struct
     set_available_memory(sizeof(Region) / 2);
 
-    fn(1, &error, REGION_GET_CURRENT_FILE_LOCATION);
+    fn(1, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION, error.code);
 
@@ -60,14 +59,13 @@ TestResult region_alloc_case_4()
 {
     try_init_test_fn();
 
+    size_t capacity = 10;
     RegionError error = {0};
     TestResult result = {0};
 
-    // Emulate a system that cannot allocate a complete Region struct + capacity for the data
-    size_t capacity = 10;
     set_available_memory(sizeof(Region) + capacity / 2);
 
-    fn(capacity, &error, REGION_GET_CURRENT_FILE_LOCATION);
+    fn(capacity, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY, error.code);
 
