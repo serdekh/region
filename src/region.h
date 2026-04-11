@@ -169,6 +169,9 @@ typedef enum {
     // __stack_region_peek
     REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_NO_STACK_REGION, // The pointer to the `StackRegion` struct equals to `NULL`.
 
+    // __stack_region_peek_at
+    REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_AT_NO_STACK_REGION, // The pointer to the `StackRegion` struct equals to `NULL`.
+
     // __stack_region_pop
     REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_NO_STACK_REGION, // The pointer to the `Region` struct equals to `NULL`.
 
@@ -226,6 +229,12 @@ static const char *region_error_code_as_strings[] = {
     "Invalid argument: The value of `size` cannot equal to zero.",
     "Invalid argument: The value of `size` is too large. Cannot allocate memory.",
     "No free space: Failed to allocate a `Region` struct for a new item.",
+
+    // __stack_region_peek
+    "Invalid argument: The value of `StackRegion` cannot equal to `NULL`.",
+
+    // __stack_region_peek_at
+    "Invalid argument: The value of `StackRegion` cannot equal to `NULL`.",
 
     // __stack_region_pop
     "Invalid argument: The value of `StackRegion` cannot equal to `NULL`."
@@ -682,11 +691,12 @@ void *stack_region_peek(StackRegion *stack, RegionError *error)
 void *stack_region_peek_at(StackRegion *stack, size_t index, RegionError *error)
 {
     if (!stack) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_AT_NO_STACK_REGION);
         return NULL;
     }
 
-    if (stack_region_get_count(stack) == 0) return NULL;
+    if (stack_region_get_count(stack) == 0 || 
+        stack_region_get_count(stack) <= index) return NULL;
 
     size_t last_node_index = 0;
     Region *last_node = (Region *)stack;
@@ -694,9 +704,7 @@ void *stack_region_peek_at(StackRegion *stack, size_t index, RegionError *error)
     while (last_node->next != NULL && (last_node->next)->size > 0) {
         last_node = last_node->next;
         last_node_index++;
-    }
-
-    if(last_node_index != 0) last_node_index--;
+    } if (last_node_index != 0) last_node_index--;
 
     size_t bytes_to_read = last_node->size;
 
@@ -708,15 +716,17 @@ void *stack_region_peek_at(StackRegion *stack, size_t index, RegionError *error)
         bytes_to_read -= indexed_frame_size + sizeof(size_t);
 
         if (bytes_to_read == 0) {
-            if (i == index) break;
+            if (i >= index) break;
 
             last_node = (Region *)stack;
             for (size_t j = 0; j < last_node_index; j++) {
                 last_node = last_node->next;
             }
-
-            last_node_index--;
+            
             bytes_to_read = last_node->size;
+            
+            if (last_node_index == 0) last_node_index = 0;
+            else last_node_index--;
         }
     }
 
