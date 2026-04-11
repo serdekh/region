@@ -279,6 +279,7 @@ StackRegion *stack_region_alloc(size_t capacity, RegionError *error);
 
 void *stack_region_push(StackRegion *stack, size_t size, RegionError *error);
 void *stack_region_peek(StackRegion *stack, RegionError *error);
+void *stack_region_peek_at(StackRegion *stack, size_t index, RegionError *error);
 void *stack_region_pop(StackRegion *stack, RegionError *error);
 
 void stack_region_free(StackRegion **stack);
@@ -676,6 +677,50 @@ void *stack_region_peek(StackRegion *stack, RegionError *error)
     void *last_frame_start = last_frame_end - sizeof(size_t) - last_frame_size;
 
     return last_frame_start;
+}
+
+void *stack_region_peek_at(StackRegion *stack, size_t index, RegionError *error)
+{
+    if (!stack) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL);
+        return NULL;
+    }
+
+    if (stack_region_get_count(stack) == 0) return NULL;
+
+    size_t last_node_index = 0;
+    Region *last_node = (Region *)stack;
+
+    while (last_node->next != NULL && (last_node->next)->size > 0) {
+        last_node = last_node->next;
+        last_node_index++;
+    }
+
+    if(last_node_index != 0) last_node_index--;
+
+    size_t bytes_to_read = last_node->size;
+
+    for (size_t i = 0; i <= index; i++) {
+        void *indexed_frame_end = last_node->data + bytes_to_read;
+
+        size_t indexed_frame_size = *(size_t *)(indexed_frame_end - sizeof(size_t));
+
+        bytes_to_read -= indexed_frame_size + sizeof(size_t);
+
+        if (bytes_to_read == 0) {
+            if (i == index) break;
+
+            last_node = (Region *)stack;
+            for (size_t j = 0; j < last_node_index; j++) {
+                last_node = last_node->next;
+            }
+
+            last_node_index--;
+            bytes_to_read = last_node->size;
+        }
+    }
+
+    return last_node->data + bytes_to_read;
 }
 
 void *stack_region_pop(StackRegion *stack, RegionError *error)
