@@ -51,6 +51,18 @@
   #define REGION_EXTERN_C_END
 #endif
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+  #ifdef REGION_BUILD
+    #define REGION_API __declspec(dllexport)
+  #else
+    #define REGION_API __declspec(dllimport)
+  #endif
+#elif defined(__GNUC__) || defined(__clang__)
+  #define REGION_API __attribute__((visibility("default")))
+#else
+  #define REGION_API
+#endif
+
 #define REGION_PRIVATE_CORE_FIELDS \
     size_t capacity;               \
     size_t size;                   \
@@ -86,17 +98,17 @@ typedef enum {
     // Emulates the amount of memory a process can request from an OS
     static size_t __test_available_memory = REGION_TEST_AVAILABLE_MEMORY_DEFAULT;
 
-    void __test_set_available_memory(size_t value) 
+    REGION_API void __test_set_available_memory(size_t value) 
     {
         __test_available_memory = value;
     }
 
-    size_t __test_get_available_memory()
+    REGION_API size_t __test_get_available_memory()
     {
         return __test_available_memory;
     }
 
-    void *test_malloc(size_t capacity)
+    REGION_API void *test_malloc(size_t capacity)
     {
         if (capacity > __test_available_memory) return NULL;
 
@@ -270,28 +282,28 @@ typedef struct {
 REGION_EXTERN_C_BEGIN
 
 // Region
-Region *region_alloc(size_t capacity, RegionError *error);
-Region *region_clone(Region *region, RegionError *error);
-Region *region_merge(Region *region, RegionMergeOption option, RegionError *error);
-Region *region_get_last_node(Region *region, RegionError *error);
+REGION_API Region *region_alloc(size_t capacity, RegionError *error);
+REGION_API Region *region_clone(Region *region, RegionError *error);
+REGION_API Region *region_merge(Region *region, RegionMergeOption option, RegionError *error);
+REGION_API Region *region_get_last_node(Region *region, RegionError *error);
 
-Region **region_collect(Region *region, size_t *collected_size, RegionError *error);
+REGION_API Region **region_collect(Region *region, size_t *collected_size, RegionError *error);
 
-void *region_push(Region *region, size_t size, RegionError *error);
+REGION_API void *region_push(Region *region, size_t size, RegionError *error);
 
-void region_reset(Region *region, RegionResetOption option);
-void region_free(Region **region);
-void region_shrink_capacity(Region *region, RegionShrinkCapacityOption option, RegionError *error);
+REGION_API void region_reset(Region *region, RegionResetOption option);
+REGION_API void region_free(Region **region);
+REGION_API void region_shrink_capacity(Region *region, RegionShrinkCapacityOption option, RegionError *error);
 
 // Stack Region
-StackRegion *stack_region_alloc(size_t capacity, RegionError *error);
+REGION_API StackRegion *stack_region_alloc(size_t capacity, RegionError *error);
 
-void *stack_region_push(StackRegion *stack, size_t size, RegionError *error);
-void *stack_region_peek(StackRegion *stack, RegionError *error);
-void *stack_region_peek_at(StackRegion *stack, size_t index, RegionError *error);
-void *stack_region_pop(StackRegion *stack, RegionError *error);
+REGION_API void *stack_region_push(StackRegion *stack, size_t size, RegionError *error);
+REGION_API void *stack_region_peek(StackRegion *stack, RegionError *error);
+REGION_API void *stack_region_peek_at(StackRegion *stack, size_t index, RegionError *error);
+REGION_API void *stack_region_pop(StackRegion *stack, RegionError *error);
 
-void stack_region_free(StackRegion **stack);
+REGION_API void stack_region_free(StackRegion **stack);
 
 #define STACK_REGION_CACHE_COUNT_SIZE sizeof(size_t)
 
@@ -411,7 +423,7 @@ void region_reset(Region *region, RegionResetOption option)
     }
 }
 
-void __region_shrink_capacity_helper(Region *region, RegionShrinkCapacityOption option, RegionError *error)
+void __region_shrink_capacity_helper(Region *region, RegionError *error)
 {
     if (region->size == region->capacity || region->size == 0) return;
 
@@ -439,12 +451,12 @@ void region_shrink_capacity(Region *region, RegionShrinkCapacityOption option, R
     }
 
     if (option == REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT) {
-        __region_shrink_capacity_helper(region, option, error);
+        __region_shrink_capacity_helper(region, error);
         return;
     }
 
     for (Region *t = region; t; t = t->next) {
-        __region_shrink_capacity_helper(t, option, error);
+        __region_shrink_capacity_helper(t, error);
             
         if (error->code != REGION_ERROR_CODE_NO_ERROR) return;
     }
