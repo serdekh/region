@@ -4,7 +4,7 @@ usage:
 CC = gcc
 # The warnings are temporarily disabled because they treat the `region_error_code_as_strings` array
 # as unused since it's only referred to in macros and not in functions
-CC_FLAGS = -std=gnu99 #-Wall -Wextra
+CC_FLAGS = -std=gnu99 -fvisibility=hidden -Wall -Wextra
 
 BUILD := .build
 OBJ := $(BUILD)/obj
@@ -43,7 +43,7 @@ $(TARGET_OBJ): src/region.h $(OBJ)
 	$(CC) $(CC_FLAGS) -DREGION_IMPLEMENTATION -x c -c src/region.h -o $(TARGET_OBJ)
 
 $(TARGET_SOBJ): src/region.h $(SOBJ)
-	$(CC) $(CC_FLAGS) -DREGION_IMPLEMENTATION -x c -c src/region.h -o $(TARGET_SOBJ)
+	$(CC) $(CC_FLAGS) -DREGION_IMPLEMENTATION -DREGION_BUILD -x c -c src/region.h -o $(TARGET_SOBJ)
 	$(CC) -shared -o $(TARGET_SOBJ) -DREGION_IMPLEMENTATION -x c -fPIC src/region.h
 
 $(TARGET_TEST_SOBJ): src/region.h $(SOBJ)
