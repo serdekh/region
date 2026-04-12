@@ -19,6 +19,7 @@
 #define SYMBOL_FN_STACK_REGION_PEEK "stack_region_peek"
 #define SYMBOL_FN_STACK_REGION_PEEK_AT "stack_region_peek_at"
 #define SYMBOL_FN_STACK_REGION_POP "stack_region_pop"
+#define SYMBOL_FN_STACK_REGION_SWAP "stack_region_swap"
 #define SYMBOL_FN_STACK_REGION_FREE "stack_region_free"
 
 #define SYMBOL_FN_TEST_SET_AVAILABLE_MEMORY "__test_set_available_memory"
@@ -38,6 +39,7 @@ typedef void *(*FuncPtr_stack_region_push)(StackRegion *stack, size_t size, Regi
 typedef void *(*FuncPtr_stack_region_peek)(StackRegion *stack, RegionError *error);
 typedef void *(*FuncPtr_stack_region_peek_at)(StackRegion *stack, size_t index, RegionError *error);
 typedef void *(*FuncPtr_stack_region_pop)(StackRegion *stack, RegionError *error);
+typedef void (*FuncPtr_stack_region_swap)(StackRegion *stack, RegionError *error);
 typedef void (*FuncPtr_stack_region_free)(StackRegion **stack);
 
 typedef void (*FuncPtr_test_set_available_memory)(size_t value);
