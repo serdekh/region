@@ -6,7 +6,6 @@
    2.2: `stack_region_rotate` to shift the last three elements on top of the stack in a specified direction
 3: Clean up the testing infrastructure
    3.1: Make the logic (function usage, namings, error reports...) more consistent
-   3.2: Refactor Makefile to be less hardcoded
 4:
    4.1: Add additional tests for the existing functions to capture more
    cases. Specifically for the `stack_region_swap.c`, `stack_region_peek_at`,
