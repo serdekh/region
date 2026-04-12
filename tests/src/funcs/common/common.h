@@ -25,7 +25,7 @@
 #define SYMBOL_FN_TEST_GET_AVAILABLE_MEMORY "__test_get_available_memory"
 
 typedef Region *(*FuncPtr_region_alloc)(size_t, RegionError*);
-typedef Region *(*FuncPtr_region_get_last_node)(Region *region, RegionError *error);
+typedef Region *(*FuncPtr_region_get_last_node)(Region *region, RegionGetLastNodeOption option, RegionError *error);
 typedef Region *(*FuncPtr_region_clone)(Region *region, RegionError *error);
 typedef Region *(*FuncPtr_region_merge)(Region *region, RegionMergeOption option, RegionError *error);
 typedef Region **(*FuncPtr_region_collect)(Region *region, size_t *collected_size, RegionError *error);

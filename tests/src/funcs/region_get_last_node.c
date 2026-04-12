@@ -17,7 +17,7 @@ TestResult test_region_get_last_node_case_1()
     TestResult result = {0};
     RegionError error = {0};
 
-    fn(NULL, &error);
+    fn(NULL, REGION_GET_LAST_NODE_OPTION_DEFAULT, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_GET_LAST_NODE_NO_REGION, error.code);
 
@@ -35,14 +35,14 @@ TestResult test_region_get_last_node_case_2()
     Region *second = NULL;
 
     FuncPtr_region_free  region_free   = try_get_symbol(SYMBOL_FN_REGION_FREE);
-    FuncPtr_region_alloc region_alloc = try_get_symbol(SYMBOL_FN_REGION_ALLOC);
+    FuncPtr_region_alloc region_alloc  = try_get_symbol(SYMBOL_FN_REGION_ALLOC);
 
     first  = region_alloc(TEST_REGION_GET_LAST_NODE_CAPACITY, &error); UNWRAP;
     second = region_alloc(TEST_REGION_GET_LAST_NODE_CAPACITY, &error); UNWRAP;
 
     first->next = second;
 
-    Region *last_node = fn(first, &error); UNWRAP;
+    Region *last_node = fn(first, REGION_GET_LAST_NODE_OPTION_DEFAULT, &error); UNWRAP;
 
     TEST_RESULT_WRITE_PTR(result, second, last_node);
 
