@@ -83,14 +83,19 @@ typedef enum {
 } RegionResetOption;
 
 typedef enum {
-    REGION_MERGE_OPTION_DEFAULT,
+    REGION_MERGE_OPTION_DEFAULT = 0,
     REGION_MERGE_OPTION_CONDENSE
 } RegionMergeOption;
 
 typedef enum {
-    REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT,
+    REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT = 0,
     REGION_SHRINK_CAPACITY_OPTION_ALL
 } RegionShrinkCapacityOption;
+
+typedef enum {
+    REGION_GET_LAST_NODE_OPTION_DEFAULT = 0,
+    REGION_GET_LAST_NODE_OPTION_NON_EMPTY
+} RegionGetLastNodeOption;
 
 #define REGION_TEST_AVAILABLE_MEMORY_DEFAULT 2048
 
@@ -187,6 +192,12 @@ typedef enum {
     // __stack_region_pop
     REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_NO_STACK_REGION, // The pointer to the `Region` struct equals to `NULL`.
 
+    // stack_region_swap
+    REGION_ERROR_CODE_EINVAL_STACK_REGION_SWAP_NO_STACK_REGION,         // The pointer to the `StackRegion` struct equals to `NULL`.
+    REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_MALLOC_TEMPORARY_BUFFER, // Failed to allocate a temporary buffer to which the swapped data gets copied.
+    REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_PUSH_LAST,               // Failed to re-push the last frame as a previous one.
+    REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_PUSH_PREV,               // Failed to re-push the previous frame as a last one.
+
 } RegionErrorCode;
 
 static const char *region_error_code_as_strings[] = {
@@ -196,33 +207,33 @@ static const char *region_error_code_as_strings[] = {
     "Invalid argument.",
     "No free space.",
 
-    // __region_alloc
+    // region_alloc
     "Invalid argument: The value of `capacity` cannot equal to zero.",
     "Invalid argument: The value of `capacity` is too large. Cannot allocate memory.",
     "No free space: Failed to allocate a `Region` struct.",
     "No free space: Failed to allocate `capacity` bytes into the `Region` struct.",
 
-    // __region_push
+    // region_push
     "Invalid argument: The value of `region` cannot equal to `NULL`.",
     "Invalid argument: The value of `size` cannot equal to zero.",
     "Invalid argument: The value of `size` is too large. Cannot allocate memory.",
     "No free space: Failed to allocate a `Region` struct for a new item.",
 
-    // __region_shrink_capacity
+    // region_shrink_capacity
     "Invalid argument: The value of `region` cannot equal to `NULL`.",
     "No free space: Failed to allocate a new shrinked buffer.",
 
-    // __region_collect
+    // region_collect
     "Invalid argument: The value of `region` cannot equal to `NULL`.",
     "Invalid argument: The value of `collected_size` cannot equal to `NULL`.", 
     "No free space: Failed to allocate an array to collect all the nodes in the `region`.", 
 
-    // __region_clone
+    // region_clone
     "Invalid argument: The value of `region` cannot equal to `NULL`.",
     "No free space: Failed to clone the `region` argument.",
     "No free space: Failed to clone a node from the `region` argument.",
 
-    // __region_merge
+    // region_merge
     "Invalid argument: The value of `region` cannot equal to `NULL`.",
     "No free space: Failed to allocate a temporary buffer to store a collection of `region`'s nodes.",
     "No free space: Failed to allocate a region with the combined capacity",
@@ -230,26 +241,32 @@ static const char *region_error_code_as_strings[] = {
     // region_get_last_node
     "Invalid argument: the value of `region` cannot equal to `NULL`",
 
-    // __stack_region_alloc
+    // stack_region_alloc
     "Invalid argument: The value of `capacity` cannot equal to zero.",
     "Invalid argument: The value of `capacity` is too large. Cannot allocate memory.",
     "No free space: Failed to allocate a `StackRegion` struct.",
     "No free space: Failed to allocate `capacity` bytes into the `StackRegion` struct.",
 
-    // __stack_region_push
+    // stack_region_push
     "Invalid argument: The value of `StackRegion` cannot equal to `NULL`.",
     "Invalid argument: The value of `size` cannot equal to zero.",
     "Invalid argument: The value of `size` is too large. Cannot allocate memory.",
     "No free space: Failed to allocate a `Region` struct for a new item.",
 
-    // __stack_region_peek
+    // stack_region_peek
     "Invalid argument: The value of `StackRegion` cannot equal to `NULL`.",
 
-    // __stack_region_peek_at
+    // stack_region_peek_at
     "Invalid argument: The value of `StackRegion` cannot equal to `NULL`.",
 
-    // __stack_region_pop
-    "Invalid argument: The value of `StackRegion` cannot equal to `NULL`."
+    // stack_region_pop
+    "Invalid argument: The value of `StackRegion` cannot equal to `NULL`.",
+
+    // stack_region_swap
+    "Invalid argument: The value of `StackRegion` cannot equal to `NULL`.",
+    "No free space: Failed to allocate a temporary buffer to store the swapped frames",
+    "No free space: Failed to re-push the last frame at a previous position",
+    "No free space: Failed to re-push the previous frame at a last position",
 };
 
 typedef struct {
@@ -285,8 +302,7 @@ REGION_EXTERN_C_BEGIN
 REGION_API Region *region_alloc(size_t capacity, RegionError *error);
 REGION_API Region *region_clone(Region *region, RegionError *error);
 REGION_API Region *region_merge(Region *region, RegionMergeOption option, RegionError *error);
-REGION_API Region *region_get_last_node(Region *region, RegionError *error);
-
+REGION_API Region *region_get_last_node(Region *region, RegionGetLastNodeOption option, RegionError *error);
 REGION_API Region **region_collect(Region *region, size_t *collected_size, RegionError *error);
 
 REGION_API void *region_push(Region *region, size_t size, RegionError *error);
@@ -303,6 +319,7 @@ REGION_API void *stack_region_peek(StackRegion *stack, RegionError *error);
 REGION_API void *stack_region_peek_at(StackRegion *stack, size_t index, RegionError *error);
 REGION_API void *stack_region_pop(StackRegion *stack, RegionError *error);
 
+REGION_API void stack_region_swap(StackRegion *stack, RegionError *error);
 REGION_API void stack_region_free(StackRegion **stack);
 
 #define STACK_REGION_CACHE_COUNT_SIZE sizeof(size_t)
@@ -590,7 +607,7 @@ Region *region_merge(Region *region, RegionMergeOption option, RegionError *erro
     return merged_region;
 }
 
-Region *region_get_last_node(Region *region, RegionError *error)
+Region *region_get_last_node(Region *region, RegionGetLastNodeOption option, RegionError *error)
 {
     if (!region) {
         REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_GET_LAST_NODE_NO_REGION);
@@ -599,7 +616,13 @@ Region *region_get_last_node(Region *region, RegionError *error)
 
     Region *last_node = region;
 
-    while (last_node->next != NULL) last_node = last_node->next;
+    while (last_node->next != NULL) {
+        bool predicate = option == REGION_GET_LAST_NODE_OPTION_NON_EMPTY ? (last_node->next)->size != 0 : true;
+
+        if (!predicate) break;
+
+        last_node = last_node->next;
+    }
 
     return last_node;
 }
@@ -685,11 +708,7 @@ void *stack_region_peek(StackRegion *stack, RegionError *error)
 
     if (stack_region_get_count(stack) == 0) return NULL;
 
-    Region *last_node = (Region *)stack;
-
-    while (last_node->next != NULL && (last_node->next)->size > 0) {
-        last_node = last_node->next;
-    }
+    Region *last_node = region_get_last_node((Region *)stack, REGION_GET_LAST_NODE_OPTION_NON_EMPTY, NULL);
 
     void *last_frame_end = last_node->data + last_node->size;
 
@@ -766,10 +785,75 @@ void *stack_region_pop(StackRegion *stack, RegionError *error)
 
     void *last_frame_start = last_frame_end - sizeof(size_t) - last_frame_size;
 
-    *stack_region_get_ref_count(stack) += 1;
+    *stack_region_get_ref_count(stack) -= 1;
     (last_node)->size -= (last_frame_size + sizeof(size_t));
 
     return last_frame_start;
+}
+
+void stack_region_swap(StackRegion *stack, RegionError *error)
+{
+    if (!stack) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_SWAP_NO_STACK_REGION);
+        return;
+    }
+
+    if (stack_region_get_count(stack) < 2) return;
+  
+    Region *last_node = region_get_last_node((Region *)stack, REGION_GET_LAST_NODE_OPTION_NON_EMPTY, NULL);
+
+    size_t last_frame_total_size = last_node->size;
+
+    void *last_frame = stack_region_pop(stack, NULL); 
+
+    last_frame_total_size -= last_node->size;
+
+    size_t last_frame_size = last_frame_total_size - sizeof(size_t);
+
+    // --------------------------------------
+
+    last_node = region_get_last_node((Region *)stack, REGION_GET_LAST_NODE_OPTION_NON_EMPTY, NULL);
+
+    size_t prev_frame_total_size = last_node->size;
+
+    void *prev_frame = stack_region_pop(stack, NULL); 
+    
+    prev_frame_total_size -= last_node->size;
+
+    size_t prev_frame_size = prev_frame_total_size - sizeof(size_t);
+
+    void *temp_buffer = REGION_MALLOC(prev_frame_size + last_frame_size);
+    
+    if (!temp_buffer) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_MALLOC_TEMPORARY_BUFFER);
+        return;
+    }
+
+    REGION_MEMCPY(temp_buffer, last_frame, last_frame_size);
+    REGION_MEMCPY(temp_buffer + last_frame_size, prev_frame, prev_frame_size);
+
+    RegionError local_error = {0};
+
+    void *swapped_prev_frame = stack_region_push(stack, last_frame_size, &local_error);
+    
+    if (REGION_ERROR(local_error)) {
+        REGION_FREE(temp_buffer);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_PUSH_LAST);
+        return;
+    }
+    
+    void *swapped_last_frame = stack_region_push(stack, prev_frame_size, &local_error);
+    
+    if (REGION_ERROR(local_error)) {
+        REGION_FREE(temp_buffer);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_PUSH_PREV);
+        return;
+    }
+
+    REGION_MEMCPY(swapped_prev_frame, temp_buffer, last_frame_size);
+    REGION_MEMCPY(swapped_last_frame, temp_buffer + last_frame_size, prev_frame_size);
+
+    REGION_FREE(temp_buffer);
 }
 
 void stack_region_free(StackRegion **stack)
