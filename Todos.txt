@@ -1,14 +1,14 @@
 - Daily tasks:
 
-1: Add tests for the reimplemented stack functions which use the new `StackRegionFrame` struct.
-2: Add additional tests for the updated `region_get_last_node` function
-3: Add other functions and tests for them such as:
-   3.1: `stack_region_pop_for` to pop an `n` number of frames
-   3.2: `stack_region_rotate` to shift the last three elements on top of the stack in a specified direction
-4: Clean up the testing infrastructure
-   4.1: Make the logic (function usage, namings, error reports...) more consistent
-5:
-   5.1: Add additional tests for the existing functions to capture more
+1: 
+   1.1: Add additional tests for the updated `region_get_last_node` function
+2: Add other functions and tests for them such as:
+   2.1: `stack_region_pop_for` to pop an `n` number of frames
+   2.2: `stack_region_rotate` to shift the last three elements on top of the stack in a specified direction
+3: Clean up the testing infrastructure
+   3.1: Make the logic (function usage, namings, error reports...) more consistent
+4:
+   4.1: Add additional tests for the existing functions to capture more
    cases. Specifically for the `stack_region_swap.c`, `stack_region_peek_at`,
    `stack_region_pop`, `region_merge`.
 

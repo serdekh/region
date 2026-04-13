@@ -51,15 +51,15 @@ TestResult test_stack_region_swap_case_2()
 
     stack = stack_region_alloc(TEST_STACK_REGION_SWAP_CASE2_CAPACITY, &error); UNWRAP;
 
-    int *pushed = (int *)stack_region_push(stack, TEST_STACK_REGION_SWAP_CASE2_CAPACITY, &error); UNWRAP;
+    int *pushed = (int *)(stack_region_push(stack, TEST_STACK_REGION_SWAP_CASE2_CAPACITY, &error)).data; UNWRAP;
 
     *pushed = TEST_STACK_REGION_SWAP_CASE2_VALUE;
 
     fn(stack, &error);
 
-    int *pushed_after_swap = (int *)stack_region_peek(stack, &error); UNWRAP;
+    StackRegionFrame pushed_after_swap = stack_region_peek(stack, &error); UNWRAP;
 
-    TEST_RESULT_WRITE_INT(result, TEST_STACK_REGION_SWAP_CASE2_VALUE, *pushed_after_swap);
+    TEST_RESULT_WRITE_INT(result, TEST_STACK_REGION_SWAP_CASE2_VALUE, *(int *)pushed_after_swap.data);
 
     stack_region_free(&stack);
 
@@ -92,16 +92,16 @@ TestResult test_stack_region_swap_case_3()
 
     stack = stack_region_alloc(TEST_STACK_REGION_SWAP_CASE3_CAPACITY, &error); UNWRAP;
 
-    int *item_2 = (int *)stack_region_push(stack, sizeof(int), &error); UNWRAP;
-    int *item_1 = (int *)stack_region_push(stack, sizeof(int), &error); UNWRAP;
+    int *item_2 = (int *)(stack_region_push(stack, sizeof(int), &error)).data; UNWRAP;
+    int *item_1 = (int *)(stack_region_push(stack, sizeof(int), &error)).data; UNWRAP;
 
     *item_1 = TEST_STACK_REGION_SWAP_CASE3_VALUE1;
     *item_2 = TEST_STACK_REGION_SWAP_CASE3_VALUE2;
 
     fn(stack, &error);
 
-    int *swapped_item_1 = (int *)stack_region_peek_at(stack, 0, &error); UNWRAP;
-    int *swapped_item_2 = (int *)stack_region_peek_at(stack, 1, &error); UNWRAP;
+    int *swapped_item_1 = (int *)(stack_region_peek_at(stack, 0, &error)).data; UNWRAP;
+    int *swapped_item_2 = (int *)(stack_region_peek_at(stack, 1, &error)).data; UNWRAP;
 
     sprintf(result.expected, "Before swap: {%d, %d}, After swap: {%d, %d}", 
         TEST_STACK_REGION_SWAP_CASE3_VALUE2, TEST_STACK_REGION_SWAP_CASE3_VALUE1,
@@ -145,16 +145,16 @@ TestResult test_stack_region_swap_case_4()
 
     stack = stack_region_alloc(TEST_STACK_REGION_SWAP_CASE4_CAPACITY, &error); UNWRAP;
 
-    int   *item_2 = (int *)stack_region_push(stack, sizeof(int), &error); UNWRAP;
-    float *item_1 = (float *)stack_region_push(stack, sizeof(float), &error); UNWRAP;
+    int   *item_2 = (int *)(stack_region_push(stack, sizeof(int), &error).data); UNWRAP;
+    float *item_1 = (float *)(stack_region_push(stack, sizeof(float), &error)).data; UNWRAP;
 
     *item_1 = TEST_STACK_REGION_SWAP_CASE4_VALUE_FLOAT;
     *item_2 = TEST_STACK_REGION_SWAP_CASE4_VALUE_INT;
 
     fn(stack, &error);
 
-    int *swapped_item_1 = (int *)stack_region_pop(stack, &error); UNWRAP;
-    float *swapped_item_2 = (float *)stack_region_pop(stack, &error); UNWRAP;
+    int *swapped_item_1 = (int *)(stack_region_pop(stack, &error)).data; UNWRAP;
+    float *swapped_item_2 = (float *)(stack_region_pop(stack, &error)).data; UNWRAP;
 
     sprintf(result.expected, "Before swap: {%d, %f}, After swap: {%f, %d}", 
         TEST_STACK_REGION_SWAP_CASE4_VALUE_INT, TEST_STACK_REGION_SWAP_CASE4_VALUE_FLOAT,

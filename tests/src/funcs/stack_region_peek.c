@@ -41,13 +41,14 @@ TestResult test_stack_region_peek_case_2()
     FuncPtr_stack_region_alloc stack_region_alloc = try_get_symbol(SYMBOL_FN_STACK_REGION_ALLOC);
 
     stack = stack_region_alloc(TEST_STACK_REGION_PEEK_CAPACITY, &error); UNWRAP;
-    int *data = (int *)stack_region_push(stack, sizeof(int), &error); UNWRAP;
+
+    StackRegionFrame frame = stack_region_push(stack, sizeof(int), &error); UNWRAP;
     
-    *data = TEST_STACK_REGION_PEEK_RANDOM_VALUE;
+    *(int *)frame.data = TEST_STACK_REGION_PEEK_RANDOM_VALUE;
     
-    int *peeked_data = (int *)stack_region_peek(stack, &error); UNWRAP;
+    StackRegionFrame peeked_frame = stack_region_peek(stack, &error); UNWRAP;
   
-    TEST_RESULT_WRITE_INT(result, TEST_STACK_REGION_PEEK_RANDOM_VALUE, *peeked_data);
+    TEST_RESULT_WRITE_INT(result, TEST_STACK_REGION_PEEK_RANDOM_VALUE, *(int *)peeked_frame.data);
 
     stack_region_free(&stack);
 

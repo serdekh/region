@@ -35,10 +35,11 @@ typedef void (*FuncPtr_region_shrink_capacity)(Region *region, RegionShrinkCapac
 typedef void (*FuncPtr_region_free)(Region **region);
 
 typedef StackRegion *(*FuncPtr_stack_region_alloc)(size_t capacity, RegionError *error);
-typedef void *(*FuncPtr_stack_region_push)(StackRegion *stack, size_t size, RegionError *error);
-typedef void *(*FuncPtr_stack_region_peek)(StackRegion *stack, RegionError *error);
-typedef void *(*FuncPtr_stack_region_peek_at)(StackRegion *stack, size_t index, RegionError *error);
-typedef void *(*FuncPtr_stack_region_pop)(StackRegion *stack, RegionError *error);
+typedef StackRegionFrame (*FuncPtr_stack_region_push)(StackRegion *stack, size_t size, RegionError *error);
+typedef StackRegionFrame (*FuncPtr_stack_region_peek)(StackRegion *stack, RegionError *error);
+typedef StackRegionFrame (*FuncPtr_stack_region_peek_at)(StackRegion *stack, size_t index, RegionError *error);
+typedef StackRegionFrame (*FuncPtr_stack_region_pop)(StackRegion *stack, RegionError *error);
+
 typedef void (*FuncPtr_stack_region_swap)(StackRegion *stack, RegionError *error);
 typedef void (*FuncPtr_stack_region_free)(StackRegion **stack);
 

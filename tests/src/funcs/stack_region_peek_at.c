@@ -39,9 +39,9 @@ TestResult test_stack_region_peek_at_case_2()
     RegionError error = {0};
     StackRegion *stack = NULL;
 
-    void *p = fn(stack, 1, &error);
+    StackRegionFrame frame = fn(stack, 1, &error);
 
-    TEST_RESULT_WRITE_PTR(result, NULL, p);
+    TEST_RESULT_WRITE_PTR(result, NULL, frame.data);
 
     return result;
 
@@ -69,9 +69,9 @@ TestResult test_stack_region_peek_at_case_3()
 
     stack = stack_region_alloc(TEST_STACK_REGION_PEEK_AT_CASE_3_CAPACITY, &error); UNWRAP;
 
-    void *p = fn(stack, TEST_STACK_REGION_PEEK_AT_CASE_3_HUGE_INDEX, &error); 
+    StackRegionFrame frame = fn(stack, TEST_STACK_REGION_PEEK_AT_CASE_3_HUGE_INDEX, &error); 
 
-    TEST_RESULT_WRITE_PTR(result, NULL, p); 
+    TEST_RESULT_WRITE_PTR(result, NULL, frame.data); 
 
     stack_region_free(&stack);
 
@@ -103,18 +103,18 @@ TestResult test_stack_region_peek_at_case_4()
     stack = stack_region_alloc(TEST_STACK_REGION_PEEK_AT_CASE_4_CAPACITY, &error); UNWRAP;
 
     for (int i = 0; i < TEST_STACK_REGION_PEEK_AT_CASE_4_ITEMS_COUNT; i++) {
-        int *item = (int *)stack_region_push(stack, TEST_STACK_REGION_PEEK_AT_CASE_4_ITEM_SIZE, &error); UNWRAP;
-        *item = (i + 1) * 100;
+        StackRegionFrame frame = stack_region_push(stack, TEST_STACK_REGION_PEEK_AT_CASE_4_ITEM_SIZE, &error); UNWRAP;
+        *(int *)frame.data = (i + 1) * 100;
     }
 
     for (int i = 0; i < TEST_STACK_REGION_PEEK_AT_CASE_4_ITEMS_COUNT; i++) {
-        int *item = fn(stack, i, &error); UNWRAP;
+        StackRegionFrame frame = fn(stack, i, &error); UNWRAP;
         int expected_value = (TEST_STACK_REGION_PEEK_AT_CASE_4_ITEMS_COUNT - i) * 100;
 
-        if (*item == expected_value) continue;
+        if (*(int *)frame.data == expected_value) continue;
 
         sprintf(result.expected, "Value: [%d] at: [%d]", expected_value, i);
-        sprintf(result.actual,   "Value: [%d] at: [%d]", *item, i);
+        sprintf(result.actual,   "Value: [%d] at: [%d]", *(int *)frame.data, i);
 
         result.success = false;
         stack_region_free(&stack);
