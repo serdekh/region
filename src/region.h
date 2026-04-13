@@ -77,6 +77,14 @@ typedef struct __StackRegion {
     REGION_PRIVATE_CORE_FIELDS
 } StackRegion;
 
+typedef struct _StackRegionFrame {
+    void *data;
+    size_t size;
+} StackRegionFrame;
+
+#define STACK_REGION_FRAME_EMPTY (StackRegionFrame){ .data = NULL, .size = 0}
+#define STACK_REGION_FRAME_IS_EMPTY(frame) ((frame).data == NULL && (frame).size == 0)
+
 typedef enum {
     REGION_RESET_OPTION_SOFT = 0,
     REGION_RESET_OPTION_HARD = 1,
@@ -314,10 +322,10 @@ REGION_API void region_shrink_capacity(Region *region, RegionShrinkCapacityOptio
 // Stack Region
 REGION_API StackRegion *stack_region_alloc(size_t capacity, RegionError *error);
 
-REGION_API void *stack_region_push(StackRegion *stack, size_t size, RegionError *error);
-REGION_API void *stack_region_peek(StackRegion *stack, RegionError *error);
-REGION_API void *stack_region_peek_at(StackRegion *stack, size_t index, RegionError *error);
-REGION_API void *stack_region_pop(StackRegion *stack, RegionError *error);
+REGION_API StackRegionFrame stack_region_push(StackRegion *stack, size_t size, RegionError *error);
+REGION_API StackRegionFrame stack_region_peek(StackRegion *stack, RegionError *error);
+REGION_API StackRegionFrame stack_region_peek_at(StackRegion *stack, size_t index, RegionError *error);
+REGION_API StackRegionFrame stack_region_pop(StackRegion *stack, RegionError *error);
 
 REGION_API void stack_region_swap(StackRegion *stack, RegionError *error);
 REGION_API void stack_region_free(StackRegion **stack);
@@ -329,7 +337,7 @@ REGION_API void stack_region_free(StackRegion **stack);
 
 // ----- * -----
 
-#ifdef REGION_IMPLEMENTATION
+//#ifdef REGION_IMPLEMENTATION
 
 Region *region_alloc(size_t capacity, RegionError *error)
 {
@@ -663,25 +671,30 @@ StackRegion *stack_region_alloc(size_t capacity, RegionError *error)
     return NULL;
 }
 
-void *stack_region_push(StackRegion *stack, size_t size, RegionError *error)
+StackRegionFrame stack_region_push(StackRegion *stack, size_t size, RegionError *error)
 {
     if (size == 0) {
         REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_SMALL_SIZE);
-        return NULL;
+        return STACK_REGION_FRAME_EMPTY;
     }
 
     if (size + sizeof(size_t) < size) {
         REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_LARGE_SIZE);
-        return NULL;
+        return STACK_REGION_FRAME_EMPTY;
     }
 
     RegionError local_error = {0};
 
-    void *frame = region_push((Region *)stack, size + sizeof(size_t), &local_error);
+    void *frame_data = region_push((Region *)stack, size + sizeof(size_t), &local_error);
 
     if (REGION_NO_ERROR(local_error)) {
         *stack_region_get_ref_count(stack) += 1;
-        *(size_t *)(frame + size) = size;
+        *(size_t *)(frame_data + size) = size;
+
+        StackRegionFrame frame = {0};
+        frame.data = frame_data;
+        frame.size = size;
+
         return frame;
     }
 
@@ -696,17 +709,17 @@ void *stack_region_push(StackRegion *stack, size_t size, RegionError *error)
             REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM); break;
     }
 
-    return NULL;
+    return STACK_REGION_FRAME_EMPTY;
 }
 
-void *stack_region_peek(StackRegion *stack, RegionError *error)
+StackRegionFrame stack_region_peek(StackRegion *stack, RegionError *error)
 {
     if (!stack) {
         REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_NO_STACK_REGION);
-        return NULL;
+        return STACK_REGION_FRAME_EMPTY;
     }
 
-    if (stack_region_get_count(stack) == 0) return NULL;
+    if (stack_region_get_count(stack) == 0) return STACK_REGION_FRAME_EMPTY;
 
     Region *last_node = region_get_last_node((Region *)stack, REGION_GET_LAST_NODE_OPTION_NON_EMPTY, NULL);
 
@@ -716,18 +729,23 @@ void *stack_region_peek(StackRegion *stack, RegionError *error)
 
     void *last_frame_start = last_frame_end - sizeof(size_t) - last_frame_size;
 
-    return last_frame_start;
+    StackRegionFrame frame = {
+        .data = last_frame_start,
+        .size = last_frame_size
+    };
+
+    return frame;
 }
 
-void *stack_region_peek_at(StackRegion *stack, size_t index, RegionError *error)
+StackRegionFrame stack_region_peek_at(StackRegion *stack, size_t index, RegionError *error)
 {
     if (!stack) {
         REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_AT_NO_STACK_REGION);
-        return NULL;
+        return STACK_REGION_FRAME_EMPTY;
     }
 
     if (stack_region_get_count(stack) == 0 || 
-        stack_region_get_count(stack) <= index) return NULL;
+        stack_region_get_count(stack) <= index) return STACK_REGION_FRAME_EMPTY;
 
     size_t last_node_index = 0;
     Region *last_node = (Region *)stack;
@@ -761,17 +779,22 @@ void *stack_region_peek_at(StackRegion *stack, size_t index, RegionError *error)
         }
     }
 
-    return last_node->data + bytes_to_read;
+    StackRegionFrame frame = {
+        .data = last_node->data + bytes_to_read,
+        .size = *(size_t *)(last_node->data + bytes_to_read - sizeof(size_t))
+    };
+
+    return frame;
 }
 
-void *stack_region_pop(StackRegion *stack, RegionError *error)
+StackRegionFrame stack_region_pop(StackRegion *stack, RegionError *error)
 {
     if (!stack) {
         REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_NO_STACK_REGION);
-        return NULL;
+        return STACK_REGION_FRAME_EMPTY;
     }
 
-    if (stack_region_get_count(stack) == 0) return NULL;
+    if (stack_region_get_count(stack) == 0) return STACK_REGION_FRAME_EMPTY;
 
     Region *last_node = (Region *)stack;
 
@@ -788,7 +811,12 @@ void *stack_region_pop(StackRegion *stack, RegionError *error)
     *stack_region_get_ref_count(stack) -= 1;
     (last_node)->size -= (last_frame_size + sizeof(size_t));
 
-    return last_frame_start;
+    StackRegionFrame frame = {
+        .data = last_frame_start,
+        .size = last_frame_size
+    };
+
+    return frame;
 }
 
 void stack_region_swap(StackRegion *stack, RegionError *error)
@@ -800,60 +828,94 @@ void stack_region_swap(StackRegion *stack, RegionError *error)
 
     if (stack_region_get_count(stack) < 2) return;
   
-    Region *last_node = region_get_last_node((Region *)stack, REGION_GET_LAST_NODE_OPTION_NON_EMPTY, NULL);
+    StackRegionFrame last = stack_region_pop(stack, error);
+    StackRegionFrame prev = stack_region_pop(stack, error);
 
-    size_t last_frame_total_size = last_node->size;
+    void *temporary_buffer = REGION_MALLOC(last.size + prev.size);
 
-    void *last_frame = stack_region_pop(stack, NULL); 
-
-    last_frame_total_size -= last_node->size;
-
-    size_t last_frame_size = last_frame_total_size - sizeof(size_t);
-
-    // --------------------------------------
-
-    last_node = region_get_last_node((Region *)stack, REGION_GET_LAST_NODE_OPTION_NON_EMPTY, NULL);
-
-    size_t prev_frame_total_size = last_node->size;
-
-    void *prev_frame = stack_region_pop(stack, NULL); 
-    
-    prev_frame_total_size -= last_node->size;
-
-    size_t prev_frame_size = prev_frame_total_size - sizeof(size_t);
-
-    void *temp_buffer = REGION_MALLOC(prev_frame_size + last_frame_size);
-    
-    if (!temp_buffer) {
+    if (!temporary_buffer) {
         REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_MALLOC_TEMPORARY_BUFFER);
         return;
     }
 
-    REGION_MEMCPY(temp_buffer, last_frame, last_frame_size);
-    REGION_MEMCPY(temp_buffer + last_frame_size, prev_frame, prev_frame_size);
+    REGION_MEMCPY(temporary_buffer, last.data, last.size);
+    REGION_MEMCPY(temporary_buffer + last.size, prev.data, prev.size);
 
-    RegionError local_error = {0};
+    StackRegionFrame repushed_last = stack_region_push(stack, last.size, error);
 
-    void *swapped_prev_frame = stack_region_push(stack, last_frame_size, &local_error);
-    
-    if (REGION_ERROR(local_error)) {
-        REGION_FREE(temp_buffer);
+    if (STACK_REGION_FRAME_IS_EMPTY(repushed_last)) {
+        REGION_FREE(temporary_buffer);
         REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_PUSH_LAST);
         return;
     }
     
-    void *swapped_last_frame = stack_region_push(stack, prev_frame_size, &local_error);
-    
-    if (REGION_ERROR(local_error)) {
-        REGION_FREE(temp_buffer);
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_PUSH_PREV);
+    StackRegionFrame repushed_prev = stack_region_push(stack, prev.size, error);
+
+    if (STACK_REGION_FRAME_IS_EMPTY(repushed_prev)) {
+        stack_region_pop(stack, NULL);
+        REGION_FREE(temporary_buffer);
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_PUSH_LAST);
         return;
     }
 
-    REGION_MEMCPY(swapped_prev_frame, temp_buffer, last_frame_size);
-    REGION_MEMCPY(swapped_last_frame, temp_buffer + last_frame_size, prev_frame_size);
+    REGION_MEMCPY(repushed_last.data, temporary_buffer, last.size);
+    REGION_MEMCPY(repushed_prev.data, temporary_buffer + last.size, prev.size);
+    REGION_FREE(temporary_buffer);
 
-    REGION_FREE(temp_buffer);
+    // Region *last_node = region_get_last_node((Region *)stack, REGION_GET_LAST_NODE_OPTION_NON_EMPTY, NULL);
+
+    // size_t last_frame_total_size = last_node->size;
+
+    // void *last_frame = stack_region_pop(stack, NULL); 
+
+    // last_frame_total_size -= last_node->size;
+
+    // size_t last_frame_size = last_frame_total_size - sizeof(size_t);
+
+    // // --------------------------------------
+
+    // last_node = region_get_last_node((Region *)stack, REGION_GET_LAST_NODE_OPTION_NON_EMPTY, NULL);
+
+    // size_t prev_frame_total_size = last_node->size;
+
+    // void *prev_frame = stack_region_pop(stack, NULL); 
+    
+    // prev_frame_total_size -= last_node->size;
+
+    // size_t prev_frame_size = prev_frame_total_size - sizeof(size_t);
+
+    // void *temp_buffer = REGION_MALLOC(prev_frame_size + last_frame_size);
+    
+    // if (!temp_buffer) {
+    //     REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_MALLOC_TEMPORARY_BUFFER);
+    //     return;
+    // }
+
+    // REGION_MEMCPY(temp_buffer, last_frame, last_frame_size);
+    // REGION_MEMCPY(temp_buffer + last_frame_size, prev_frame, prev_frame_size);
+
+    // RegionError local_error = {0};
+
+    // void *swapped_prev_frame = stack_region_push(stack, last_frame_size, &local_error);
+    
+    // if (REGION_ERROR(local_error)) {
+    //     REGION_FREE(temp_buffer);
+    //     REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_PUSH_LAST);
+    //     return;
+    // }
+    
+    // void *swapped_last_frame = stack_region_push(stack, prev_frame_size, &local_error);
+    
+    // if (REGION_ERROR(local_error)) {
+    //     REGION_FREE(temp_buffer);
+    //     REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_PUSH_PREV);
+    //     return;
+    // }
+
+    // REGION_MEMCPY(swapped_prev_frame, temp_buffer, last_frame_size);
+    // REGION_MEMCPY(swapped_last_frame, temp_buffer + last_frame_size, prev_frame_size);
+
+    // REGION_FREE(temp_buffer);
 }
 
 void stack_region_free(StackRegion **stack)
@@ -865,5 +927,5 @@ void stack_region_free(StackRegion **stack)
     region_free((Region **)stack);
 }
 
-#endif // REGION_IMPLEMENTATION
+//#endif // REGION_IMPLEMENTATION
 REGION_EXTERN_C_END
