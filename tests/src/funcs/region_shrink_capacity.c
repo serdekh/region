@@ -75,14 +75,10 @@ TestResult test_region_shrink_capacity_case_3()
 
     return result;
     
-fatal:    
-    REGION_LOG_ERROR(error);
-    fprintf(stderr, "[Test][Error]: Failed to perfom a test. Stop.\n");
-
-    if (r) region_free(&r);
-    if (_RegionHandle) dlclose(_RegionHandle);
-
-    exit(1);
+    TEST_FATAL(
+        if (r) region_free(&r);
+        if (_RegionHandle) dlclose(_RegionHandle);
+    );
 }
 
 TestResult test_region_shrink_capacity_case_4()
@@ -125,14 +121,10 @@ TestResult test_region_shrink_capacity_case_4()
 
     return result;
     
-fatal:    
-    REGION_LOG_ERROR(error);
-    fprintf(stderr, "[Test][Error]: Could not allocate memory for a testing function. Stop.");
-
-    if (node_1) region_free(&node_1);
-    if (_RegionHandle) dlclose(_RegionHandle);
-
-    exit(1);
+    TEST_FATAL(
+        if (node_1) region_free(&node_1);
+        if (_RegionHandle) dlclose(_RegionHandle);
+    );
 }
 
 REGISTER_TEST(test_region_shrink_capacity_case_1, 1);

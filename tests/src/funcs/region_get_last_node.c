@@ -69,14 +69,10 @@ TestResult test_region_get_last_node_case_2()
     
     return result;
 
-fatal:
-    REGION_LOG_ERROR(error);
-    fprintf(stderr, "[Test][Error]: Failed to perform a test for the `region_get_last_node` function. Stop.\n");
-
-    if (region_with_two_nodes) lib_region_free(&region_with_two_nodes);
-    if (_RegionHandle) dlclose(_RegionHandle);
-
-    exit(1);
+    TEST_FATAL(
+        if (region_with_two_nodes) lib_region_free(&region_with_two_nodes);
+        if (_RegionHandle) dlclose(_RegionHandle);
+    );
 }
 
 TestResult test_region_get_last_node_case_3()
@@ -98,14 +94,10 @@ TestResult test_region_get_last_node_case_3()
     
     return result;
 
-fatal:
-    REGION_LOG_ERROR(error);
-    fprintf(stderr, "[Test][Error]: Failed to perform a test for the `region_get_last_node` function. Stop.\n");
-
-    if (region_with_two_nodes) lib_region_free(&region_with_two_nodes);
-    if (_RegionHandle) dlclose(_RegionHandle);
-
-    exit(1);
+    TEST_FATAL(
+        if (region_with_two_nodes) lib_region_free(&region_with_two_nodes);
+        if (_RegionHandle) dlclose(_RegionHandle);
+    );
 }
 
 REGISTER_TEST(test_region_get_last_node_case_1, 1);

@@ -107,17 +107,13 @@ cleanup:
 
     return result;
 
-fatal:
-    REGION_LOG_ERROR(error);
-    fprintf(stderr, "[Test][Error]: Could not perfom a test. Stop.\n");
+    TEST_FATAL(
+        if (first)  region_free(&first);
+        if (second) region_free(&second);
+        if (merged) region_free(&merged);
 
-    if (first)  region_free(&first);
-    if (second) region_free(&second);
-    if (merged) region_free(&merged);
-
-    if (_RegionHandle) dlclose(_RegionHandle);
-
-    exit(1);
+        if (_RegionHandle) dlclose(_RegionHandle);
+    );
 }
 
 TestResult test_region_merge_case_5()
@@ -164,17 +160,13 @@ cleanup:
 
     return result;
 
-fatal:
-    REGION_LOG_ERROR(error);
-    fprintf(stderr, "[Test][Error]: Could not perfom a test. Stop.\n");
+    TEST_FATAL(
+        if (first)  region_free(&first);
+        if (second) region_free(&second);
+        if (merged) region_free(&merged);
 
-    if (first)  region_free(&first);
-    if (second) region_free(&second);
-    if (merged) region_free(&merged);
-
-    if (_RegionHandle) dlclose(_RegionHandle);
-
-    exit(1);
+        if (_RegionHandle) dlclose(_RegionHandle);
+    );
 }
 
 REGISTER_TEST(test_region_merge_case_1, 1);

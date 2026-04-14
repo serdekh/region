@@ -79,14 +79,10 @@ TestResult test_region_push_case_4()
 
     return result;
     
-fatal:
-    REGION_LOG_ERROR(error);
-    fprintf(stderr, "[Test][Error]: Could not perfom a test. Stop.\n");
-
-    if(region) region_free(&region);
-    if (_RegionHandle) dlclose(_RegionHandle);
-
-    exit(1);
+    TEST_FATAL(
+        if (region) region_free(&region);
+        if (_RegionHandle) dlclose(_RegionHandle);
+    );
 }
 
 REGISTER_TEST(test_region_push_case_1, 1);

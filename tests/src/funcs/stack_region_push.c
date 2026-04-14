@@ -47,14 +47,10 @@ TestResult test_stack_region_push_case_2()
 
     return result;
 
-fatal:
-    REGION_LOG_ERROR(error);
-    fprintf(stderr, "[Test][Error]: Could not perfrom a test. Stop.\n");
-
-    if (stack) stack_region_free(&stack);
-    if (_RegionHandle) dlclose(_RegionHandle);
-
-    exit(1);
+    TEST_FATAL(
+        if (stack) stack_region_free(&stack);
+        if (_RegionHandle) dlclose(_RegionHandle);
+    );
 }
 
 TestResult test_stack_region_push_case_3()
@@ -80,14 +76,10 @@ TestResult test_stack_region_push_case_3()
 
     return result;
 
-fatal:
-    REGION_LOG_ERROR(error);
-    fprintf(stderr, "[Test][Error]: Could not perfrom a test. Stop.\n");
-
-    if (stack) stack_region_free(&stack);
-    if (_RegionHandle) dlclose(_RegionHandle);
-
-    exit(1);
+    TEST_FATAL(
+        if (stack) stack_region_free(&stack);
+        if (_RegionHandle) dlclose(_RegionHandle);
+    );
 }
 
 TestResult test_stack_region_push_case_4()
@@ -117,14 +109,10 @@ TestResult test_stack_region_push_case_4()
 
     return result;
 
-fatal:
-    REGION_LOG_ERROR(error);
-    fprintf(stderr, "[Test][Error]: Could not perfrom a test. Stop.\n");
-
-    if (stack) stack_region_free(&stack);
-    if (_RegionHandle) dlclose(_RegionHandle);
-
-    exit(1);
+    TEST_FATAL(
+        if (stack) stack_region_free(&stack);
+        if (_RegionHandle) dlclose(_RegionHandle);
+    );
 }
 
 REGISTER_TEST(test_stack_region_push_case_1, 1);
