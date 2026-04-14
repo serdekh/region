@@ -69,11 +69,11 @@ TestResult test_region_clone_case_4()
 {
     try_init_test_fn();
 
-    Region region = {0};    
-    Region *clone = NULL;
-
-    RegionError error  = {0};
     TestResult  result = {0};
+    
+    Region region = {0};
+    Region *clone = NULL;
+    RegionError error  = REGION_ERROR_INIT;
 
     FuncPtr_region_free region_free = try_get_symbol(SYMBOL_FN_REGION_FREE);
 
@@ -92,14 +92,10 @@ TestResult test_region_clone_case_4()
 
     return result;
 
-fatal:
-    REGION_LOG_ERROR(error);
-    fprintf(stderr, "[Test][Error]: Could not perfom a test. Stop.\n");
-
-    if (clone) region_free(&clone);
-    if (_RegionHandle) dlclose(_RegionHandle);
-
-    exit(1);
+    TEST_FATAL(
+        if (clone) region_free(&clone);
+        if (_RegionHandle) dlclose(_RegionHandle);
+    );
 }
 
 REGISTER_TEST(test_region_clone_case_1, 1);

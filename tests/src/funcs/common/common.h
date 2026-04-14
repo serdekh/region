@@ -56,3 +56,13 @@ void set_available_memory(size_t value);
 size_t get_available_memory();
 
 #define UNWRAP if(REGION_ERROR(error)) goto fatal
+
+#define TEST_LOG_ERROR_FAILED_TEST_FATAL_ERROR                       \
+    TEST_LOG(stderr, "Error", "Could not perfom a test. Stop.\n\t"); \
+    REGION_LOG_ERROR(error)
+
+#define TEST_FATAL(cleanup_code)             \
+fatal:                                       \
+    TEST_LOG_ERROR_FAILED_TEST_FATAL_ERROR;  \
+    cleanup_code                             \
+    exit(1);                     

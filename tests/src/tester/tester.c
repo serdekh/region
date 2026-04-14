@@ -25,13 +25,11 @@ bool try_load_file_and_test(const char *file_path)
         TestResult result = t->func();
     
         if (result.success) {
-            fprintf(stdout, "[Test][Fn: \"%s\"][Case: %zu]: Passed!\n", 
-                t->func_name, t->case_number);
+            TEST_LOG_PASSED_TEST(t);
             continue;
         } 
         
-        fprintf(stderr, "[Test][Fn: \"%s\"][Case: %zu]: Failed\n\tExpected:\n\t\t`%s`\n\tBut got:\n\t\t`%s`\n", 
-            t->func_name, t->case_number, result.expected, result.actual);
+        TEST_LOG_FAILED_TEST(t, result);
         
         dlclose(handle); 
         return false;

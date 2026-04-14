@@ -36,6 +36,16 @@ typedef struct {
 #define TEST_RESULT_WRITE_INT(result, e, a) TEST_RESULT_WRITE_FMT((result), "%d", (e), (a))
 #define TEST_RESULT_WRITE_PTR(result, e, a) TEST_RESULT_WRITE_FMT((result), "%p", (e), (a))
 
+#define TEST_LOG(stream, type, message, ...) fprintf((stream), "[Test]["type"]: "message, ##__VA_ARGS__)
+#define TEST_LOG_LINE(stream, type, message, ...) fprintf((stream), "[Test]["type"]: "message"\n", ##__VA_ARGS__)
+
+#define TEST_LOG_PASSED_ALL_TESTS TEST_LOG_LINE(stdout, "Log", "All tests have passed!")
+
+#define TEST_LOG_PASSED_TEST(test_context) TEST_LOG_LINE(stdout, "Check", "[function: \"%s\"][case: %zu]: Passing", (test_context)->func_name, (test_context)->case_number)
+
+#define TEST_LOG_FAILED_TEST(test_context, result) TEST_LOG_LINE(stderr, "Check", "[function: \"%s\"][case: %zu]: Failed!\n\tExpected:\n\t\t`%s`\n\tBut got:\n\t\t`%s`\n",\
+        (test_context)->func_name, (test_context)->case_number, result.expected, result.actual)
+
 #define GET_TESTS_START_STR   "get_tests_start"
 #define GET_TESTS_END_STR   "get_tests_end"
 

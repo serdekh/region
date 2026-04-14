@@ -6,7 +6,7 @@ int main()
 {
     try_load_files_and_test(SO_FOLDER);
     
-    printf("[Test][Passed] All tests have passed\n");
+    TEST_LOG_PASSED_ALL_TESTS;
 
     return 0;
 }
