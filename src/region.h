@@ -290,8 +290,9 @@ typedef struct {
 
 #define REGION_SET_ERROR(error, error_code) if ((error)) (error)->code = (error_code);        
 #define REGION_GET_CURRENT_FILE_LOCATION (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}
-#define REGION_ERROR_INIT_LOCATION(error) (error)->location = REGION_GET_CURRENT_FILE_LOCATION                        
-                                                      
+#define REGION_ERROR_INIT_LOCATION(error) (error)->location = REGION_GET_CURRENT_FILE_LOCATION          
+#define REGION_ERROR_INIT (RegionError){.code = 0, .location.file_name = __FILE__, .location.line = __LINE__, .location.func_name = __func__}
+
 #define REGION_LOG_ERROR_TO(error, out)                          \
     REGION_FPRINTF((out), "[Region][ERROR](\"%s:%d:%s\"): %s\n", \
         (error).location.file_name,                              \

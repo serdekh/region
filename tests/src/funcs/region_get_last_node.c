@@ -22,7 +22,8 @@ TestResult test_region_get_last_node_case_1()
     try_init_test_fn();
 
     TestResult result = {0};
-    RegionError error = {0}; REGION_ERROR_INIT_LOCATION(&error);
+
+    RegionError error = REGION_ERROR_INIT;
 
     fn(NULL, REGION_GET_LAST_NODE_OPTION_DEFAULT, &error);
 
@@ -57,7 +58,8 @@ TestResult test_region_get_last_node_case_2()
     try_init_test_fn();
     
     TestResult result = {0};
-    RegionError error = {0}; REGION_ERROR_INIT_LOCATION(&error);
+
+    RegionError error = REGION_ERROR_INIT;
 
     Region *region_with_two_nodes = _alloc_region_with_two_nodes(&error); UNWRAP;
 
@@ -80,7 +82,8 @@ TestResult test_region_get_last_node_case_3()
     try_init_test_fn();
     
     TestResult result = {0};
-    RegionError error = {0}; REGION_ERROR_INIT_LOCATION(&error);
+    
+    RegionError error = REGION_ERROR_INIT;
 
     Region *region_with_two_nodes = _alloc_region_with_two_nodes(&error); UNWRAP;
 

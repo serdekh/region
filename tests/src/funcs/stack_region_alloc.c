@@ -15,7 +15,8 @@ TestResult test_stack_region_alloc_case_1()
     try_init_test_fn();
 
     TestResult result = {0};
-    RegionError error = {0};
+
+    RegionError error = REGION_ERROR_INIT;
 
     fn(0, &error);
 
@@ -29,7 +30,8 @@ TestResult test_stack_region_alloc_case_2()
     try_init_test_fn();
 
     TestResult result = {0};
-    RegionError error = {0};
+
+    RegionError error = REGION_ERROR_INIT;
 
     fn(SIZE_MAX, &error);
 
@@ -44,7 +46,8 @@ TestResult test_stack_region_alloc_case_3()
     try_init_test_fn();
 
     TestResult result = {0};
-    RegionError error = {0};
+
+    RegionError error = REGION_ERROR_INIT;
 
     set_available_memory(sizeof(StackRegion) / 2);
 
@@ -62,7 +65,8 @@ TestResult test_stack_region_alloc_case_4()
     try_init_test_fn();
 
     TestResult result = {0};
-    RegionError error = {0};
+    
+    RegionError error = REGION_ERROR_INIT;
 
     set_available_memory(sizeof(StackRegion));
 

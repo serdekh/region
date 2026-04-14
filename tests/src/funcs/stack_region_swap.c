@@ -25,7 +25,7 @@ TestResult test_stack_region_swap_case_1()
 
     TestResult result = {0};
 
-    RegionError error = {0};
+    RegionError error = REGION_ERROR_INIT;
 
     fn(NULL, &error);
 
@@ -40,7 +40,7 @@ TestResult test_stack_region_swap_case_2()
 
     TestResult result = {0};
 
-    RegionError error = {0}; REGION_ERROR_INIT_LOCATION(&error);
+    RegionError error = REGION_ERROR_INIT;
 
     StackRegion *stack = NULL;
 
@@ -77,7 +77,7 @@ TestResult test_stack_region_swap_case_3()
 
     TestResult result = {0};
 
-    RegionError error = {0}; REGION_ERROR_INIT_LOCATION(&error);
+    RegionError error = REGION_ERROR_INIT;
 
     StackRegion *stack = NULL;
 
@@ -126,7 +126,7 @@ TestResult test_stack_region_swap_case_4()
 
     TestResult result = {0};
 
-    RegionError error = {0}; REGION_ERROR_INIT_LOCATION(&error);
+    RegionError error = REGION_ERROR_INIT;
 
     StackRegion *stack = NULL;
 

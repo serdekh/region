@@ -21,7 +21,8 @@ TestResult test_region_shrink_capacity_case_1()
     try_init_test_fn();
 
     TestResult result = {0};
-    RegionError error = {0};
+
+    RegionError error = REGION_ERROR_INIT;
 
     fn(NULL, REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT, &error);
    
@@ -35,7 +36,8 @@ TestResult test_region_shrink_capacity_case_2()
     try_init_test_fn();
 
     TestResult result = {0};
-    RegionError error = {0};
+
+    RegionError error = REGION_ERROR_INIT;
     Region r = {0};
 
     r.size = SIZE_MAX;
@@ -54,7 +56,7 @@ TestResult test_region_shrink_capacity_case_3()
     TestResult result = {0};
 
     Region *r = NULL;
-    RegionError error = {0};
+    RegionError error = REGION_ERROR_INIT;
 
     FuncPtr_region_push region_push = try_get_symbol(SYMBOL_FN_REGION_PUSH);
     FuncPtr_region_free region_free = try_get_symbol(SYMBOL_FN_REGION_FREE);
@@ -89,7 +91,7 @@ TestResult test_region_shrink_capacity_case_4()
     
     Region *node_1 = NULL;
     Region *node_2 = NULL;
-    RegionError error = {0};
+    RegionError error = REGION_ERROR_INIT;
 
     FuncPtr_region_push region_push = try_get_symbol(SYMBOL_FN_REGION_PUSH);
     FuncPtr_region_free region_free = try_get_symbol(SYMBOL_FN_REGION_FREE);

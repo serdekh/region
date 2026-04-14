@@ -19,8 +19,9 @@ TestResult test_region_merge_case_1()
 {
     try_init_test_fn();
 
-    RegionError error = {0};
     TestResult result = {0};
+
+    RegionError error = REGION_ERROR_INIT;
 
     fn(NULL, 0, &error);
 
@@ -33,9 +34,10 @@ TestResult test_region_merge_case_2()
 {
     try_init_test_fn();
 
-    Region region = {0};
-    RegionError error = {0};
     TestResult result = {0};
+
+    Region region = {0};
+    RegionError error = REGION_ERROR_INIT;
 
     set_available_memory(0);
 
@@ -52,9 +54,10 @@ TestResult test_region_merge_case_3()
 {
     try_init_test_fn();
 
-    Region region = {.capacity = TEST_REGION_MERGE_CAPACITY };
-    RegionError error = {0};
     TestResult result = {0};
+
+    Region region = {.capacity = TEST_REGION_MERGE_CAPACITY };
+    RegionError error = REGION_ERROR_INIT;
 
     set_available_memory(TEST_REGION_MERGE_CAPACITY + sizeof(Region **));
 
@@ -71,8 +74,9 @@ TestResult test_region_merge_case_4()
 {
     try_init_test_fn();
 
-    RegionError error = {0};
     TestResult result = {0};
+
+    RegionError error = REGION_ERROR_INIT;
 
     Region *first = NULL;
     Region *second = NULL;
@@ -120,8 +124,9 @@ TestResult test_region_merge_case_5()
 {
     try_init_test_fn();
 
-    RegionError error = {0};
     TestResult result = {0};
+    
+    RegionError error = REGION_ERROR_INIT;
 
     Region *first = NULL;
     Region *second = NULL;

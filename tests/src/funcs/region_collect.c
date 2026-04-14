@@ -12,9 +12,10 @@ TestResult test_region_collect_case_1()
 {
     try_init_test_fn();
 
-    RegionError error = {0};
     TestResult result = {0};
+
     size_t collected_size = 0;
+    RegionError error = REGION_ERROR_INIT;
 
     fn(NULL, &collected_size, &error);
 
@@ -26,10 +27,11 @@ TestResult test_region_collect_case_1()
 TestResult test_region_collect_case_2()
 {
     try_init_test_fn();
+    
+    TestResult result = {0};
 
     Region region = {0};
-    RegionError error = {0};
-    TestResult result = {0};
+    RegionError error = REGION_ERROR_INIT;
 
     fn(&region, NULL, &error);
 
@@ -41,10 +43,11 @@ TestResult test_region_collect_case_2()
 TestResult test_region_collect_case_3()
 {
     try_init_test_fn();
+    
+    TestResult result = {0};
 
     Region region = {0};
-    RegionError error = {0};
-    TestResult result = {0};
+    RegionError error = REGION_ERROR_INIT;
     size_t collected_size = {0};
 
     set_available_memory(0);

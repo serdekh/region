@@ -13,9 +13,10 @@ void try_init_test_fn()
 TestResult test_region_clone_case_1()
 {
     try_init_test_fn();
-
-    RegionError error = {0};
+    
     TestResult result = {0};
+
+    RegionError error = REGION_ERROR_INIT;
 
     fn(NULL, &error);
 
@@ -28,9 +29,10 @@ TestResult test_region_clone_case_2()
 {
     try_init_test_fn();
 
-    Region region     = {0};
-    RegionError error = {0};
     TestResult result = {0};
+
+    Region region     = {0};
+    RegionError error = REGION_ERROR_INIT;
 
     set_available_memory(sizeof(Region *) / 2);
 
@@ -47,11 +49,12 @@ TestResult test_region_clone_case_3()
 {
     try_init_test_fn();
 
-    Region      root   = { .capacity = 1 };
-    Region      second = { .capacity = 1 };
-    RegionError error  = {0};
     TestResult  result = {0};
 
+    Region      root   = { .capacity = 1 };
+    Region      second = { .capacity = 1 };
+    RegionError error = REGION_ERROR_INIT;
+    
     root.next = &second;
 
     set_available_memory(sizeof(root) + root.capacity);

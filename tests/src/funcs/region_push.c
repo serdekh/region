@@ -14,8 +14,9 @@ TestResult test_region_push_case_1()
 {
     try_init_test_fn();
 
-    RegionError error = {0};
     TestResult result = {0};
+
+    RegionError error = REGION_ERROR_INIT;
 
     fn(NULL, 10, &error);
 
@@ -28,9 +29,10 @@ TestResult test_region_push_case_2()
 {
     try_init_test_fn();
     
-    Region r = {0};
-    RegionError error = {0};
     TestResult result = {0};
+
+    Region r = {0};
+    RegionError error = REGION_ERROR_INIT;
 
     fn(&r, 0, &error);
 
@@ -43,9 +45,10 @@ TestResult test_region_push_case_3()
 {
     try_init_test_fn();
     
-    Region r = {0};
-    RegionError error = {0};
     TestResult result = {0};
+
+    Region r = {0};
+    RegionError error = REGION_ERROR_INIT;
 
     fn(&r, SIZE_MAX, &error);
 
@@ -58,8 +61,9 @@ TestResult test_region_push_case_4()
 {
     try_init_test_fn();
     
-    RegionError error = {0};
     TestResult result = {0};
+    
+    RegionError error = REGION_ERROR_INIT;
     Region *region = NULL;
 
     FuncPtr_region_free region_free = try_get_symbol(SYMBOL_FN_REGION_FREE);

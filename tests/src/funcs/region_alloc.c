@@ -13,8 +13,9 @@ TestResult region_alloc_case_1()
 {
     try_init_test_fn();
 
-    RegionError error = {0};
     TestResult result = {0};
+
+    RegionError error = REGION_ERROR_INIT;
 
     fn(0, &error);
 
@@ -27,8 +28,9 @@ TestResult region_alloc_case_2()
 {
     try_init_test_fn();
 
-    RegionError error = {0};
     TestResult result = {0};
+
+    RegionError error = REGION_ERROR_INIT;
 
     fn(SIZE_MAX, &error);
 
@@ -41,8 +43,9 @@ TestResult region_alloc_case_3()
 {
     try_init_test_fn();
 
-    RegionError error = {0};
     TestResult result = {0};
+
+    RegionError error = REGION_ERROR_INIT;
 
     set_available_memory(sizeof(Region) / 2);
 
@@ -59,9 +62,11 @@ TestResult region_alloc_case_4()
 {
     try_init_test_fn();
 
-    size_t capacity = 10;
-    RegionError error = {0};
     TestResult result = {0};
+
+    size_t capacity = 10;
+    
+    RegionError error = REGION_ERROR_INIT;
 
     set_available_memory(sizeof(Region) + capacity / 2);
 
