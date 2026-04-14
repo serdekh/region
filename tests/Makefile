@@ -20,7 +20,7 @@ FRAMEWORK_C = $(TESTER)/$(FRAMEWORK).c
 FRAMEWORK_H = $(TESTER)/$(FRAMEWORK).c
 FRAMEWORK_EXEC = $(BIN)/$(FRAMEWORK)
 
-REGION_SOBJ = ../.build/obj/region-test.so
+REGION_SOBJ = ../.build/sobj/region-test.so
 
 $(BUILD):
 	mkdir -p .build

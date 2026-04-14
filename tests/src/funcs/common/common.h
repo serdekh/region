@@ -3,7 +3,7 @@
 #include "../../include/shared.h"
 #include "../../../../src/region.h"
 
-#define REGION_SHARED_OBJECT_FILE_PATH "../.build/obj/region-test.so"
+#define REGION_SHARED_OBJECT_FILE_PATH "../.build/sobj/region-test.so"
 
 #define SYMBOL_FN_REGION_ALLOC "region_alloc"
 #define SYMBOL_FN_REGION_PUSH "region_push"

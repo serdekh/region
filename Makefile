@@ -8,7 +8,7 @@ CC_FLAGS = -std=gnu99 -fvisibility=hidden # -Wall -Wextra
 
 BUILD := .build
 OBJ := $(BUILD)/obj
-SOBJ := $(BUILD)/obj
+SOBJ := $(BUILD)/sobj
 BIN := $(BUILD)/bin
 
 TESTS := tests
