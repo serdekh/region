@@ -43,15 +43,38 @@ typedef StackRegionFrame (*FuncPtr_stack_region_pop)(StackRegion *stack, RegionE
 typedef void (*FuncPtr_stack_region_swap)(StackRegion *stack, RegionError *error);
 typedef void (*FuncPtr_stack_region_free)(StackRegion **stack);
 
+typedef struct {
+    FuncPtr_region_alloc           region_alloc;
+    FuncPtr_region_clone           region_clone;
+    FuncPtr_region_collect         region_collect;
+    FuncPtr_region_free            region_free;
+    FuncPtr_region_get_last_node   region_get_last_node;
+    FuncPtr_region_merge           region_merge;
+    FuncPtr_region_push            region_push;
+    FuncPtr_region_shrink_capacity region_shrink_capacity;
+
+    FuncPtr_stack_region_alloc   stack_region_alloc;
+    FuncPtr_stack_region_free    stack_region_free;
+    FuncPtr_stack_region_peek    stack_region_peek;
+    FuncPtr_stack_region_peek_at stack_region_peek_at;
+    FuncPtr_stack_region_pop     stack_region_pop;
+    FuncPtr_stack_region_push    stack_region_push;
+    FuncPtr_stack_region_swap    stack_region_swap;
+} RegionAPI;
+
 typedef void (*FuncPtr_test_set_available_memory)(size_t value);
 typedef size_t (*FuncPtr_test_get_available_memory)();
 
 extern void *_RegionHandle;
+extern RegionAPI *region_api;
+
+RegionAPI *try_get_region_api_handle();
+void *try_get_symbol(const char *symbol_name);
+void close_region_api_handle();
+
 extern FuncPtr_test_set_available_memory __test_set_available_memory;
 extern FuncPtr_test_get_available_memory __test_get_available_memory;
 
-void try_get_region_handle();
-void *try_get_symbol(const char *symbol_name);
 void set_available_memory(size_t value);
 size_t get_available_memory();
 

@@ -1,24 +1,16 @@
 #include "./common/common.h"
 
-FuncPtr_region_push fn = NULL;
-
 #define TEST_REGION_PUSH_CASE_4_CAPACITY 10
-
-void try_init_test_fn()
-{
-    if (!_RegionHandle) try_get_region_handle();
-    if (!fn) fn = try_get_symbol(SYMBOL_FN_REGION_PUSH);
-}
 
 TestResult test_region_push_case_1()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
 
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
 
-    fn(NULL, 10, &error);
+    api->region_push(NULL, 10, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION, error.code);
 
@@ -27,14 +19,14 @@ TestResult test_region_push_case_1()
 
 TestResult test_region_push_case_2()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
     
     TestResult result = {0};
 
     Region r = {0};
     RegionError error = REGION_ERROR_INIT;
 
-    fn(&r, 0, &error);
+    api->region_push(&r, 0, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_PUSH_SMALL_SIZE, error.code);
 
@@ -43,14 +35,14 @@ TestResult test_region_push_case_2()
 
 TestResult test_region_push_case_3()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
     
     TestResult result = {0};
 
     Region r = {0};
     RegionError error = REGION_ERROR_INIT;
 
-    fn(&r, SIZE_MAX, &error);
+    api->region_push(&r, SIZE_MAX, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_PUSH_LARGE_SIZE, error.code);
 
@@ -59,33 +51,30 @@ TestResult test_region_push_case_3()
 
 TestResult test_region_push_case_4()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
     
     TestResult result = {0};
-    
+
     RegionError error = REGION_ERROR_INIT;
     Region *region = NULL;
 
-    FuncPtr_region_free region_free = try_get_symbol(SYMBOL_FN_REGION_FREE);
-    FuncPtr_region_alloc region_alloc = try_get_symbol(SYMBOL_FN_REGION_ALLOC);
-
-    region = region_alloc(TEST_REGION_PUSH_CASE_4_CAPACITY, &error); UNWRAP;
+    region = api->region_alloc(TEST_REGION_PUSH_CASE_4_CAPACITY, &error); UNWRAP;
 
     set_available_memory(0);
 
-    fn(region, TEST_REGION_PUSH_CASE_4_CAPACITY * 2, &error);
+    api->region_push(region, TEST_REGION_PUSH_CASE_4_CAPACITY * 2, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION, error.code);
 
     set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
-    region_free(&region);
+    api->region_free(&region);
 
     return result;
     
     TEST_FATAL(
-        if (region) region_free(&region);
-        if (_RegionHandle) dlclose(_RegionHandle);
+        if (region) api->region_free(&region);
+        close_region_api_handle();
     );
 }
 

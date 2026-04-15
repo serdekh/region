@@ -1,7 +1,5 @@
 #include "./common/common.h"
 
-FuncPtr_region_shrink_capacity fn = NULL;
-
 #define TEST_REGION_SHRINK_CAPACITY_CASE3_CAPACITY (size_t)10
 #define TEST_REGION_SHRINK_CAPACITY_CASE3_CAPACITY_SHRINKED (TEST_REGION_SHRINK_CAPACITY_CASE3_CAPACITY) / 2
 
@@ -10,21 +8,15 @@ FuncPtr_region_shrink_capacity fn = NULL;
 #define TEST_REGION_SHRINK_CAPACITY_CASE4_NODE2_CAPACITY (size_t)11
 #define TEST_REGION_SHRINK_CAPACITY_CASE4_NODE2_CAPACITY_SHRINKED (TEST_REGION_SHRINK_CAPACITY_CASE4_NODE2_CAPACITY) / 2
 
-void try_init_test_fn()
-{
-    if (!_RegionHandle) try_get_region_handle();
-    if (!fn) fn = try_get_symbol(SYMBOL_FN_REGION_SHRINK_CAPACITY);
-}
-
 TestResult test_region_shrink_capacity_case_1()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
 
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
 
-    fn(NULL, REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT, &error);
+    api->region_shrink_capacity(NULL, REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT, &error);
    
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_SHRINK_CAPACITY_NO_REGION, error.code);
     
@@ -33,7 +25,7 @@ TestResult test_region_shrink_capacity_case_1()
 
 TestResult test_region_shrink_capacity_case_2()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
 
     TestResult result = {0};
 
@@ -42,7 +34,7 @@ TestResult test_region_shrink_capacity_case_2()
 
     r.size = SIZE_MAX;
 
-    fn(&r, REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT, &error);
+    api->region_shrink_capacity(&r, REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_SHRINK_CAPACITY_MALLOC, error.code);
 
@@ -51,41 +43,37 @@ TestResult test_region_shrink_capacity_case_2()
 
 TestResult test_region_shrink_capacity_case_3()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
 
     TestResult result = {0};
 
     Region *r = NULL;
     RegionError error = REGION_ERROR_INIT;
 
-    FuncPtr_region_push region_push = try_get_symbol(SYMBOL_FN_REGION_PUSH);
-    FuncPtr_region_free region_free = try_get_symbol(SYMBOL_FN_REGION_FREE);
-    FuncPtr_region_alloc region_alloc = try_get_symbol(SYMBOL_FN_REGION_ALLOC);
+    r = api->region_alloc(TEST_REGION_SHRINK_CAPACITY_CASE3_CAPACITY, &error); UNWRAP;
 
-    r = region_alloc(TEST_REGION_SHRINK_CAPACITY_CASE3_CAPACITY, &error); UNWRAP;
+    api->region_push(r, TEST_REGION_SHRINK_CAPACITY_CASE3_CAPACITY_SHRINKED, &error); UNWRAP;
 
-    region_push(r, TEST_REGION_SHRINK_CAPACITY_CASE3_CAPACITY_SHRINKED, &error); UNWRAP;
-
-    fn(r, REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT, &error); UNWRAP;
+    api->region_shrink_capacity(r, REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT, &error); UNWRAP;
 
     sprintf(result.expected, "Capacity after shrinking: %zu", TEST_REGION_SHRINK_CAPACITY_CASE3_CAPACITY_SHRINKED);
     sprintf(result.actual, "Actual capacity after shrinking: %zu", r->capacity);
 
     result.success = r->capacity == TEST_REGION_SHRINK_CAPACITY_CASE3_CAPACITY_SHRINKED;
 
-    region_free(&r);
+    api->region_free(&r);
 
     return result;
     
     TEST_FATAL(
-        if (r) region_free(&r);
-        if (_RegionHandle) dlclose(_RegionHandle);
+        if (r) api->region_free(&r);
+        close_region_api_handle();
     );
 }
 
 TestResult test_region_shrink_capacity_case_4()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
 
     TestResult result = {0};
     
@@ -93,19 +81,15 @@ TestResult test_region_shrink_capacity_case_4()
     Region *node_2 = NULL;
     RegionError error = REGION_ERROR_INIT;
 
-    FuncPtr_region_push region_push = try_get_symbol(SYMBOL_FN_REGION_PUSH);
-    FuncPtr_region_free region_free = try_get_symbol(SYMBOL_FN_REGION_FREE);
-    FuncPtr_region_alloc region_alloc = try_get_symbol(SYMBOL_FN_REGION_ALLOC);
+    node_1 = api->region_alloc(TEST_REGION_SHRINK_CAPACITY_CASE4_NODE1_CAPACITY, &error); UNWRAP;
+    node_2 = api->region_alloc(TEST_REGION_SHRINK_CAPACITY_CASE4_NODE2_CAPACITY, &error); UNWRAP;
 
-    node_1 = region_alloc(TEST_REGION_SHRINK_CAPACITY_CASE4_NODE1_CAPACITY, &error); UNWRAP;
-    node_2 = region_alloc(TEST_REGION_SHRINK_CAPACITY_CASE4_NODE2_CAPACITY, &error); UNWRAP;
-
-    region_push(node_1, TEST_REGION_SHRINK_CAPACITY_CASE4_NODE1_CAPACITY_SHRINKED, &error); UNWRAP;
-    region_push(node_2, TEST_REGION_SHRINK_CAPACITY_CASE4_NODE2_CAPACITY_SHRINKED, &error); UNWRAP;
+    api->region_push(node_1, TEST_REGION_SHRINK_CAPACITY_CASE4_NODE1_CAPACITY_SHRINKED, &error); UNWRAP;
+    api->region_push(node_2, TEST_REGION_SHRINK_CAPACITY_CASE4_NODE2_CAPACITY_SHRINKED, &error); UNWRAP;
 
     node_1->next = node_2;
 
-    fn(node_1, REGION_SHRINK_CAPACITY_OPTION_ALL, &error); UNWRAP;
+    api->region_shrink_capacity(node_1, REGION_SHRINK_CAPACITY_OPTION_ALL, &error); UNWRAP;
 
     sprintf(result.expected, "Capacity after shrinking: { First node: %zu, Second node: %zu}", 
         TEST_REGION_SHRINK_CAPACITY_CASE4_NODE1_CAPACITY_SHRINKED,
@@ -119,13 +103,13 @@ TestResult test_region_shrink_capacity_case_4()
         node_1->capacity == TEST_REGION_SHRINK_CAPACITY_CASE4_NODE1_CAPACITY_SHRINKED &&
         node_2->capacity == TEST_REGION_SHRINK_CAPACITY_CASE4_NODE2_CAPACITY_SHRINKED;
 
-    region_free(&node_1);
+    api->region_free(&node_1);
 
     return result;
     
     TEST_FATAL(
-        if (node_1) region_free(&node_1);
-        if (_RegionHandle) dlclose(_RegionHandle);
+        if (node_1) api->region_free(&node_1);
+        close_region_api_handle();
     );
 }
 

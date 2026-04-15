@@ -1,24 +1,16 @@
 #include "common/common.h"
 
-FuncPtr_stack_region_alloc fn = NULL;
-
 #define TEST_STACK_REGION_ALLOC_CAPACITY 1
-
-void try_init_test_fn()
-{
-    if (!_RegionHandle) try_get_region_handle();
-    if (!fn) fn = try_get_symbol(SYMBOL_FN_STACK_REGION_ALLOC);
-}
 
 TestResult test_stack_region_alloc_case_1()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
 
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
 
-    fn(0, &error);
+    api->stack_region_alloc(0, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_SMALL_CAPACITY, error.code);
 
@@ -27,13 +19,13 @@ TestResult test_stack_region_alloc_case_1()
 
 TestResult test_stack_region_alloc_case_2()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
 
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
 
-    fn(SIZE_MAX, &error);
+    api->stack_region_alloc(SIZE_MAX, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_LARGE_CAPACITY, error.code);
 
@@ -43,7 +35,7 @@ TestResult test_stack_region_alloc_case_2()
 
 TestResult test_stack_region_alloc_case_3()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
 
     TestResult result = {0};
 
@@ -51,7 +43,7 @@ TestResult test_stack_region_alloc_case_3()
 
     set_available_memory(sizeof(StackRegion) / 2);
 
-    fn(TEST_STACK_REGION_ALLOC_CAPACITY, &error);
+    api->stack_region_alloc(TEST_STACK_REGION_ALLOC_CAPACITY, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION, error.code);
 
@@ -62,15 +54,15 @@ TestResult test_stack_region_alloc_case_3()
 
 TestResult test_stack_region_alloc_case_4()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
 
     TestResult result = {0};
-    
+
     RegionError error = REGION_ERROR_INIT;
 
     set_available_memory(sizeof(StackRegion));
 
-    fn(TEST_STACK_REGION_ALLOC_CAPACITY, &error);
+    api->stack_region_alloc(TEST_STACK_REGION_ALLOC_CAPACITY, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_CAPACITY, error.code);
 

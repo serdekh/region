@@ -1,23 +1,15 @@
 #include "common/common.h"
 
-FuncPtr_region_collect fn = NULL;
-
-void try_init_test_fn()
-{
-    if (!_RegionHandle) try_get_region_handle();
-    if (!fn) fn = try_get_symbol(SYMBOL_FN_REGION_COLLECT);
-}
-
 TestResult test_region_collect_case_1()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
 
     TestResult result = {0};
 
     size_t collected_size = 0;
     RegionError error = REGION_ERROR_INIT;
 
-    fn(NULL, &collected_size, &error);
+    api->region_collect(NULL, &collected_size, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_REGION, error.code);
 
@@ -26,14 +18,14 @@ TestResult test_region_collect_case_1()
 
 TestResult test_region_collect_case_2()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
     
     TestResult result = {0};
 
     Region region = {0};
     RegionError error = REGION_ERROR_INIT;
 
-    fn(&region, NULL, &error);
+    api->region_collect(&region, NULL, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_COLLECTED_SIZE, error.code);
 
@@ -42,7 +34,7 @@ TestResult test_region_collect_case_2()
 
 TestResult test_region_collect_case_3()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
     
     TestResult result = {0};
 
@@ -52,7 +44,7 @@ TestResult test_region_collect_case_3()
 
     set_available_memory(0);
 
-    fn(&region, &collected_size, &error);
+    api->region_collect(&region, &collected_size, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_COLLECT_MALLOC_COLLECTION, error.code);
 

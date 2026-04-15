@@ -1,7 +1,5 @@
 #include "common/common.h"
 
-FuncPtr_stack_region_peek_at fn = NULL;
-
 #define TEST_STACK_REGION_PEEK_AT_CASE_3_CAPACITY 1
 #define TEST_STACK_REGION_PEEK_AT_CASE_3_HUGE_INDEX TEST_STACK_REGION_PEEK_AT_CASE_3_CAPACITY * 1000
 
@@ -10,21 +8,15 @@ FuncPtr_stack_region_peek_at fn = NULL;
 #define TEST_STACK_REGION_PEEK_AT_CASE_4_CAPACITY                                             \
     TEST_STACK_REGION_PEEK_AT_CASE_4_ITEM_SIZE * TEST_STACK_REGION_PEEK_AT_CASE_4_ITEMS_COUNT \
 
-void try_init_test_fn()
-{
-    if (!_RegionHandle) try_get_region_handle();
-    if (!fn) fn = try_get_symbol(SYMBOL_FN_STACK_REGION_PEEK_AT); 
-}
-
 TestResult test_stack_region_peek_at_case_1()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
 
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
 
-    fn(NULL, 1, &error);
+    api->stack_region_peek_at(NULL, 1, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_AT_NO_STACK_REGION, error.code);
 
@@ -33,75 +25,68 @@ TestResult test_stack_region_peek_at_case_1()
 
 TestResult test_stack_region_peek_at_case_2()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
     
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
     StackRegion *stack = NULL;
 
-    StackRegionFrame frame = fn(stack, 1, &error);
+    StackRegionFrame frame = api->stack_region_peek_at(stack, 1, &error);
 
     TEST_RESULT_WRITE_PTR(result, NULL, frame.data);
 
     return result;
 
     TEST_FATAL(
-        if (stack) stack_region_free(&stack);
-        if (_RegionHandle) dlclose(_RegionHandle);
+        if (stack) api->stack_region_free(&stack);
+        close_region_api_handle();
     );
 }
 
 TestResult test_stack_region_peek_at_case_3()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
     
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
     StackRegion *stack = NULL;
 
-    FuncPtr_stack_region_free  stack_region_free  = try_get_symbol(SYMBOL_FN_STACK_REGION_FREE);
-    FuncPtr_stack_region_alloc stack_region_alloc = try_get_symbol(SYMBOL_FN_STACK_REGION_ALLOC);
+    stack = api->stack_region_alloc(TEST_STACK_REGION_PEEK_AT_CASE_3_CAPACITY, &error); UNWRAP;
 
-    stack = stack_region_alloc(TEST_STACK_REGION_PEEK_AT_CASE_3_CAPACITY, &error); UNWRAP;
-
-    StackRegionFrame frame = fn(stack, TEST_STACK_REGION_PEEK_AT_CASE_3_HUGE_INDEX, &error); 
+    StackRegionFrame frame = api->stack_region_peek_at(stack, TEST_STACK_REGION_PEEK_AT_CASE_3_HUGE_INDEX, &error); 
 
     TEST_RESULT_WRITE_PTR(result, NULL, frame.data); 
 
-    stack_region_free(&stack);
+    api->stack_region_free(&stack);
 
     return result;
 
     TEST_FATAL(
-        if (stack) stack_region_free(&stack);
-        if (_RegionHandle) dlclose(_RegionHandle);
+        if (stack) api->stack_region_free(&stack);
+        close_region_api_handle();
     );
 }
 
 TestResult test_stack_region_peek_at_case_4()
 {
-    try_init_test_fn();
+    RegionAPI *api = try_get_region_api_handle();
     
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
     StackRegion *stack = NULL;
 
-    FuncPtr_stack_region_free  stack_region_free  = try_get_symbol(SYMBOL_FN_STACK_REGION_FREE);
-    FuncPtr_stack_region_push  stack_region_push  = try_get_symbol(SYMBOL_FN_STACK_REGION_PUSH);
-    FuncPtr_stack_region_alloc stack_region_alloc = try_get_symbol(SYMBOL_FN_STACK_REGION_ALLOC);
-
-    stack = stack_region_alloc(TEST_STACK_REGION_PEEK_AT_CASE_4_CAPACITY, &error); UNWRAP;
+    stack = api->stack_region_alloc(TEST_STACK_REGION_PEEK_AT_CASE_4_CAPACITY, &error); UNWRAP;
 
     for (int i = 0; i < TEST_STACK_REGION_PEEK_AT_CASE_4_ITEMS_COUNT; i++) {
-        StackRegionFrame frame = stack_region_push(stack, TEST_STACK_REGION_PEEK_AT_CASE_4_ITEM_SIZE, &error); UNWRAP;
+        StackRegionFrame frame = api->stack_region_push(stack, TEST_STACK_REGION_PEEK_AT_CASE_4_ITEM_SIZE, &error); UNWRAP;
         *(int *)frame.data = (i + 1) * 100;
     }
 
     for (int i = 0; i < TEST_STACK_REGION_PEEK_AT_CASE_4_ITEMS_COUNT; i++) {
-        StackRegionFrame frame = fn(stack, i, &error); UNWRAP;
+        StackRegionFrame frame = api->stack_region_peek_at(stack, i, &error); UNWRAP;
         int expected_value = (TEST_STACK_REGION_PEEK_AT_CASE_4_ITEMS_COUNT - i) * 100;
 
         if (*(int *)frame.data == expected_value) continue;
@@ -110,19 +95,19 @@ TestResult test_stack_region_peek_at_case_4()
         sprintf(result.actual,   "Value: [%d] at: [%d]", *(int *)frame.data, i);
 
         result.success = false;
-        stack_region_free(&stack);
+        api->stack_region_free(&stack);
 
         return result;
     }
 
     result.success = true;
-    stack_region_free(&stack);
+    api->stack_region_free(&stack);
 
     return result;
 
     TEST_FATAL(
-        if (stack) stack_region_free(&stack);
-        if (_RegionHandle) dlclose(_RegionHandle);
+        if (stack) api->stack_region_free(&stack);
+        close_region_api_handle();
     );
 }
 
