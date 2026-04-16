@@ -6,7 +6,12 @@
 #define REGION_SHARED_OBJECT_FILE_PATH "../.build/sobj/region-test.so"
 
 #define SYMBOL_FN_REGION_ALLOC "region_alloc"
+
 #define SYMBOL_FN_REGION_PUSH "region_push"
+#define SYMBOL_FN_REGION_PUSH_INT "region_push_int"
+#define SYMBOL_FN_REGION_PUSH_FLOAT "region_push_float"
+#define SYMBOL_FN_REGION_PUSH_DOUBLE "region_push_double"
+
 #define SYMBOL_FN_REGION_SHRINK_CAPACITY "region_shrink_capacity"
 #define SYMBOL_FN_REGION_GET_LAST_NODE "region_get_last_node"
 #define SYMBOL_FN_REGION_COLLECT "region_collect"
@@ -30,7 +35,12 @@ typedef Region *(*FuncPtr_region_get_last_node)(Region *region, RegionGetLastNod
 typedef Region *(*FuncPtr_region_clone)(Region *region, RegionError *error);
 typedef Region *(*FuncPtr_region_merge)(Region *region, RegionMergeOption option, RegionError *error);
 typedef Region **(*FuncPtr_region_collect)(Region *region, size_t *collected_size, RegionError *error);
+
 typedef void *(*FuncPtr_region_push)(Region *region, size_t size, RegionError *error);
+typedef int *(*FuncPtr_region_push_int)(Region *region, int value, RegionError *error);
+typedef float *(*FuncPtr_region_push_float)(Region *region, float value, RegionError *error);
+typedef double *(*FuncPtr_region_push_double)(Region *region, double value, RegionError *error);
+
 typedef void (*FuncPtr_region_shrink_capacity)(Region *region, RegionShrinkCapacityOption option, RegionError *error);
 typedef void (*FuncPtr_region_free)(Region **region);
 
@@ -51,6 +61,9 @@ typedef struct {
     FuncPtr_region_get_last_node   region_get_last_node;
     FuncPtr_region_merge           region_merge;
     FuncPtr_region_push            region_push;
+    FuncPtr_region_push_int        region_push_int;
+    FuncPtr_region_push_float      region_push_float;
+    FuncPtr_region_push_double     region_push_double;
     FuncPtr_region_shrink_capacity region_shrink_capacity;
 
     FuncPtr_stack_region_alloc   stack_region_alloc;

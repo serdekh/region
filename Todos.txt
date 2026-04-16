@@ -1,8 +1,10 @@
 - Daily tasks:
 
 1: Add other functions and tests for them such as:
-   1.1: `stack_region_pop_for` to pop an `n` number of frames
-   1.2: `stack_region_rotate` to shift the last three elements on top of the stack in a specified direction
+   1.1: `region_push_float` and `region_push_double` tests
+   1.2: `stack_region_push_int`, `stack_region_pop_int`
+   1.3: `stack_region_push_float`, `stack_region_pop_float`
+   1.4: `stack_region_push_double`, `stack_region_pop_double`
 2: Clean up the testing infrastructure
    2.1: Make the logic (function usage, namings, error reports...) more consistent
 3:

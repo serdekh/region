@@ -40,6 +40,9 @@ RegionAPI *try_get_region_api_handle()
     region_api->region_get_last_node   = try_get_symbol(SYMBOL_FN_REGION_GET_LAST_NODE);
     region_api->region_merge           = try_get_symbol(SYMBOL_FN_REGION_MERGE);
     region_api->region_push            = try_get_symbol(SYMBOL_FN_REGION_PUSH);
+    region_api->region_push_int        = try_get_symbol(SYMBOL_FN_REGION_PUSH_INT);
+    region_api->region_push_float      = try_get_symbol(SYMBOL_FN_REGION_PUSH_FLOAT);
+    region_api->region_push_double     = try_get_symbol(SYMBOL_FN_REGION_PUSH_DOUBLE);
     region_api->region_shrink_capacity = try_get_symbol(SYMBOL_FN_REGION_SHRINK_CAPACITY);
 
     region_api->stack_region_alloc   = try_get_symbol(SYMBOL_FN_STACK_REGION_ALLOC);
