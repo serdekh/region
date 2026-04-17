@@ -1,9 +1,7 @@
-#include "./common/common.h"
+#include "../include/shared.h"
 
-TestResult test_stack_region_push_case_1()
+TestResult test_stack_region_push_case_1(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -17,10 +15,8 @@ TestResult test_stack_region_push_case_1()
 
 #define TEST_STACK_REGION_CAPACITY 1
 
-TestResult test_stack_region_push_case_2()
+TestResult test_stack_region_push_case_2(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -36,16 +32,11 @@ TestResult test_stack_region_push_case_2()
 
     return result;
 
-    TEST_FATAL(
-        if (stack) api->stack_region_free(&stack);
-        close_region_api_handle();
-    );
+    TEST_FATAL(if (stack) api->stack_region_free(&stack););
 }
 
-TestResult test_stack_region_push_case_3()
+TestResult test_stack_region_push_case_3(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -61,16 +52,11 @@ TestResult test_stack_region_push_case_3()
 
     return result;
 
-    TEST_FATAL(
-        if (stack) api->stack_region_free(&stack);
-        close_region_api_handle();
-    );
+    TEST_FATAL(if (stack) api->stack_region_free(&stack););
 }
 
-TestResult test_stack_region_push_case_4()
+TestResult test_stack_region_push_case_4(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -78,22 +64,19 @@ TestResult test_stack_region_push_case_4()
 
     stack = api->stack_region_alloc(TEST_STACK_REGION_CAPACITY, &error); UNWRAP;
 
-    set_available_memory(TEST_STACK_REGION_CAPACITY / 2);
+    api->test_set_available_memory(TEST_STACK_REGION_CAPACITY / 2);
 
     api->stack_region_push(stack, TEST_STACK_REGION_CAPACITY * 2, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION, error.code);
 
-    set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
+    api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
     api->stack_region_free(&stack);
 
     return result;
 
-    TEST_FATAL(
-        if (stack) api->stack_region_free(&stack);
-        close_region_api_handle();
-    );
+    TEST_FATAL(if (stack) api->stack_region_free(&stack););
 }
 
 REGISTER_TEST(test_stack_region_push_case_1, 1);

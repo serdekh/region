@@ -1,12 +1,10 @@
-#include "./common/common.h"
+#include "../include/shared.h"
 
 #define TEST_STACK_REGION_PEEK_CAPACITY sizeof(int) + sizeof(size_t)
 #define TEST_STACK_REGION_PEEK_RANDOM_VALUE 42
 
-TestResult test_stack_region_peek_case_1()
+TestResult test_stack_region_peek_case_1(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -18,10 +16,8 @@ TestResult test_stack_region_peek_case_1()
     return result;
 }
 
-TestResult test_stack_region_peek_case_2()
+TestResult test_stack_region_peek_case_2(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -41,10 +37,7 @@ TestResult test_stack_region_peek_case_2()
 
     return result;
     
-    TEST_FATAL(
-        if (stack) api->stack_region_free(&stack);
-        close_region_api_handle();
-    );
+    TEST_FATAL(if (stack) api->stack_region_free(&stack););
 }
 
 REGISTER_TEST(test_stack_region_peek_case_1, 1);

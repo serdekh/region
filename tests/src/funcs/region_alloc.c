@@ -1,9 +1,7 @@
-#include "./common/common.h"
+#include "../include/shared.h"
 
-TestResult region_alloc_case_1() 
+TestResult region_alloc_case_1(RegionAPI *api) 
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -15,10 +13,8 @@ TestResult region_alloc_case_1()
     return result;
 }
 
-TestResult region_alloc_case_2() 
+TestResult region_alloc_case_2(RegionAPI *api) 
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -30,42 +26,38 @@ TestResult region_alloc_case_2()
     return result;
 }
 
-TestResult region_alloc_case_3() 
+TestResult region_alloc_case_3(RegionAPI *api) 
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
 
-    set_available_memory(sizeof(Region) / 2);
+    api->test_set_available_memory(sizeof(Region) / 2);
 
     api->region_alloc(1, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION, error.code);
 
-    set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
+    api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
     return result;
 }
 
-TestResult region_alloc_case_4() 
+TestResult region_alloc_case_4(RegionAPI *api) 
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     size_t capacity = 10;
 
     RegionError error = REGION_ERROR_INIT;
 
-    set_available_memory(sizeof(Region) + capacity / 2);
+    api->test_set_available_memory(sizeof(Region) + capacity / 2);
 
     api->region_alloc(capacity, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY, error.code);
 
-    set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
+    api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
     return result;
 }

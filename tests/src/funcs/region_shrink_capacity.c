@@ -1,4 +1,4 @@
-#include "./common/common.h"
+#include "../include/shared.h"
 
 #define TEST_REGION_SHRINK_CAPACITY_CASE3_CAPACITY (size_t)10
 #define TEST_REGION_SHRINK_CAPACITY_CASE3_CAPACITY_SHRINKED (TEST_REGION_SHRINK_CAPACITY_CASE3_CAPACITY) / 2
@@ -8,10 +8,8 @@
 #define TEST_REGION_SHRINK_CAPACITY_CASE4_NODE2_CAPACITY (size_t)11
 #define TEST_REGION_SHRINK_CAPACITY_CASE4_NODE2_CAPACITY_SHRINKED (TEST_REGION_SHRINK_CAPACITY_CASE4_NODE2_CAPACITY) / 2
 
-TestResult test_region_shrink_capacity_case_1()
+TestResult test_region_shrink_capacity_case_1(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -23,10 +21,8 @@ TestResult test_region_shrink_capacity_case_1()
     return result;
 }
 
-TestResult test_region_shrink_capacity_case_2()
+TestResult test_region_shrink_capacity_case_2(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -41,10 +37,8 @@ TestResult test_region_shrink_capacity_case_2()
     return result;
 }
 
-TestResult test_region_shrink_capacity_case_3()
+TestResult test_region_shrink_capacity_case_3(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     Region *r = NULL;
@@ -65,16 +59,11 @@ TestResult test_region_shrink_capacity_case_3()
 
     return result;
     
-    TEST_FATAL(
-        if (r) api->region_free(&r);
-        close_region_api_handle();
-    );
+    TEST_FATAL(if (r) api->region_free(&r););
 }
 
-TestResult test_region_shrink_capacity_case_4()
+TestResult test_region_shrink_capacity_case_4(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
     
     Region *node_1 = NULL;
@@ -107,10 +96,7 @@ TestResult test_region_shrink_capacity_case_4()
 
     return result;
     
-    TEST_FATAL(
-        if (node_1) api->region_free(&node_1);
-        close_region_api_handle();
-    );
+    TEST_FATAL(if (node_1) api->region_free(&node_1););
 }
 
 REGISTER_TEST(test_region_shrink_capacity_case_1, 1);

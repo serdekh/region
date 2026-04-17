@@ -1,11 +1,9 @@
-#include "common/common.h"
+#include "../include/shared.h"
 
 #define REGION_TEST_REGION_CLONE_STATIC_DATA "Hello from tests!"
 
-TestResult test_region_clone_case_1()
-{
-    RegionAPI *api = try_get_region_api_handle();
-    
+TestResult test_region_clone_case_1(RegionAPI *api)
+{  
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -17,30 +15,26 @@ TestResult test_region_clone_case_1()
     return result;
 }
 
-TestResult test_region_clone_case_2()
+TestResult test_region_clone_case_2(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     Region region     = {0};
     RegionError error = REGION_ERROR_INIT;
 
-    set_available_memory(sizeof(Region *) / 2);
+    api->test_set_available_memory(sizeof(Region *) / 2);
 
     api->region_clone(&region, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_ROOT, error.code);
 
-    set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
+    api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
     return result;
 }
 
-TestResult test_region_clone_case_3()
+TestResult test_region_clone_case_3(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult  result = {0};
 
     Region      root   = { .capacity = 1 };
@@ -49,21 +43,19 @@ TestResult test_region_clone_case_3()
 
     root.next = &second;
 
-    set_available_memory(sizeof(root) + root.capacity);
+    api->test_set_available_memory(sizeof(root) + root.capacity);
 
     api->region_clone(&root, &error); 
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_NODE, error.code);
 
-    set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
+    api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
     return result;
 }
 
-TestResult test_region_clone_case_4()
+TestResult test_region_clone_case_4(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult  result = {0};
     
     Region region = {0};
@@ -85,10 +77,7 @@ TestResult test_region_clone_case_4()
 
     return result;
 
-    TEST_FATAL(
-        if (clone) api->region_free(&clone);
-        close_region_api_handle();
-    );
+    TEST_FATAL(if (clone) api->region_free(&clone););
 }
 
 REGISTER_TEST(test_region_clone_case_1, 1);

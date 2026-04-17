@@ -107,21 +107,25 @@ typedef enum {
 
 #define REGION_TEST_AVAILABLE_MEMORY_DEFAULT 2048
 
+REGION_API void __test_set_available_memory(size_t value);
+REGION_API size_t __test_get_available_memory();
+REGION_API void *test_malloc(size_t capacity);
+
 #ifdef REGION_TEST_IMPLEMENTATION
     // Emulates the amount of memory a process can request from an OS
     static size_t __test_available_memory = REGION_TEST_AVAILABLE_MEMORY_DEFAULT;
 
-    REGION_API void __test_set_available_memory(size_t value) 
+    void __test_set_available_memory(size_t value) 
     {
         __test_available_memory = value;
     }
 
-    REGION_API size_t __test_get_available_memory()
+    size_t __test_get_available_memory()
     {
         return __test_available_memory;
     }
 
-    REGION_API void *test_malloc(size_t capacity)
+    void *test_malloc(size_t capacity)
     {
         if (capacity > __test_available_memory) return NULL;
 

@@ -1,11 +1,9 @@
-#include "./common/common.h"
+#include "../include/shared.h"
 
 #define TEST_REGION_GET_LAST_NODE_CAPACITY 1
 
-TestResult test_region_get_last_node_case_1()
+TestResult test_region_get_last_node_case_1(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -17,10 +15,8 @@ TestResult test_region_get_last_node_case_1()
     return result;
 }
 
-Region *_alloc_region_with_two_nodes(RegionError *error)
+Region *_alloc_region_with_two_nodes(RegionAPI *api, RegionError *error)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     Region *first = NULL;
     Region *second = NULL;
 
@@ -40,15 +36,13 @@ Region *_alloc_region_with_two_nodes(RegionError *error)
     return first;
 }
 
-TestResult test_region_get_last_node_case_2()
-{
-    RegionAPI *api = try_get_region_api_handle();
-    
+TestResult test_region_get_last_node_case_2(RegionAPI *api)
+{   
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
 
-    Region *region_with_two_nodes = _alloc_region_with_two_nodes(&error); UNWRAP;
+    Region *region_with_two_nodes = _alloc_region_with_two_nodes(api, &error); UNWRAP;
 
     Region *last_node = api->region_get_last_node(region_with_two_nodes, REGION_GET_LAST_NODE_OPTION_DEFAULT, &error); UNWRAP;
 
@@ -60,19 +54,16 @@ TestResult test_region_get_last_node_case_2()
 
     TEST_FATAL(
         if (region_with_two_nodes) api->region_free(&region_with_two_nodes);
-        close_region_api_handle();
     );
 }
 
-TestResult test_region_get_last_node_case_3()
-{
-    RegionAPI *api = try_get_region_api_handle();
-    
+TestResult test_region_get_last_node_case_3(RegionAPI *api)
+{   
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
 
-    Region *region_with_two_nodes = _alloc_region_with_two_nodes(&error); UNWRAP;
+    Region *region_with_two_nodes = _alloc_region_with_two_nodes(api, &error); UNWRAP;
 
     region_with_two_nodes->next->size = 0;
 
@@ -86,7 +77,6 @@ TestResult test_region_get_last_node_case_3()
 
     TEST_FATAL(
         if (region_with_two_nodes) api->region_free(&region_with_two_nodes);
-        close_region_api_handle();
     );
 }
 

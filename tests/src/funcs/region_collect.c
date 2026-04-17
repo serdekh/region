@@ -1,9 +1,7 @@
-#include "common/common.h"
+#include "../include/shared.h"
 
-TestResult test_region_collect_case_1()
+TestResult test_region_collect_case_1(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     size_t collected_size = 0;
@@ -16,10 +14,8 @@ TestResult test_region_collect_case_1()
     return result;
 }
 
-TestResult test_region_collect_case_2()
-{
-    RegionAPI *api = try_get_region_api_handle();
-    
+TestResult test_region_collect_case_2(RegionAPI *api)
+{ 
     TestResult result = {0};
 
     Region region = {0};
@@ -32,23 +28,21 @@ TestResult test_region_collect_case_2()
     return result;
 }
 
-TestResult test_region_collect_case_3()
-{
-    RegionAPI *api = try_get_region_api_handle();
-    
+TestResult test_region_collect_case_3(RegionAPI *api)
+{   
     TestResult result = {0};
 
     Region region = {0};
     RegionError error = REGION_ERROR_INIT;
     size_t collected_size = {0};
 
-    set_available_memory(0);
+    api->test_set_available_memory(0);
 
     api->region_collect(&region, &collected_size, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_COLLECT_MALLOC_COLLECTION, error.code);
 
-    set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
+    api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
     return result;
 }

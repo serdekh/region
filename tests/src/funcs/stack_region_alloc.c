@@ -1,11 +1,9 @@
-#include "common/common.h"
+#include "../include/shared.h"
 
 #define TEST_STACK_REGION_ALLOC_CAPACITY 1
 
-TestResult test_stack_region_alloc_case_1()
+TestResult test_stack_region_alloc_case_1(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -17,10 +15,8 @@ TestResult test_stack_region_alloc_case_1()
     return result;
 }
 
-TestResult test_stack_region_alloc_case_2()
+TestResult test_stack_region_alloc_case_2(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -33,40 +29,36 @@ TestResult test_stack_region_alloc_case_2()
 }
 
 
-TestResult test_stack_region_alloc_case_3()
+TestResult test_stack_region_alloc_case_3(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
 
-    set_available_memory(sizeof(StackRegion) / 2);
+    api->test_set_available_memory(sizeof(StackRegion) / 2);
 
     api->stack_region_alloc(TEST_STACK_REGION_ALLOC_CAPACITY, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION, error.code);
 
-    set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
+    api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
     return result;
 }
 
-TestResult test_stack_region_alloc_case_4()
+TestResult test_stack_region_alloc_case_4(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
 
-    set_available_memory(sizeof(StackRegion));
+    api->test_set_available_memory(sizeof(StackRegion));
 
     api->stack_region_alloc(TEST_STACK_REGION_ALLOC_CAPACITY, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_CAPACITY, error.code);
 
-    set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
+    api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
     return result;
 }

@@ -1,34 +1,30 @@
 #pragma once
-
-#include "../../include/shared.h"
-#include "../../../../src/region.h"
-
-#define REGION_SHARED_OBJECT_FILE_PATH "../.build/sobj/region-test.so"
+#include "../../../src/region.h"
 
 #define SYMBOL_FN_REGION_ALLOC "region_alloc"
 
-#define SYMBOL_FN_REGION_PUSH "region_push"
-#define SYMBOL_FN_REGION_PUSH_INT "region_push_int"
-#define SYMBOL_FN_REGION_PUSH_FLOAT "region_push_float"
+#define SYMBOL_FN_REGION_PUSH        "region_push"
+#define SYMBOL_FN_REGION_PUSH_INT    "region_push_int"
+#define SYMBOL_FN_REGION_PUSH_FLOAT  "region_push_float"
 #define SYMBOL_FN_REGION_PUSH_DOUBLE "region_push_double"
 
 #define SYMBOL_FN_REGION_SHRINK_CAPACITY "region_shrink_capacity"
-#define SYMBOL_FN_REGION_GET_LAST_NODE "region_get_last_node"
-#define SYMBOL_FN_REGION_COLLECT "region_collect"
-#define SYMBOL_FN_REGION_CLONE "region_clone"
-#define SYMBOL_FN_REGION_MERGE "region_merge"
-#define SYMBOL_FN_REGION_FREE "region_free"
+#define SYMBOL_FN_REGION_GET_LAST_NODE   "region_get_last_node"
+#define SYMBOL_FN_REGION_COLLECT         "region_collect"
+#define SYMBOL_FN_REGION_CLONE           "region_clone"
+#define SYMBOL_FN_REGION_MERGE           "region_merge"
+#define SYMBOL_FN_REGION_FREE            "region_free"
 
-#define SYMBOL_FN_STACK_REGION_ALLOC "stack_region_alloc"
-#define SYMBOL_FN_STACK_REGION_PUSH "stack_region_push"
-#define SYMBOL_FN_STACK_REGION_PEEK "stack_region_peek"
+#define SYMBOL_FN_STACK_REGION_ALLOC   "stack_region_alloc"
+#define SYMBOL_FN_STACK_REGION_PUSH    "stack_region_push"
+#define SYMBOL_FN_STACK_REGION_PEEK    "stack_region_peek"
 #define SYMBOL_FN_STACK_REGION_PEEK_AT "stack_region_peek_at"
-#define SYMBOL_FN_STACK_REGION_POP "stack_region_pop"
-#define SYMBOL_FN_STACK_REGION_SWAP "stack_region_swap"
-#define SYMBOL_FN_STACK_REGION_FREE "stack_region_free"
+#define SYMBOL_FN_STACK_REGION_POP     "stack_region_pop"
+#define SYMBOL_FN_STACK_REGION_SWAP    "stack_region_swap"
+#define SYMBOL_FN_STACK_REGION_FREE    "stack_region_free"
 
 #define SYMBOL_FN_TEST_SET_AVAILABLE_MEMORY "__test_set_available_memory"
-#define SYMBOL_FN_TEST_GET_AVAILABLE_MEMORY "__test_get_available_memory"
+#define SYMBOL_FN_TEST_GET_AVAILABLE_MEMORY "__test_get_available_memory"     
 
 typedef Region *(*FuncPtr_region_alloc)(size_t, RegionError*);
 typedef Region *(*FuncPtr_region_get_last_node)(Region *region, RegionGetLastNodeOption option, RegionError *error);
@@ -53,6 +49,9 @@ typedef StackRegionFrame (*FuncPtr_stack_region_pop)(StackRegion *stack, RegionE
 typedef void (*FuncPtr_stack_region_swap)(StackRegion *stack, RegionError *error);
 typedef void (*FuncPtr_stack_region_free)(StackRegion **stack);
 
+typedef void (*FuncPtr__test_set_available_memory)(size_t value);
+typedef size_t (*FuncPtr__test_get_available_memory)(size_t value);
+
 typedef struct {
     FuncPtr_region_alloc           region_alloc;
     FuncPtr_region_clone           region_clone;
@@ -73,32 +72,10 @@ typedef struct {
     FuncPtr_stack_region_pop     stack_region_pop;
     FuncPtr_stack_region_push    stack_region_push;
     FuncPtr_stack_region_swap    stack_region_swap;
+    
+    FuncPtr__test_set_available_memory test_set_available_memory;
 } RegionAPI;
 
-typedef void (*FuncPtr_test_set_available_memory)(size_t value);
-typedef size_t (*FuncPtr_test_get_available_memory)();
+RegionAPI *try_get_region_api_handle(void *handle);
 
-extern void *_RegionHandle;
-extern RegionAPI *region_api;
-
-RegionAPI *try_get_region_api_handle();
-void *try_get_symbol(const char *symbol_name);
-void close_region_api_handle();
-
-extern FuncPtr_test_set_available_memory __test_set_available_memory;
-extern FuncPtr_test_get_available_memory __test_get_available_memory;
-
-void set_available_memory(size_t value);
-size_t get_available_memory();
-
-#define UNWRAP if(REGION_ERROR(error)) goto fatal
-
-#define TEST_LOG_ERROR_FAILED_TEST_FATAL_ERROR                       \
-    TEST_LOG(stderr, "Error", "Could not perfom a test. Stop.\n\t"); \
-    REGION_LOG_ERROR(error)
-
-#define TEST_FATAL(cleanup_code)             \
-fatal:                                       \
-    TEST_LOG_ERROR_FAILED_TEST_FATAL_ERROR;  \
-    cleanup_code                             \
-    exit(1);                     
+void *try_get_symbol(void *handle, const char *symbol_name, bool *is_error);

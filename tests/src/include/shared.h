@@ -4,7 +4,10 @@
 #include <stdbool.h>
 #include <dlfcn.h>
 
+#include "region-api.h"
+
 #define FUNCS_SO_FILE_PATH "./.build/obj/funcs.so"
+#define TEST_REGION_TEST_SO_FILE_PATH "../.build/sobj/region-test.so"
 
 #define TEST_SECTION_TOKEN tests
 #define TEST_SECTION "tests"
@@ -20,8 +23,10 @@ typedef struct {
 typedef struct {
     size_t case_number;
     const char *func_name;
-    TestResult (*func)(void);
+    TestResult (*func)(RegionAPI *api);
 } TestContext;
+
+#define UNWRAP if (REGION_ERROR(error)) goto fatal
 
 #define FMT_TO_STR(destination, fmt, value) sprintf((destination), (fmt), (value))
 
@@ -29,9 +34,9 @@ typedef struct {
 #define PTR_TO_STR(to, p) FMT_TO_STR((to), "%p", (n))
 
 #define TEST_RESULT_WRITE_FMT(result, fmt, e, a) \
-    sprintf((result).expected, (fmt), (e));   \
-    sprintf((result).actual, (fmt), (a));     \
-    (result).success = (e) == (a);               \
+sprintf((result).expected, (fmt), (e));   \
+sprintf((result).actual, (fmt), (a));     \
+(result).success = (e) == (a);               \
 
 #define TEST_RESULT_WRITE_INT(result, e, a) TEST_RESULT_WRITE_FMT((result), "%d", (e), (a))
 #define TEST_RESULT_WRITE_FLOAT(result, e, a) TEST_RESULT_WRITE_FMT((result), "%f", (e), (a))
@@ -47,6 +52,17 @@ typedef struct {
 
 #define TEST_LOG_FAILED_TEST(test_context, result) TEST_LOG_LINE(stderr, "Check", "[function: \"%s\"][case: %zu]: Failed!\n\tExpected:\n\t\t`%s`\n\tBut got:\n\t\t`%s`\n",\
         (test_context)->func_name, (test_context)->case_number, result.expected, result.actual)
+
+
+#define TEST_LOG_ERROR_FAILED_TEST_FATAL_ERROR                       \
+    TEST_LOG(stderr, "Error", "Could not perfom a test. Stop.\n\t"); \
+    REGION_LOG_ERROR(error)
+
+#define TEST_FATAL(cleanup_code)             \
+fatal:                                       \
+    TEST_LOG_ERROR_FAILED_TEST_FATAL_ERROR;  \
+    cleanup_code                             \
+    exit(1);       
 
 #define GET_TESTS_START_STR   "get_tests_start"
 #define GET_TESTS_END_STR   "get_tests_end"

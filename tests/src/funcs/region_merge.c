@@ -1,4 +1,4 @@
-#include "common/common.h"
+#include "../include/shared.h"
 
 #define TEST_REGION_MERGE_CAPACITY 1
 #define TEST_REGION_MERGE_CASE_4_RVALUE_INT1 19
@@ -7,10 +7,8 @@
 #define TEST_REGION_MERGE_CASE_5_RVALUE_INT2 555
 #define TEST_REGION_MERGE_CASE_5_GARBAGE_SPACE 5
 
-TestResult test_region_merge_case_1()
+TestResult test_region_merge_case_1(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -22,50 +20,44 @@ TestResult test_region_merge_case_1()
     return result;
 }
 
-TestResult test_region_merge_case_2()
+TestResult test_region_merge_case_2(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     Region region = {0};
     RegionError error = REGION_ERROR_INIT;
 
-    set_available_memory(0);
+    api->test_set_available_memory(0);
 
     api->region_merge(&region, 0, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_COLLECTION, error.code);
 
-    set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
+    api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
     return result;
 }
 
-TestResult test_region_merge_case_3()
+TestResult test_region_merge_case_3(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     Region region = {.capacity = TEST_REGION_MERGE_CAPACITY };
     RegionError error = REGION_ERROR_INIT;
 
-    set_available_memory(TEST_REGION_MERGE_CAPACITY + sizeof(Region **));
+    api->test_set_available_memory(TEST_REGION_MERGE_CAPACITY + sizeof(Region **));
 
     api->region_merge(&region, 0, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_REGION, error.code);
 
-    set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
+    api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
     return result;
 }
 
-TestResult test_region_merge_case_4()
+TestResult test_region_merge_case_4(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -103,15 +95,11 @@ cleanup:
     TEST_FATAL(
         if (first)  api->region_free(&first);
         if (merged) api->region_free(&merged);
-
-        close_region_api_handle();
     );
 }
 
-TestResult test_region_merge_case_5()
+TestResult test_region_merge_case_5(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -152,8 +140,6 @@ cleanup:
     TEST_FATAL(
         if (first)  api->region_free(&first);
         if (merged) api->region_free(&merged);
-
-        close_region_api_handle();
     );
 }
 

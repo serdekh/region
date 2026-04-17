@@ -1,4 +1,4 @@
-#include "common/common.h"
+#include "../include/shared.h"
 
 #define TEST_STACK_REGION_PEEK_AT_CASE_3_CAPACITY 1
 #define TEST_STACK_REGION_PEEK_AT_CASE_3_HUGE_INDEX TEST_STACK_REGION_PEEK_AT_CASE_3_CAPACITY * 1000
@@ -8,10 +8,8 @@
 #define TEST_STACK_REGION_PEEK_AT_CASE_4_CAPACITY                                             \
     TEST_STACK_REGION_PEEK_AT_CASE_4_ITEM_SIZE * TEST_STACK_REGION_PEEK_AT_CASE_4_ITEMS_COUNT \
 
-TestResult test_stack_region_peek_at_case_1()
+TestResult test_stack_region_peek_at_case_1(RegionAPI *api)
 {
-    RegionAPI *api = try_get_region_api_handle();
-
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -23,10 +21,8 @@ TestResult test_stack_region_peek_at_case_1()
     return result;
 }
 
-TestResult test_stack_region_peek_at_case_2()
-{
-    RegionAPI *api = try_get_region_api_handle();
-    
+TestResult test_stack_region_peek_at_case_2(RegionAPI *api)
+{   
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -38,16 +34,11 @@ TestResult test_stack_region_peek_at_case_2()
 
     return result;
 
-    TEST_FATAL(
-        if (stack) api->stack_region_free(&stack);
-        close_region_api_handle();
-    );
+    TEST_FATAL(if (stack) api->stack_region_free(&stack););
 }
 
-TestResult test_stack_region_peek_at_case_3()
-{
-    RegionAPI *api = try_get_region_api_handle();
-    
+TestResult test_stack_region_peek_at_case_3(RegionAPI *api)
+{  
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -63,16 +54,11 @@ TestResult test_stack_region_peek_at_case_3()
 
     return result;
 
-    TEST_FATAL(
-        if (stack) api->stack_region_free(&stack);
-        close_region_api_handle();
-    );
+    TEST_FATAL(if (stack) api->stack_region_free(&stack););
 }
 
-TestResult test_stack_region_peek_at_case_4()
-{
-    RegionAPI *api = try_get_region_api_handle();
-    
+TestResult test_stack_region_peek_at_case_4(RegionAPI *api)
+{   
     TestResult result = {0};
 
     RegionError error = REGION_ERROR_INIT;
@@ -105,10 +91,7 @@ TestResult test_stack_region_peek_at_case_4()
 
     return result;
 
-    TEST_FATAL(
-        if (stack) api->stack_region_free(&stack);
-        close_region_api_handle();
-    );
+    TEST_FATAL(if (stack) api->stack_region_free(&stack););
 }
 
 REGISTER_TEST(test_stack_region_peek_at_case_1, 1);
