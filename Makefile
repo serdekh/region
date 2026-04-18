@@ -51,17 +51,22 @@ $(TARGET_TEST_SOBJ): src/region.h $(SOBJ)
 	$(CC) -shared -o $(TARGET_SOBJ) -DREGION_IMPLEMENTATION -DREGION_TEST_IMPLEMENTATION -x c -fPIC src/region.h
 
 help:
-	@echo "\tmake run   -- Builds the whole project"
-	@echo "\t              1. Creates the '.build' folder"
-	@echo "\t              2. Creates the '.build/bin' and '.build/obj' folders"
-	@echo "\t              3. Compiles the source code header file 'src/region.h' to an object file"
-	@echo "\t                 and places it in the '.build/obj' directory."
-	@echo "\t              4. Compiles the 'src/main.c' file in the '.build/bin' directory"
-	@echo "\t                 and links it with the '.build/obj/region.o' file"
-	@echo "\t              5. Runs the '.build/bin/region' file upon successful compilation"
-	@echo "\tmake build -- creates the 'region.o' file and puts it in the '.build/obj' directory"
-	@echo "\tmake clean -- removes the '.build' and 'tests/bin' folders"
-	@echo "\tmake test  -- builds the test system and runs it upon successful build."
+	@echo "\tmake run               -- Builds the whole project and runs it"
+	@echo "\t                          \tRequires a 'main.c' file in the '<project>/src/' subdirectory"
+	@echo "\tmake build             -- Builds the region library and produces an object file"
+	@echo "\t                          \tTests are not built, the object file is located at '<project>/.build/obj'"
+	@echo "\tmake build-shared      -- Builds the region library and produces a shared object file"   
+	@echo "\t                          \tTests are not built, the object file is located at '<project>/.build/sobj'"
+	@echo "\tmake build-shared-test -- Builds the region library with the -REGION_TEST_IMPLEMENTATION macro"
+	@echo "\t                          and produces a shared object file"
+	@echo "\t                          \tTests are not built, the object file is located at '<project>/.build/sobj'"
+	@echo "\tmake test              -- Builds a testing system and the region shared object for tests."
+	@echo "\t                          Calls the 'run' command from the inner Makefile. Runs upon success"
+	@echo "\t                          \tTests are built, the files are located at       "
+	@echo "\t                          \t\t'<project>/.build'           - region shared object (with the REGION_TEST_IMPLEMENTATION macro defined)"
+	@echo "\t                          \t\t'<project>/tests/.build/obj' - object files with tests  "
+	@echo "\t                          \t\t'<project>/tests/.build/bin' - test framework executable"
+	
 
 clean:
 	rm -rf $(BUILD) $(TESTS_BUILD)
