@@ -99,4 +99,4 @@ REGISTER_TEST(test_stack_region_peek_at_case_2, 2);
 REGISTER_TEST(test_stack_region_peek_at_case_3, 3);
 REGISTER_TEST(test_stack_region_peek_at_case_4, 4);
 
-EXPOSE(tests);
+EXPORT_AT_TESTS_SECTION

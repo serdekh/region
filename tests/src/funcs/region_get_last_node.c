@@ -84,4 +84,4 @@ REGISTER_TEST(test_region_get_last_node_case_1, 1);
 REGISTER_TEST(test_region_get_last_node_case_2, 2);
 REGISTER_TEST(test_region_get_last_node_case_3, 3);
 
-EXPOSE(tests);
+EXPORT_AT_TESTS_SECTION

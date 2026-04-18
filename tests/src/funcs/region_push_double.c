@@ -89,4 +89,4 @@ REGISTER_TEST(test_region_push_double_case_2, 2);
 REGISTER_TEST(test_region_push_double_case_3, 3);
 REGISTER_TEST(test_region_push_double_case_4, 4);
 
-EXPOSE(tests);
+EXPORT_AT_TESTS_SECTION

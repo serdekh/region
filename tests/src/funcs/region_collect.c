@@ -51,4 +51,4 @@ REGISTER_TEST(test_region_collect_case_1, 1);
 REGISTER_TEST(test_region_collect_case_2, 2);
 REGISTER_TEST(test_region_collect_case_3, 3);
 
-EXPOSE(tests);
+EXPORT_AT_TESTS_SECTION

@@ -132,4 +132,4 @@ REGISTER_TEST(test_stack_region_swap_case_2, 2);
 REGISTER_TEST(test_stack_region_swap_case_3, 3);
 REGISTER_TEST(test_stack_region_swap_case_4, 4);
 
-EXPOSE(tests);
+EXPORT_AT_TESTS_SECTION

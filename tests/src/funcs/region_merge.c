@@ -149,4 +149,4 @@ REGISTER_TEST(test_region_merge_case_3, 3);
 REGISTER_TEST(test_region_merge_case_4, 4);
 REGISTER_TEST(test_region_merge_case_5, 5);
 
-EXPOSE(tests);
+EXPORT_AT_TESTS_SECTION

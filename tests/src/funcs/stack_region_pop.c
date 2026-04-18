@@ -41,4 +41,4 @@ TestResult test_stack_region_pop_case_2(RegionAPI *api)
 REGISTER_TEST(test_stack_region_pop_case_1, 1);
 REGISTER_TEST(test_stack_region_pop_case_2, 2);
 
-EXPOSE(tests);
+EXPORT_AT_TESTS_SECTION

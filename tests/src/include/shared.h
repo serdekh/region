@@ -86,3 +86,5 @@ fatal:                                       \
         .func_name = #f,                                                            \
         .func = f,                                                                  \
     };                        
+
+#define EXPORT_AT_TESTS_SECTION EXPOSE(tests)
