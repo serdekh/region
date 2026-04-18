@@ -34,13 +34,13 @@ typedef struct {
 #define PTR_TO_STR(to, p) FMT_TO_STR((to), "%p", (n))
 
 #define TEST_RESULT_WRITE_FMT(result, fmt, e, a) \
-sprintf((result).expected, (fmt), (e));   \
-sprintf((result).actual, (fmt), (a));     \
-(result).success = (e) == (a);               \
+    sprintf((result).expected, (fmt), (e));      \
+    sprintf((result).actual, (fmt), (a));        \
+    (result).success = (e) == (a);               \
 
 #define TEST_RESULT_WRITE_INT(result, e, a) TEST_RESULT_WRITE_FMT((result), "%d", (e), (a))
 #define TEST_RESULT_WRITE_FLOAT(result, e, a) TEST_RESULT_WRITE_FMT((result), "%f", (e), (a))
-#define TEST_RESULT_WRITE_DOUBLE(result, e, a) TEST_RESULT_WRITE_FMT((result), "%f", (e), (a))
+#define TEST_RESULT_WRITE_DOUBLE(result, e, a) TEST_RESULT_WRITE_FMT((result), "%f", ((double)e), ((double)a))
 #define TEST_RESULT_WRITE_PTR(result, e, a) TEST_RESULT_WRITE_FMT((result), "%p", (e), (a))
 
 #define TEST_LOG(stream, type, message, ...) fprintf((stream), "[Test]["type"]: "message, ##__VA_ARGS__)
