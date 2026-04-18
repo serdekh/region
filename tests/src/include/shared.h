@@ -61,7 +61,7 @@ sprintf((result).actual, (fmt), (a));     \
 #define TEST_FATAL(cleanup_code)             \
 fatal:                                       \
     TEST_LOG_ERROR_FAILED_TEST_FATAL_ERROR;  \
-    cleanup_code                             \
+    cleanup_code;                            \
     exit(1);       
 
 #define GET_TESTS_START_STR   "get_tests_start"
