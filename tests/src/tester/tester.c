@@ -62,8 +62,12 @@ RegionAPI *try_get_region_api_handle(void *handle)
     region_api->stack_region_peek    = try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PEEK, &is_error); REGION_API_HANDLE_UNWRAP;
     region_api->stack_region_peek_at = try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PEEK_AT, &is_error); REGION_API_HANDLE_UNWRAP;
     region_api->stack_region_pop     = try_get_symbol(handle, SYMBOL_FN_STACK_REGION_POP, &is_error); REGION_API_HANDLE_UNWRAP;
-    region_api->stack_region_push    = try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PUSH, &is_error); REGION_API_HANDLE_UNWRAP;
     region_api->stack_region_swap    = try_get_symbol(handle, SYMBOL_FN_STACK_REGION_SWAP, &is_error); REGION_API_HANDLE_UNWRAP;
+    
+    region_api->stack_region_push        = try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PUSH, &is_error); REGION_API_HANDLE_UNWRAP;
+    region_api->stack_region_push_int    = try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PUSH_INT, &is_error); REGION_API_HANDLE_UNWRAP;
+    region_api->stack_region_push_float  = try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PUSH_FLOAT, &is_error); REGION_API_HANDLE_UNWRAP;
+    region_api->stack_region_push_double = try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PUSH_DOUBLE, &is_error); REGION_API_HANDLE_UNWRAP;
 
     region_api->test_set_available_memory = try_get_symbol(handle, SYMBOL_FN_TEST_SET_AVAILABLE_MEMORY, &is_error); REGION_API_HANDLE_UNWRAP; 
     return region_api;
