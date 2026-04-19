@@ -16,12 +16,16 @@
 #define SYMBOL_FN_REGION_FREE            "region_free"
 
 #define SYMBOL_FN_STACK_REGION_ALLOC   "stack_region_alloc"
-#define SYMBOL_FN_STACK_REGION_PUSH    "stack_region_push"
 #define SYMBOL_FN_STACK_REGION_PEEK    "stack_region_peek"
 #define SYMBOL_FN_STACK_REGION_PEEK_AT "stack_region_peek_at"
 #define SYMBOL_FN_STACK_REGION_POP     "stack_region_pop"
 #define SYMBOL_FN_STACK_REGION_SWAP    "stack_region_swap"
 #define SYMBOL_FN_STACK_REGION_FREE    "stack_region_free"
+
+#define SYMBOL_FN_STACK_REGION_PUSH        "stack_region_push"
+#define SYMBOL_FN_STACK_REGION_PUSH_INT    "stack_region_push_int"
+#define SYMBOL_FN_STACK_REGION_PUSH_FLOAT  "stack_region_push_float"
+#define SYMBOL_FN_STACK_REGION_PUSH_DOUBLE "stack_region_push_double"
 
 #define SYMBOL_FN_TEST_SET_AVAILABLE_MEMORY "__test_set_available_memory"
 #define SYMBOL_FN_TEST_GET_AVAILABLE_MEMORY "__test_get_available_memory"     
@@ -41,10 +45,14 @@ typedef void (*FuncPtr_region_shrink_capacity)(Region *region, RegionShrinkCapac
 typedef void (*FuncPtr_region_free)(Region **region);
 
 typedef StackRegion *(*FuncPtr_stack_region_alloc)(size_t capacity, RegionError *error);
-typedef StackRegionFrame (*FuncPtr_stack_region_push)(StackRegion *stack, size_t size, RegionError *error);
 typedef StackRegionFrame (*FuncPtr_stack_region_peek)(StackRegion *stack, RegionError *error);
 typedef StackRegionFrame (*FuncPtr_stack_region_peek_at)(StackRegion *stack, size_t index, RegionError *error);
 typedef StackRegionFrame (*FuncPtr_stack_region_pop)(StackRegion *stack, RegionError *error);
+
+typedef StackRegionFrame (*FuncPtr_stack_region_push)(StackRegion *stack, size_t size, RegionError *error);
+typedef int *(*FuncPtr_stack_region_push_int)(StackRegion *stack, int value, RegionError *error);
+typedef float *(*FuncPtr_stack_region_push_float)(StackRegion *stack, float value, RegionError *error);
+typedef double *(*FuncPtr_stack_region_push_double)(StackRegion *stack, double value, RegionError *error);
 
 typedef void (*FuncPtr_stack_region_swap)(StackRegion *stack, RegionError *error);
 typedef void (*FuncPtr_stack_region_free)(StackRegion **stack);
@@ -70,9 +78,13 @@ typedef struct {
     FuncPtr_stack_region_peek    stack_region_peek;
     FuncPtr_stack_region_peek_at stack_region_peek_at;
     FuncPtr_stack_region_pop     stack_region_pop;
-    FuncPtr_stack_region_push    stack_region_push;
     FuncPtr_stack_region_swap    stack_region_swap;
     
+    FuncPtr_stack_region_push        stack_region_push;
+    FuncPtr_stack_region_push_int    stack_region_push_int;
+    FuncPtr_stack_region_push_float  stack_region_push_float;
+    FuncPtr_stack_region_push_double stack_region_push_double;
+
     FuncPtr__test_set_available_memory test_set_available_memory;
 } RegionAPI;
 
