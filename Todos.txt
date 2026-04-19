@@ -1,7 +1,7 @@
 - Daily tasks:
 
 1: Add tests for:
-   1.1: `stack_region_push_int`, `stack_region_pop_int`
+   1.1: `stack_region_pop_int`
    1.2: `stack_region_push_float`, `stack_region_pop_float`
    1.3: `stack_region_push_double`, `stack_region_pop_double`
 2: Clean up the testing infrastructure
