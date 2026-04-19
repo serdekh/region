@@ -1,15 +1,12 @@
 - Daily tasks:
 
-1: Add tests for:
-   1.1: `stack_region_pop_int`
-   1.2: `stack_region_push_float`, `stack_region_pop_float`
-   1.3: `stack_region_push_double`, `stack_region_pop_double`
-2: Clean up the testing infrastructure
-   2.1: Make the logic (function usage, namings, error reports...) more consistent
-3:
-   3.1: Add additional tests for the existing functions to capture more
-   cases. Specifically for the `stack_region_swap.c`, `stack_region_peek_at`,
-   `stack_region_pop`, `region_merge`.
+1: Clean up the testing infrastructure
+   1.1: Make the logic (function usage, namings, error reports...) more consistent
+2: Add additional tests for the existing functions to capture more cases.
+   2.1: for `stack_region_swap.c` 
+   2.2: for `stack_region_peek_at`
+   2.3: for `stack_region_pop`, 
+   2.4: for `region_merge`.
 
 - Big tasks (Should be Implemented as soon as all the daily tasks are complete)
 
