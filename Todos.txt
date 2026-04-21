@@ -5,7 +5,6 @@
 2: Add additional tests for the existing functions to capture more cases.
    2.1: for `stack_region_swap.c` 
    2.2: for `stack_region_peek_at`
-   2.3: for `stack_region_pop`, 
    2.4: for `region_merge`.
 
 - Big tasks (Should be Implemented as soon as all the daily tasks are complete)
