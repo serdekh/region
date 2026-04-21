@@ -35,12 +35,12 @@ $(OBJ)/%.so: $(FUNCS)/%.c $(OBJ)
 
 FUNCS_SOS := $(patsubst $(FUNCS)/%.c,$(OBJ)/%.so,$(FUNCS_SRCS))
 
-$(FRAMEWORK_EXEC): $(BUILD) $(OBJ) $(BIN) $(FUNCS_SOS)
+$(FRAMEWORK_EXEC): $(BUILD) $(OBJ) $(BIN)
 	$(CC) $(FRAMEWORK_C) $(SRC)/main.c -o $(FRAMEWORK_EXEC) -ldl
 
 build: $(REGION_SOBJ) $(OBJ) $(BIN) $(FUNCS_SOS) $(FRAMEWORK_EXEC)
 
-run: $(FRAMEWORK_EXEC) $(REGION_SOBJ)
+run: $(FRAMEWORK_EXEC) $(REGION_SOBJ) $(FUNCS_SOS)
 	./$(FRAMEWORK_EXEC)
 
 clean:

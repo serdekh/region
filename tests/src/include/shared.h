@@ -18,6 +18,7 @@ typedef struct {
     char actual[TEST_RESULT_MAX_STRING_SIZE];
     char expected[TEST_RESULT_MAX_STRING_SIZE];
     bool success;
+    bool fatal;
 } TestResult;
 
 typedef struct {
@@ -62,7 +63,8 @@ typedef struct {
 fatal:                                       \
     TEST_LOG_ERROR_FAILED_TEST_FATAL_ERROR;  \
     cleanup_code;                            \
-    exit(1);       
+    result.fatal = true;                     \
+    return result;                           \
 
 #define GET_TESTS_START_STR   "get_tests_start"
 #define GET_TESTS_END_STR   "get_tests_end"

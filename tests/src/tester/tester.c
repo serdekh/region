@@ -108,8 +108,11 @@ bool try_load_file_and_test(RegionAPI *api, const char *file_path)
             TEST_LOG_PASSED_TEST(t);
             continue;
         } 
+
+        if (result.fatal) goto fatal;
         
         TEST_LOG_FAILED_TEST(t, result);
+        
         goto fatal;
     }
     
