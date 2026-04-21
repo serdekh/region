@@ -1050,8 +1050,12 @@ StackRegionFrame stack_region_pop(StackRegion *stack, RegionError *error)
 
     Region *last_node = (Region *)stack;
 
-    while (last_node->next != NULL && last_node->size > 0) {
+    while (last_node->next && last_node->next->size != 0) {
         last_node = last_node->next;
+    }
+
+    if (sizeof(size_t) >= last_node->size) {
+        return STACK_REGION_FRAME_EMPTY;
     }
 
     void *last_frame_end = last_node->data + last_node->size;
@@ -1059,9 +1063,10 @@ StackRegionFrame stack_region_pop(StackRegion *stack, RegionError *error)
     size_t last_frame_size = *(size_t *)(last_frame_end - sizeof(size_t));
 
     void *last_frame_start = last_frame_end - sizeof(size_t) - last_frame_size;
+    
+    (*stack_region_get_ref_count(stack))--;
 
-    *stack_region_get_ref_count(stack) -= 1;
-    (last_node)->size -= (last_frame_size + sizeof(size_t));
+    last_node->size -= (last_frame_size + sizeof(size_t));
 
     StackRegionFrame frame = {
         .data = last_frame_start,
@@ -1083,7 +1088,9 @@ int *stack_region_pop_int(StackRegion *stack, RegionError *error)
         return NULL;
     }
 
-    return (int *)stack_region_pop(stack, NULL).data;
+    StackRegionFrame frame = stack_region_pop(stack, NULL);
+
+    return (int *)(frame.data);
 }
 
 float *stack_region_pop_float(StackRegion *stack, RegionError *error)
