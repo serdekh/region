@@ -18,7 +18,12 @@
 #define SYMBOL_FN_STACK_REGION_ALLOC   "stack_region_alloc"
 #define SYMBOL_FN_STACK_REGION_PEEK    "stack_region_peek"
 #define SYMBOL_FN_STACK_REGION_PEEK_AT "stack_region_peek_at"
-#define SYMBOL_FN_STACK_REGION_POP     "stack_region_pop"
+
+#define SYMBOL_FN_STACK_REGION_POP        "stack_region_pop"
+#define SYMBOL_FN_STACK_REGION_POP_INT    "stack_region_pop_int"
+#define SYMBOL_FN_STACK_REGION_POP_FLOAT  "stack_region_pop_float"
+#define SYMBOL_FN_STACK_REGION_POP_DOUBLE "stack_region_pop_double"
+
 #define SYMBOL_FN_STACK_REGION_SWAP    "stack_region_swap"
 #define SYMBOL_FN_STACK_REGION_FREE    "stack_region_free"
 
@@ -47,7 +52,11 @@ typedef void (*FuncPtr_region_free)(Region **region);
 typedef StackRegion *(*FuncPtr_stack_region_alloc)(size_t capacity, RegionError *error);
 typedef StackRegionFrame (*FuncPtr_stack_region_peek)(StackRegion *stack, RegionError *error);
 typedef StackRegionFrame (*FuncPtr_stack_region_peek_at)(StackRegion *stack, size_t index, RegionError *error);
+
 typedef StackRegionFrame (*FuncPtr_stack_region_pop)(StackRegion *stack, RegionError *error);
+typedef int *(*FuncPtr_stack_region_pop_int)(StackRegion *stack, RegionError *error);
+typedef float *(*FuncPtr_stack_region_pop_float)(StackRegion *stack, RegionError *error);
+typedef double *(*FuncPtr_stack_region_pop_double)(StackRegion *stack, RegionError *error);
 
 typedef StackRegionFrame (*FuncPtr_stack_region_push)(StackRegion *stack, size_t size, RegionError *error);
 typedef int *(*FuncPtr_stack_region_push_int)(StackRegion *stack, int value, RegionError *error);
@@ -77,13 +86,17 @@ typedef struct {
     FuncPtr_stack_region_free    stack_region_free;
     FuncPtr_stack_region_peek    stack_region_peek;
     FuncPtr_stack_region_peek_at stack_region_peek_at;
-    FuncPtr_stack_region_pop     stack_region_pop;
     FuncPtr_stack_region_swap    stack_region_swap;
     
     FuncPtr_stack_region_push        stack_region_push;
     FuncPtr_stack_region_push_int    stack_region_push_int;
     FuncPtr_stack_region_push_float  stack_region_push_float;
     FuncPtr_stack_region_push_double stack_region_push_double;
+
+    FuncPtr_stack_region_pop        stack_region_pop;
+    FuncPtr_stack_region_pop_int    stack_region_pop_int;
+    FuncPtr_stack_region_pop_float  stack_region_pop_float;
+    FuncPtr_stack_region_pop_double stack_region_pop_double;
 
     FuncPtr__test_set_available_memory test_set_available_memory;
 } RegionAPI;
