@@ -11,7 +11,6 @@ BIN = $(BUILD)/bin
 
 FRAMEWORK = tester
 FRAMEWORK_C = $(TESTER)/$(FRAMEWORK).c
-FRAMEWORK_H = $(TESTER)/$(FRAMEWORK).c
 FRAMEWORK_EXEC = $(BIN)/$(FRAMEWORK)
 
 REGION_SOBJ = ../.build/sobj/region-test.so
@@ -40,7 +39,7 @@ $(FRAMEWORK_EXEC): $(BUILD) $(OBJ) $(BIN)
 
 build: $(REGION_SOBJ) $(OBJ) $(BIN) $(FUNCS_SOS) $(FRAMEWORK_EXEC)
 
-run: $(FRAMEWORK_EXEC) $(REGION_SOBJ) $(FUNCS_SOS)
+run: build
 	./$(FRAMEWORK_EXEC)
 
 clean:

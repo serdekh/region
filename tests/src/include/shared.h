@@ -46,6 +46,8 @@ typedef struct {
 
 #define TEST_LOG(stream, type, message, ...) fprintf((stream), "[Test]["type"]: "message, ##__VA_ARGS__)
 #define TEST_LOG_LINE(stream, type, message, ...) fprintf((stream), "[Test]["type"]: "message"\n", ##__VA_ARGS__)
+#define TEST_LOG_ERROR(message, ...) TEST_LOG(stderr, "Error", message, ##__VA_ARGS__)
+#define TEST_LOG_ERROR_LINE(message, ...) TEST_LOG(stderr, "Error", message"\n", ##__VA_ARGS__)
 
 #define TEST_LOG_PASSED_ALL_TESTS TEST_LOG_LINE(stdout, "Log", "All tests have passed!")
 

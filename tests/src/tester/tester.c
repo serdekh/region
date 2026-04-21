@@ -5,8 +5,7 @@ void *try_load_shared_object(const char *file_path)
     void *handle = dlopen(file_path, RTLD_LAZY);
     
     if (!handle) {
-        fprintf(stderr, "[Test][Error]: Could not load a dynamic executable (%s): %s\nStop.\n",
-            file_path, dlerror());
+        TEST_LOG_ERROR_LINE("Could not load a dynamic executable: %s. Stop.", dlerror());
     }
 
     return handle;
@@ -15,7 +14,7 @@ void *try_load_shared_object(const char *file_path)
 void *try_get_symbol(void *handle, const char *symbol_name, bool *is_error)
 {
     if (!handle || !symbol_name) {
-        TEST_LOG_LINE(stderr, "Error", "Cannot look up a symbol name: invalid argument.");
+        TEST_LOG_ERROR_LINE("Cannot look up a symbol name: invalid argument.");
         if (is_error) *is_error = true;
         return NULL;
     }
@@ -23,7 +22,7 @@ void *try_get_symbol(void *handle, const char *symbol_name, bool *is_error)
     void *symbol = dlsym(handle, symbol_name);
     
     if (!symbol) {
-        TEST_LOG_LINE(stderr, "Error", "Could not find a symbol `%s` in `%s`: %s",
+        TEST_LOG_ERROR_LINE("Could not find a symbol `%s` in `%s`: %s.",
             symbol_name, TEST_REGION_TEST_SO_FILE_PATH, dlerror());
         if (is_error) *is_error = true;
         return NULL;
@@ -39,7 +38,7 @@ RegionAPI *try_get_region_api_handle(void *handle)
     RegionAPI *region_api = (RegionAPI *)malloc(sizeof(RegionAPI));
 
     if (!region_api) {
-        TEST_LOG_LINE(stderr, "Error", "Could not allocate memory for the region api handle");
+        TEST_LOG_ERROR_LINE("Could not allocate memory for the region api handle.");
         return NULL;
     }
 
@@ -78,14 +77,14 @@ RegionAPI *try_get_region_api_handle(void *handle)
 
 fatal:
     if (region_api) free(region_api);
-    TEST_LOG_LINE(stderr, "Error", "Could not initialize the region api handle. Stop.");
+    TEST_LOG_ERROR_LINE("Could not initialize the region api handle. Stop.");
     return NULL;
 }
 
 bool try_load_file_and_test(RegionAPI *api, const char *file_path)
 {
     if (!api || !file_path) {
-        TEST_LOG_LINE(stderr, "Error", "Could not load a file and test it: invalid arguments");
+        TEST_LOG_ERROR_LINE("Could not load a file and test: invalid arguments.");
         return false;
     }
 
@@ -112,7 +111,7 @@ bool try_load_file_and_test(RegionAPI *api, const char *file_path)
         if (result.fatal) goto fatal;
         
         TEST_LOG_FAILED_TEST(t, result);
-        
+
         goto fatal;
     }
     
@@ -127,7 +126,7 @@ fatal:
 char *append_file_to_directory(const char *directory, char *file_name)
 {
     if (!directory || !file_name) {
-        TEST_LOG_LINE(stderr, "Error", "Failed to allocate memory while testing: no directory or file name");
+        TEST_LOG_ERROR_LINE("Failed to allocate memory while testing: no directory or file name.");
         return NULL;   
     }
 
@@ -139,7 +138,7 @@ char *append_file_to_directory(const char *directory, char *file_name)
     char *file_path = (char *)malloc(sizeof(char) * file_path_len);
 
     if (!file_path) {
-        TEST_LOG_LINE(stderr, "Error", "Failed to allocate memory while testing");
+        TEST_LOG_ERROR_LINE("Failed to allocate memory while testing.");
         return NULL;
     }
 
@@ -154,7 +153,7 @@ char *append_file_to_directory(const char *directory, char *file_name)
 bool try_load_files_and_test(const char *directory) 
 {
     if (!directory) {
-        TEST_LOG_LINE(stderr, "Error", "Could not load files and test: no directory");
+        TEST_LOG_ERROR_LINE("Could not load files and test: no directory.");
         return false;
     }
 
@@ -163,8 +162,7 @@ bool try_load_files_and_test(const char *directory)
     DIR *dir = opendir(directory);
 
     if (!dir) {
-        TEST_LOG_LINE(stderr, "Error", "Could not open a directory \"%s\": %s",
-            directory, strerror(errno));
+        TEST_LOG_ERROR_LINE("Could not open a directory \"%s\": %s.", directory, strerror(errno));
         return false;
     }
 
