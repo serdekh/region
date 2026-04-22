@@ -26,13 +26,13 @@ TestResult test_stack_region_push_case_2(RegionAPI *api)
 
     api->stack_region_push(stack, 0, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_SMALL_SIZE, error.code);
+    TEST_RESULT_WRITE_INT(result, 0, (int)stack->size);
 
     api->stack_region_free(&stack);
 
     return result;
 
-    TEST_FATAL(if (stack) api->stack_region_free(&stack););
+    TEST_FATAL(if (stack) api->stack_region_free(&stack));
 }
 
 TestResult test_stack_region_push_case_3(RegionAPI *api)

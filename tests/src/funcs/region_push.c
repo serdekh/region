@@ -21,10 +21,11 @@ TestResult test_region_push_case_2(RegionAPI *api)
 
     Region r = {0};
     RegionError error = REGION_ERROR_INIT;
+    size_t size_before_push = r.size;
 
     api->region_push(&r, 0, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_PUSH_SMALL_SIZE, error.code);
+    result.success = (REGION_NO_ERROR(error) && r.size == size_before_push);
 
     return result;
 }

@@ -6,11 +6,17 @@ TestResult region_alloc_case_1(RegionAPI *api)
 
     RegionError error = REGION_ERROR_INIT;
 
-    api->region_alloc(0, &error);
+    Region *region = api->region_alloc(0, &error); UNWRAP;
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_SMALL_CAPACITY, error.code);
+    sprintf(result.expected, REGION_STRING_EMPTY);
+
+    REGION_TO_STRING(result.actual, region);
+
+    result.success = REGION_IS_EMPTY(region);
 
     return result;
+
+    TEST_FATAL(if (region) api->region_free(&region));
 }
 
 TestResult region_alloc_case_2(RegionAPI *api) 
