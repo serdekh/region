@@ -82,6 +82,15 @@ typedef struct _StackRegionFrame {
     size_t size;
 } StackRegionFrame;
 
+#define REGION_IS_EMPTY(region)\
+    ((region)->capacity == 0 && (region)->size == 0 && (region)->data == NULL && (region)->next == NULL)
+
+#define REGION_TO_STRING(dest, region)\
+    REGION_SPRINTF((dest), "{.capacity = %zu, .size = %zu, .data = %p, .next = %p}",\
+        (region)->capacity, (region)->size, (region)->data, (region)->next)
+
+#define REGION_STRING_EMPTY "{.capacity = 0, .size = 0, .data = (nil), .next = (nil)}"
+
 #define STACK_REGION_FRAME_EMPTY (StackRegionFrame){ .data = NULL, .size = 0}
 #define STACK_REGION_FRAME_IS_EMPTY(frame) ((frame).data == NULL && (frame).size == 0)
 
@@ -149,15 +158,13 @@ typedef enum {
     REGION_ERROR_CODE_EINVAL,
     REGION_ERROR_CODE_ENOMEM,
 
-    // __region_alloc
-    REGION_ERROR_CODE_EINVAL_REGION_ALLOC_SMALL_CAPACITY,  // The `Capacity` argument equals to zero.
+    // region_alloc
     REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY,  // The `Capacity` argument equals to `__SIZE_MAX__`.
     REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION,   // Failed to allocate the `Region` struct.
     REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY, // Failed to allocate `capacity` bytes into the `Region->data` field.
 
     // region_push
     REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION,     // The pointer to the `Region` struct equals to `NULL`.
-    REGION_ERROR_CODE_EINVAL_REGION_PUSH_SMALL_SIZE,    // The `size` argument equals to zero.
     REGION_ERROR_CODE_EINVAL_REGION_PUSH_LARGE_SIZE,    // The `size` argument equals to `__SIZE_MAX__`.
     REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION, // Failed to allocate the `Region` struct for a new item.
 
@@ -196,14 +203,12 @@ typedef enum {
     REGION_ERROR_CODE_EINVAL_REGION_GET_LAST_NODE_NO_REGION,   // The pointer to the `Region` struct equals to `NULL`.
 
     // stack_region_alloc
-    REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_SMALL_CAPACITY,  // The value of `capacity` cannot equal to zero.
     REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_LARGE_CAPACITY,  // The value of `capacity` is too large.
     REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION,   // Failed to allocate the `StackRegion` struct.
     REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_CAPACITY, // Failed to allocate `capacity` bytes into the `StackRegion->data` field.
 
     // stack_region_push
     REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_NO_STACK_REGION, // The pointer to the `Region` struct equals to `NULL`.
-    REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_SMALL_SIZE,      // The `size` argument equals to zero.
     REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_LARGE_SIZE,      // The `size` argument equals to `__SIZE_MAX__`.
     REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION,   // Failed to allocate the `Region` struct for a new item.
 
@@ -256,14 +261,12 @@ static const char *region_error_code_as_strings[] = {
     "No free space.",
 
     // region_alloc
-    "Invalid argument: The value of `capacity` cannot equal to zero.",
     "Invalid argument: The value of `capacity` is too large. Cannot allocate memory.",
     "No free space: Failed to allocate a `Region` struct.",
     "No free space: Failed to allocate `capacity` bytes into the `Region` struct.",
 
     // region_push
     "Invalid argument: The value of `region` cannot equal to `NULL`.",
-    "Invalid argument: The value of `size` cannot equal to zero.",
     "Invalid argument: The value of `size` is too large. Cannot allocate memory.",
     "No free space: Failed to allocate a `Region` struct for a new item.",
 
@@ -302,14 +305,12 @@ static const char *region_error_code_as_strings[] = {
     "Invalid argument: the value of `region` cannot equal to `NULL`",
 
     // stack_region_alloc
-    "Invalid argument: The value of `capacity` cannot equal to zero.",
     "Invalid argument: The value of `capacity` is too large. Cannot allocate memory.",
     "No free space: Failed to allocate a `StackRegion` struct.",
     "No free space: Failed to allocate `capacity` bytes into the `StackRegion` struct.",
 
     // stack_region_push
     "Invalid argument: The value of `StackRegion` cannot equal to `NULL`.",
-    "Invalid argument: The value of `size` cannot equal to zero.",
     "Invalid argument: The value of `size` is too large. Cannot allocate memory.",
     "No free space: Failed to allocate a `Region` struct for a new item.",
 
@@ -432,11 +433,6 @@ REGION_API void stack_region_free(StackRegion **stack);
 
 Region *region_alloc(size_t capacity, RegionError *error)
 {
-    if (capacity == 0) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_SMALL_CAPACITY);
-        return NULL;
-    }
-
     if (capacity > REGION_SIZE_MAX - sizeof(Region)) {
         REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY);
         return NULL;
@@ -448,6 +444,15 @@ Region *region_alloc(size_t capacity, RegionError *error)
         REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION);
         return NULL;
     }
+    
+    region->capacity = capacity;
+    region->size = 0;
+    region->next = NULL;
+
+    if (capacity == 0) {
+        region->data = NULL;
+        return region;
+    }
 
     region->data = (char *)REGION_MALLOC(sizeof(char) * capacity);
     
@@ -457,12 +462,8 @@ Region *region_alloc(size_t capacity, RegionError *error)
         return NULL;
     }
 
-    region->capacity = capacity;
-    region->size = 0;
-    region->next = NULL;
-
     REGION_MEMCPY(region->data, "\0", region->capacity);
-
+    
     return region;
 }
 
@@ -494,10 +495,7 @@ void *region_push(Region *region, size_t size, RegionError *error)
         return NULL;
     }
 
-    if (size == 0) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_SMALL_SIZE);
-        return NULL;
-    }
+    if (size == 0) return NULL;
 
     if (size > REGION_SIZE_MAX - sizeof(Region)) {
         REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_LARGE_SIZE);
@@ -505,6 +503,17 @@ void *region_push(Region *region, size_t size, RegionError *error)
     }
 
     Region *current = region;
+
+    if (!current->data) {
+        current->data = (char *)REGION_MALLOC(size * sizeof(char));
+
+        if (!current->data) {
+            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION);
+            return NULL;
+        }
+
+        current->capacity = size * sizeof(char);
+    }
 
     while (current->size + size > current->capacity) {
         if (current->next) {
@@ -522,7 +531,7 @@ void *region_push(Region *region, size_t size, RegionError *error)
         current = current->next;
         break;
     }
-
+   
     void *result = current->data + current->size;
 
     current->size += size;
@@ -710,7 +719,7 @@ Region *region_clone(Region *region, RegionError *error)
     clone->capacity = region->capacity;
     clone->size = region->size;
 
-    REGION_MEMCPY(clone->data, region->data, region->size);
+    if (region->data) REGION_MEMCPY(clone->data, region->data, region->size);
 
     Region *clone_i = clone;
 
@@ -726,7 +735,7 @@ Region *region_clone(Region *region, RegionError *error)
         node->capacity = t->capacity;
         node->size = t->size;
 
-        REGION_MEMCPY(node->data, t->data, t->size);
+        if (t->data) REGION_MEMCPY(node->data, t->data, t->size);
 
         clone_i->next = node;
         clone_i = clone_i->next;
@@ -806,11 +815,6 @@ Region *region_get_last_node(Region *region, RegionGetLastNodeOption option, Reg
 
 StackRegion *stack_region_alloc(size_t capacity, RegionError *error)
 {
-    if (capacity == 0) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_SMALL_CAPACITY);
-        return NULL;
-    }
-
     if (capacity > REGION_SIZE_MAX - sizeof(StackRegion)) {
         REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_LARGE_CAPACITY);
         return NULL;
@@ -822,7 +826,7 @@ StackRegion *stack_region_alloc(size_t capacity, RegionError *error)
     if (REGION_NO_ERROR(local_error)) {
         size_t *count = (size_t *)stack->data;
         *count = 0;
-        stack->data += STACK_REGION_CACHE_COUNT_SIZE; 
+        stack->data += STACK_REGION_CACHE_COUNT_SIZE;
         return (StackRegion *)stack;
     }
 
@@ -842,11 +846,8 @@ StackRegion *stack_region_alloc(size_t capacity, RegionError *error)
 
 StackRegionFrame stack_region_push(StackRegion *stack, size_t size, RegionError *error)
 {
-    if (size == 0) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_SMALL_SIZE);
-        return STACK_REGION_FRAME_EMPTY;
-    }
-
+    if (size == 0) return STACK_REGION_FRAME_EMPTY;
+    
     if (size + sizeof(size_t) < size) {
         REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_LARGE_SIZE);
         return STACK_REGION_FRAME_EMPTY;
