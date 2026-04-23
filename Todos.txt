@@ -1,11 +1,12 @@
 - Daily tasks:
 
-1: Clean up the testing infrastructure
-   1.1: Make the logic (function usage, namings, error reports...) more consistent
-2: Add additional tests for the existing functions to capture more cases.
-   2.1: for `stack_region_swap.c` 
-   2.2: for `stack_region_peek_at`
-   2.4: for `region_merge`.
+1: Finish the removal of errors for the '<stack|()>_region_push_<type>' family of functions
+2: Clean up the testing infrastructure
+   2.1: Make the logic (function usage, namings, error reports...) more consistent
+3: Add additional tests for the existing functions to capture more cases.
+   3.1: for `stack_region_swap.c` 
+   3.2: for `stack_region_peek_at`
+   3.3: for `region_merge`.
 
 - Big tasks (Should be Implemented as soon as all the daily tasks are complete)
 

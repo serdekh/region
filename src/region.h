@@ -164,7 +164,6 @@ typedef enum {
     REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY, // Failed to allocate `capacity` bytes into the `Region->data` field.
 
     // region_push
-    REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION,     // The pointer to the `Region` struct equals to `NULL`.
     REGION_ERROR_CODE_EINVAL_REGION_PUSH_LARGE_SIZE,    // The `size` argument equals to `__SIZE_MAX__`.
     REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION, // Failed to allocate the `Region` struct for a new item.
 
@@ -266,7 +265,6 @@ static const char *region_error_code_as_strings[] = {
     "No free space: Failed to allocate `capacity` bytes into the `Region` struct.",
 
     // region_push
-    "Invalid argument: The value of `region` cannot equal to `NULL`.",
     "Invalid argument: The value of `size` is too large. Cannot allocate memory.",
     "No free space: Failed to allocate a `Region` struct for a new item.",
 
@@ -395,7 +393,7 @@ REGION_API Region *region_merge(Region *region, RegionMergeOption option, Region
 REGION_API Region *region_get_last_node(Region *region, RegionGetLastNodeOption option, RegionError *error);
 REGION_API Region **region_collect(Region *region, size_t *collected_size, RegionError *error);
 
-REGION_API void *region_push(Region *region, size_t size, RegionError *error);
+REGION_API void *region_push(Region **region, size_t size, RegionError *error);
 REGION_API int *region_push_int(Region *region, int value, RegionError *error);
 REGION_API float *region_push_float(Region *region, float value, RegionError *error);
 REGION_API double *region_push_double(Region *region, double value, RegionError *error);
@@ -429,7 +427,7 @@ REGION_API void stack_region_free(StackRegion **stack);
 
 // ----- * -----
 
-#ifdef REGION_IMPLEMENTATION
+//#ifdef REGION_IMPLEMENTATION
 
 Region *region_alloc(size_t capacity, RegionError *error)
 {
@@ -488,17 +486,20 @@ void region_free(Region **region)
     *region = NULL;
 }
 
-void *region_push(Region *region, size_t size, RegionError *error)
+void *region_push(Region **region, size_t size, RegionError *error)
 {
-    if (!region) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION);
-        return NULL;
-    }
+    if (!region) return NULL;
 
     if (size == 0) return NULL;
 
     if (size > REGION_SIZE_MAX - sizeof(Region)) {
         REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_LARGE_SIZE);
+        return NULL;
+    }
+
+    if (!(*region)) {
+        *region = region_alloc(size, NULL);
+        if (!(*region)) REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION);
         return NULL;
     }
 
@@ -541,6 +542,8 @@ void *region_push(Region *region, size_t size, RegionError *error)
 
 int *region_push_int(Region *region, int value, RegionError *error)
 {
+    // TODO: Handle the region equals to NULL case
+    if (!region) return NULL;
     RegionError local_error = {0};
 
     int *result = (int *)region_push(region, sizeof(int), &local_error);
@@ -551,9 +554,6 @@ int *region_push_int(Region *region, int value, RegionError *error)
     }
 
     switch (local_error.code) {
-        case REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_INT_NO_REGION); break;
-
         case REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION:
             REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_INT_MALLOC_REGION); break;
         
@@ -566,6 +566,9 @@ int *region_push_int(Region *region, int value, RegionError *error)
 
 float *region_push_float(Region *region, float value, RegionError *error)
 {
+    // TODO: Handle the region equals to NULL case
+    if (!region) return NULL;
+
     RegionError local_error = {0};
 
     float *result = (float *)region_push(region, sizeof(float), &local_error);
@@ -576,9 +579,6 @@ float *region_push_float(Region *region, float value, RegionError *error)
     }
 
     switch (local_error.code) {
-        case REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_FLOAT_NO_REGION); break;
-
         case REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION:
             REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_FLOAT_MALLOC_REGION); break;
         
@@ -591,6 +591,9 @@ float *region_push_float(Region *region, float value, RegionError *error)
 
 double *region_push_double(Region *region, double value, RegionError *error)
 {
+    // TODO: Handle the region equals to NULL case
+    if (!region) return NULL;
+
     RegionError local_error = {0};
 
     double *result = (double *)region_push(region, sizeof(double), &local_error);
@@ -601,9 +604,6 @@ double *region_push_double(Region *region, double value, RegionError *error)
     }
 
     switch (local_error.code) {
-        case REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_DOUBLE_NO_REGION); break;
-
         case REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION:
             REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_DOUBLE_MALLOC_REGION); break;
         
@@ -855,7 +855,7 @@ StackRegionFrame stack_region_push(StackRegion *stack, size_t size, RegionError 
 
     RegionError local_error = {0};
 
-    void *frame_data = region_push((Region *)stack, size + sizeof(size_t), &local_error);
+    void *frame_data = region_push((Region **)&stack, size + sizeof(size_t), &local_error);
 
     if (REGION_NO_ERROR(local_error)) {
         *stack_region_get_ref_count(stack) += 1;
@@ -869,9 +869,6 @@ StackRegionFrame stack_region_push(StackRegion *stack, size_t size, RegionError 
     }
 
     switch (local_error.code) {
-        case REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_NO_STACK_REGION); break;
-
         case REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION:
             REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION); break;
 
@@ -1177,5 +1174,5 @@ void stack_region_free(StackRegion **stack)
     region_free((Region **)stack);
 }
 
-#endif // REGION_IMPLEMENTATION
+//#endif // REGION_IMPLEMENTATION
 REGION_EXTERN_C_END
