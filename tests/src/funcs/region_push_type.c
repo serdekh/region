@@ -15,7 +15,7 @@
                                                                                                      \
         region = api->region_alloc(sizeof(type), &error); UNWRAP;                                    \
                                                                                                      \
-        api->region_push_type(type, region, TEST_REGION_PUSH_TYPE_CASE_1_VALUE, &error);             \
+        api->region_push_type(type, &region, TEST_REGION_PUSH_TYPE_CASE_1_VALUE, &error);            \
                                                                                                      \
         type *actual = (type *)(region->data + region->size - sizeof(type));                         \
                                                                                                      \
@@ -38,7 +38,7 @@
                                                                                                      \
         region = api->region_alloc(sizeof(type) / 2, &error); UNWRAP;                                \
                                                                                                      \
-        api->region_push_type(type, region, TEST_REGION_PUSH_TYPE_CASE_2_VALUE, &error);             \
+        api->region_push_type(type, &region, TEST_REGION_PUSH_TYPE_CASE_2_VALUE, &error);            \
                                                                                                      \
         type *actual = (type *)(region->next->data + region->next->size - sizeof(type));             \
                                                                                                      \
@@ -60,7 +60,6 @@
                                                                         \
         api->region_push_type(type, NULL, 0, &error);                   \
                                                                         \
-                                                                        \
         TEST_RESULT_WRITE_INT(result, expected_error_code, error.code); \
                                                                         \
         return result;                                                  \
@@ -78,7 +77,7 @@
                                                                               \
         api->test_set_available_memory(0);                                    \
                                                                               \
-        api->region_push_type(type, region, 0, &error);                       \
+        api->region_push_type(type, &region, 0, &error);                      \
                                                                               \
         TEST_RESULT_WRITE_INT(result, expected_error_code, error.code);       \
                                                                               \
@@ -93,17 +92,17 @@
 
 TEST_REGION_PUSH_TYPE_CASE_1(int, "%d");
 TEST_REGION_PUSH_TYPE_CASE_2(int, "%d");
-TEST_REGION_PUSH_TYPE_CASE_3(int, REGION_ERROR_CODE_EINVAL_REGION_PUSH_INT_NO_REGION);
+TEST_REGION_PUSH_TYPE_CASE_3(int, REGION_ERROR_CODE_NO_ERROR);
 TEST_REGION_PUSH_TYPE_CASE_4(int, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_INT_MALLOC_REGION);
 
 TEST_REGION_PUSH_TYPE_CASE_1(float, "%f");
 TEST_REGION_PUSH_TYPE_CASE_2(float, "%f");
-TEST_REGION_PUSH_TYPE_CASE_3(float, REGION_ERROR_CODE_EINVAL_REGION_PUSH_FLOAT_NO_REGION);
+TEST_REGION_PUSH_TYPE_CASE_3(float, REGION_ERROR_CODE_NO_ERROR);
 TEST_REGION_PUSH_TYPE_CASE_4(float, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_FLOAT_MALLOC_REGION);
 
 TEST_REGION_PUSH_TYPE_CASE_1(double, "%f");
 TEST_REGION_PUSH_TYPE_CASE_2(double, "%f");
-TEST_REGION_PUSH_TYPE_CASE_3(double, REGION_ERROR_CODE_EINVAL_REGION_PUSH_DOUBLE_NO_REGION);
+TEST_REGION_PUSH_TYPE_CASE_3(double, REGION_ERROR_CODE_NO_ERROR);
 TEST_REGION_PUSH_TYPE_CASE_4(double, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_DOUBLE_MALLOC_REGION);
 
 REGISTER_TEST(test_region_push_int_case_1, 1);

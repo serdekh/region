@@ -9,9 +9,9 @@ TestResult test_stack_region_pop_case_1(RegionAPI *api)
 
     RegionError error = REGION_ERROR_INIT;
 
-    api->stack_region_pop(NULL, &error);
+    StackRegionFrame frame = api->stack_region_pop(NULL, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_NO_STACK_REGION, error.code);
+    TEST_RESULT_WRITE_PTR(result, NULL, frame.data);
 
     return result;
 }
@@ -24,8 +24,8 @@ TestResult test_stack_region_pop_case_2(RegionAPI *api)
     
     StackRegion *stack = api->stack_region_alloc(TEST_STACK_REGION_POP_CAPACITY, &error); UNWRAP;
 
-    api->stack_region_push(stack, sizeof(int), &error); UNWRAP;
-    api->stack_region_push(stack, sizeof(int), &error); UNWRAP;
+    api->stack_region_push(&stack, sizeof(int), &error); UNWRAP;
+    api->stack_region_push(&stack, sizeof(int), &error); UNWRAP;
     
     api->stack_region_pop(stack, &error); UNWRAP;
     

@@ -7,16 +7,15 @@
 #define stack_region_push_type(type, stack, size, error) stack_region_push_##type(stack, size, error)
 #define stack_region_pop_type(type, stack, error) stack_region_pop_##type(stack, error)
 
-#define TEST_STACK_REGION_POP_TYPE_CASE_1(type, expected_error_code)    \
+#define TEST_STACK_REGION_POP_TYPE_CASE_1(type)    \
     TestResult test_stack_region_pop_## type ##_case_1(RegionAPI *api)  \
     {                                                                   \
         TestResult result = {0};                                        \
                                                                         \
         RegionError error = REGION_ERROR_INIT;                          \
                                                                         \
-        api->stack_region_pop_type(type, NULL, &error);                 \
-                                                                        \
-        TEST_RESULT_WRITE_INT(result, expected_error_code, error.code); \
+        TEST_RESULT_WRITE_PTR(result, NULL,                             \
+            api->stack_region_pop_type(type, NULL, &error));            \
                                                                         \
         return result;                                                  \
     }                                                                   \
@@ -32,7 +31,7 @@
                                                                                             \
         stack = api->stack_region_alloc(sizeof(type) * 2 + sizeof(size_t), &error); UNWRAP; \
                                                                                             \
-        api->stack_region_push(stack, sizeof(type) * 2, &error); UNWRAP;                    \
+        api->stack_region_push(&stack, sizeof(type) * 2, &error); UNWRAP;                   \
                                                                                             \
         api->stack_region_pop_type(type, stack, &error);                                    \
                                                                                             \
@@ -56,8 +55,8 @@
                                                                                                                       \
         stack = api->stack_region_alloc(sizeof(type) * 2 + sizeof(size_t) * 2, &error); UNWRAP;                       \
                                                                                                                       \
-        api->stack_region_push_type(type, stack, TEST_STACK_REGION_POP_TYPE_CASE_3_VALUE_AT_INDEX_1, &error); UNWRAP; \
-        api->stack_region_push_type(type, stack, TEST_STACK_REGION_POP_TYPE_CASE_3_VALUE_AT_INDEX_0, &error); UNWRAP; \
+        api->stack_region_push_type(type, &stack, TEST_STACK_REGION_POP_TYPE_CASE_3_VALUE_AT_INDEX_1, &error); UNWRAP;\
+        api->stack_region_push_type(type, &stack, TEST_STACK_REGION_POP_TYPE_CASE_3_VALUE_AT_INDEX_0, &error); UNWRAP;\
                                                                                                                       \
         type *at_index_0 = api->stack_region_pop_type(type, stack, &error);                                           \
         type *at_index_1 = api->stack_region_pop_type(type, stack, &error);                                           \
@@ -91,7 +90,7 @@
                                                                                                               \
         stack = api->stack_region_alloc(sizeof(type) / 2, &error); UNWRAP;                                    \
                                                                                                               \
-        api->stack_region_push_type(type, stack, TEST_STACK_REGION_POP_TYPE_CASE_4_VALUE, &error); UNWRAP;    \
+        api->stack_region_push_type(type, &stack, TEST_STACK_REGION_POP_TYPE_CASE_4_VALUE, &error); UNWRAP;   \
                                                                                                               \
         type *at_index_0 = api->stack_region_pop_type(type, stack, &error);                                   \
                                                                                                               \
@@ -104,17 +103,17 @@
         TEST_FATAL(if (stack) api->stack_region_free(&stack));                                                \
     }                                                                                                         \
 
-TEST_STACK_REGION_POP_TYPE_CASE_1(int, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_INT_NO_STACK_REGION);
+TEST_STACK_REGION_POP_TYPE_CASE_1(int);
 TEST_STACK_REGION_POP_TYPE_CASE_2(int, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_INT_INVALID_FRAME);
 TEST_STACK_REGION_POP_TYPE_CASE_3(int, "%d");
 TEST_STACK_REGION_POP_TYPE_CASE_4(int, "%d");
 
-TEST_STACK_REGION_POP_TYPE_CASE_1(float, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_FLOAT_NO_STACK_REGION);
+TEST_STACK_REGION_POP_TYPE_CASE_1(float);
 TEST_STACK_REGION_POP_TYPE_CASE_2(float, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_FLOAT_INVALID_FRAME);
 TEST_STACK_REGION_POP_TYPE_CASE_3(float, "%f");
 TEST_STACK_REGION_POP_TYPE_CASE_4(float, "%f");
 
-TEST_STACK_REGION_POP_TYPE_CASE_1(double, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_DOUBLE_NO_STACK_REGION);
+TEST_STACK_REGION_POP_TYPE_CASE_1(double);
 TEST_STACK_REGION_POP_TYPE_CASE_2(double, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_DOUBLE_INVALID_FRAME);
 TEST_STACK_REGION_POP_TYPE_CASE_3(double, "%f");
 TEST_STACK_REGION_POP_TYPE_CASE_4(double, "%f");

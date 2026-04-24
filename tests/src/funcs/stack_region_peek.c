@@ -9,9 +9,9 @@ TestResult test_stack_region_peek_case_1(RegionAPI *api)
 
     RegionError error = REGION_ERROR_INIT;
 
-    api->stack_region_peek(NULL, &error);
+    StackRegionFrame frame = api->stack_region_peek(NULL, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_NO_STACK_REGION, error.code);
+    TEST_RESULT_WRITE_PTR(result, NULL, frame.data);
 
     return result;
 }
@@ -19,13 +19,13 @@ TestResult test_stack_region_peek_case_1(RegionAPI *api)
 TestResult test_stack_region_peek_case_2(RegionAPI *api)
 {
     TestResult result = {0};
-
+    
     RegionError error = REGION_ERROR_INIT;
     StackRegion *stack = NULL;
-
+    
     stack = api->stack_region_alloc(TEST_STACK_REGION_PEEK_CAPACITY, &error); UNWRAP;
-
-    StackRegionFrame frame = api->stack_region_push(stack, sizeof(int), &error); UNWRAP;
+    
+    StackRegionFrame frame = api->stack_region_push(&stack, sizeof(int), &error); UNWRAP;
     
     *(int *)frame.data = TEST_STACK_REGION_PEEK_RANDOM_VALUE;
     

@@ -19,7 +19,7 @@ TestResult test_stack_region_swap_case_1(RegionAPI *api)
 
     api->stack_region_swap(NULL, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_SWAP_NO_STACK_REGION, error.code);
+    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_NO_ERROR, error.code);
 
     return result;
 }
@@ -34,7 +34,7 @@ TestResult test_stack_region_swap_case_2(RegionAPI *api)
 
     stack = api->stack_region_alloc(TEST_STACK_REGION_SWAP_CASE2_CAPACITY, &error); UNWRAP;
 
-    int *pushed = (int *)(api->stack_region_push(stack, TEST_STACK_REGION_SWAP_CASE2_CAPACITY, &error)).data; UNWRAP;
+    int *pushed = (int *)(api->stack_region_push(&stack, TEST_STACK_REGION_SWAP_CASE2_CAPACITY, &error)).data; UNWRAP;
 
     *pushed = TEST_STACK_REGION_SWAP_CASE2_VALUE;
 
@@ -61,8 +61,8 @@ TestResult test_stack_region_swap_case_3(RegionAPI *api)
 
     stack = api->stack_region_alloc(TEST_STACK_REGION_SWAP_CASE3_CAPACITY, &error); UNWRAP;
 
-    int *item_2 = (int *)(api->stack_region_push(stack, sizeof(int), &error)).data; UNWRAP;
-    int *item_1 = (int *)(api->stack_region_push(stack, sizeof(int), &error)).data; UNWRAP;
+    int *item_2 = (int *)(api->stack_region_push(&stack, sizeof(int), &error)).data; UNWRAP;
+    int *item_1 = (int *)(api->stack_region_push(&stack, sizeof(int), &error)).data; UNWRAP;
 
     *item_1 = TEST_STACK_REGION_SWAP_CASE3_VALUE1;
     *item_2 = TEST_STACK_REGION_SWAP_CASE3_VALUE2;
@@ -100,8 +100,8 @@ TestResult test_stack_region_swap_case_4(RegionAPI *api)
 
     stack = api->stack_region_alloc(TEST_STACK_REGION_SWAP_CASE4_CAPACITY, &error); UNWRAP;
 
-    int   *item_2 = (int *)(api->stack_region_push(stack, sizeof(int), &error).data); UNWRAP;
-    float *item_1 = (float *)(api->stack_region_push(stack, sizeof(float), &error)).data; UNWRAP;
+    int   *item_2 = (int *)(api->stack_region_push(&stack, sizeof(int), &error).data); UNWRAP;
+    float *item_1 = (float *)(api->stack_region_push(&stack, sizeof(float), &error)).data; UNWRAP;
 
     *item_1 = TEST_STACK_REGION_SWAP_CASE4_VALUE_FLOAT;
     *item_2 = TEST_STACK_REGION_SWAP_CASE4_VALUE_INT;

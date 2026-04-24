@@ -14,9 +14,9 @@ TestResult test_stack_region_peek_at_case_1(RegionAPI *api)
 
     RegionError error = REGION_ERROR_INIT;
 
-    api->stack_region_peek_at(NULL, 1, &error);
+    StackRegionFrame frame = api->stack_region_peek_at(NULL, 1, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_AT_NO_STACK_REGION, error.code);
+    TEST_RESULT_WRITE_PTR(result, NULL, frame.data);
 
     return result;
 }
@@ -67,7 +67,7 @@ TestResult test_stack_region_peek_at_case_4(RegionAPI *api)
     stack = api->stack_region_alloc(TEST_STACK_REGION_PEEK_AT_CASE_4_CAPACITY, &error); UNWRAP;
 
     for (int i = 0; i < TEST_STACK_REGION_PEEK_AT_CASE_4_ITEMS_COUNT; i++) {
-        StackRegionFrame frame = api->stack_region_push(stack, TEST_STACK_REGION_PEEK_AT_CASE_4_ITEM_SIZE, &error); UNWRAP;
+        StackRegionFrame frame = api->stack_region_push(&stack, TEST_STACK_REGION_PEEK_AT_CASE_4_ITEM_SIZE, &error); UNWRAP;
         *(int *)frame.data = (i + 1) * 100;
     }
 

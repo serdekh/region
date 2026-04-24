@@ -7,9 +7,9 @@ TestResult test_region_collect_case_1(RegionAPI *api)
     size_t collected_size = 0;
     RegionError error = REGION_ERROR_INIT;
 
-    api->region_collect(NULL, &collected_size, &error);
+    Region **collection = api->region_collect(NULL, &collected_size, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_REGION, error.code);
+    TEST_RESULT_WRITE_PTR(result, NULL, collection);
 
     return result;
 }

@@ -8,9 +8,9 @@ TestResult test_region_clone_case_1(RegionAPI *api)
 
     RegionError error = REGION_ERROR_INIT;
 
-    api->region_clone(NULL, &error);
+    void *clone = api->region_clone(NULL, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_CLONE_NO_REGION, error.code);
+    TEST_RESULT_WRITE_PTR(result, NULL, clone);
 
     return result;
 }

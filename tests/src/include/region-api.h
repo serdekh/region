@@ -41,10 +41,10 @@ typedef Region *(*FuncPtr_region_clone)(Region *region, RegionError *error);
 typedef Region *(*FuncPtr_region_merge)(Region *region, RegionMergeOption option, RegionError *error);
 typedef Region **(*FuncPtr_region_collect)(Region *region, size_t *collected_size, RegionError *error);
 
-typedef void *(*FuncPtr_region_push)(Region *region, size_t size, RegionError *error);
-typedef int *(*FuncPtr_region_push_int)(Region *region, int value, RegionError *error);
-typedef float *(*FuncPtr_region_push_float)(Region *region, float value, RegionError *error);
-typedef double *(*FuncPtr_region_push_double)(Region *region, double value, RegionError *error);
+typedef void *(*FuncPtr_region_push)(Region **region, size_t size, RegionError *error);
+typedef int *(*FuncPtr_region_push_int)(Region **region, int value, RegionError *error);
+typedef float *(*FuncPtr_region_push_float)(Region **region, float value, RegionError *error);
+typedef double *(*FuncPtr_region_push_double)(Region **region, double value, RegionError *error);
 
 typedef void (*FuncPtr_region_shrink_capacity)(Region *region, RegionShrinkCapacityOption option, RegionError *error);
 typedef void (*FuncPtr_region_free)(Region **region);
@@ -58,10 +58,10 @@ typedef int *(*FuncPtr_stack_region_pop_int)(StackRegion *stack, RegionError *er
 typedef float *(*FuncPtr_stack_region_pop_float)(StackRegion *stack, RegionError *error);
 typedef double *(*FuncPtr_stack_region_pop_double)(StackRegion *stack, RegionError *error);
 
-typedef StackRegionFrame (*FuncPtr_stack_region_push)(StackRegion *stack, size_t size, RegionError *error);
-typedef int *(*FuncPtr_stack_region_push_int)(StackRegion *stack, int value, RegionError *error);
-typedef float *(*FuncPtr_stack_region_push_float)(StackRegion *stack, float value, RegionError *error);
-typedef double *(*FuncPtr_stack_region_push_double)(StackRegion *stack, double value, RegionError *error);
+typedef StackRegionFrame (*FuncPtr_stack_region_push)(StackRegion **stack, size_t size, RegionError *error);
+typedef int *(*FuncPtr_stack_region_push_int)(StackRegion **stack, int value, RegionError *error);
+typedef float *(*FuncPtr_stack_region_push_float)(StackRegion **stack, float value, RegionError *error);
+typedef double *(*FuncPtr_stack_region_push_double)(StackRegion **stack, double value, RegionError *error);
 
 typedef void (*FuncPtr_stack_region_swap)(StackRegion *stack, RegionError *error);
 typedef void (*FuncPtr_stack_region_free)(StackRegion **stack);

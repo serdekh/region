@@ -16,7 +16,7 @@ TestResult test_region_shrink_capacity_case_1(RegionAPI *api)
 
     api->region_shrink_capacity(NULL, REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT, &error);
    
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_SHRINK_CAPACITY_NO_REGION, error.code);
+    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_NO_ERROR, error.code);
     
     return result;
 }
@@ -46,7 +46,7 @@ TestResult test_region_shrink_capacity_case_3(RegionAPI *api)
 
     r = api->region_alloc(TEST_REGION_SHRINK_CAPACITY_CASE3_CAPACITY, &error); UNWRAP;
 
-    api->region_push(r, TEST_REGION_SHRINK_CAPACITY_CASE3_CAPACITY_SHRINKED, &error); UNWRAP;
+    api->region_push(&r, TEST_REGION_SHRINK_CAPACITY_CASE3_CAPACITY_SHRINKED, &error); UNWRAP;
 
     api->region_shrink_capacity(r, REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT, &error); UNWRAP;
 
@@ -73,8 +73,8 @@ TestResult test_region_shrink_capacity_case_4(RegionAPI *api)
     node_1 = api->region_alloc(TEST_REGION_SHRINK_CAPACITY_CASE4_NODE1_CAPACITY, &error); UNWRAP;
     node_2 = api->region_alloc(TEST_REGION_SHRINK_CAPACITY_CASE4_NODE2_CAPACITY, &error); UNWRAP;
 
-    api->region_push(node_1, TEST_REGION_SHRINK_CAPACITY_CASE4_NODE1_CAPACITY_SHRINKED, &error); UNWRAP;
-    api->region_push(node_2, TEST_REGION_SHRINK_CAPACITY_CASE4_NODE2_CAPACITY_SHRINKED, &error); UNWRAP;
+    api->region_push(&node_1, TEST_REGION_SHRINK_CAPACITY_CASE4_NODE1_CAPACITY_SHRINKED, &error); UNWRAP;
+    api->region_push(&node_2, TEST_REGION_SHRINK_CAPACITY_CASE4_NODE2_CAPACITY_SHRINKED, &error); UNWRAP;
 
     node_1->next = node_2;
 

@@ -8,9 +8,9 @@ TestResult test_region_push_case_1(RegionAPI *api)
 
     RegionError error = REGION_ERROR_INIT;
 
-    api->region_push(NULL, 10, &error);
+    void *pushed = api->region_push(NULL, 10, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_PUSH_NO_REGION, error.code);
+    TEST_RESULT_WRITE_PTR(result, NULL, pushed);
 
     return result;
 }
@@ -19,29 +19,42 @@ TestResult test_region_push_case_2(RegionAPI *api)
 {    
     TestResult result = {0};
 
-    Region r = {0};
+    Region *region = NULL;
     RegionError error = REGION_ERROR_INIT;
-    size_t size_before_push = r.size;
 
-    api->region_push(&r, 0, &error);
+    region = api->region_alloc(1, &error); UNWRAP;
 
-    result.success = (REGION_NO_ERROR(error) && r.size == size_before_push);
+    size_t size_before_push = region->size;
+
+    api->region_push(&region, 0, &error);
+
+    result.success = (REGION_NO_ERROR(error) && region->size == size_before_push);
+
+    api->region_free(&region);
 
     return result;
+
+    TEST_FATAL(if (region) api->region_free(&region));
 }
 
 TestResult test_region_push_case_3(RegionAPI *api)
 {   
     TestResult result = {0};
 
-    Region r = {0};
+    Region *region = NULL;
     RegionError error = REGION_ERROR_INIT;
+    
+    region = api->region_alloc(1, &error); UNWRAP;
 
-    api->region_push(&r, SIZE_MAX, &error);
+    api->region_push(&region, SIZE_MAX, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_PUSH_LARGE_SIZE, error.code);
 
+    api->region_free(&region);
+
     return result;
+
+    TEST_FATAL(if (region) api->region_free(&region));
 }
 
 TestResult test_region_push_case_4(RegionAPI *api)
@@ -55,7 +68,7 @@ TestResult test_region_push_case_4(RegionAPI *api)
 
     api->test_set_available_memory(0);
 
-    api->region_push(region, TEST_REGION_PUSH_CASE_4_CAPACITY * 2, &error);
+    api->region_push(&region, TEST_REGION_PUSH_CASE_4_CAPACITY * 2, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION, error.code);
 

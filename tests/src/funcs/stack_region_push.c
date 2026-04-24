@@ -6,9 +6,9 @@ TestResult test_stack_region_push_case_1(RegionAPI *api)
 
     RegionError error = REGION_ERROR_INIT;
 
-    api->stack_region_push(NULL, 1, &error);
+    StackRegionFrame frame = api->stack_region_push(NULL, 1, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_NO_STACK_REGION, error.code);
+    TEST_RESULT_WRITE_PTR(result, NULL, frame.data);
 
     return result;
 }
@@ -24,7 +24,7 @@ TestResult test_stack_region_push_case_2(RegionAPI *api)
 
     stack = api->stack_region_alloc(TEST_STACK_REGION_CAPACITY, &error); UNWRAP;
 
-    api->stack_region_push(stack, 0, &error);
+    api->stack_region_push(&stack, 0, &error);
 
     TEST_RESULT_WRITE_INT(result, 0, (int)stack->size);
 
@@ -44,7 +44,7 @@ TestResult test_stack_region_push_case_3(RegionAPI *api)
 
     stack = api->stack_region_alloc(TEST_STACK_REGION_CAPACITY, &error); UNWRAP;
 
-    api->stack_region_push(stack, SIZE_MAX, &error);
+    api->stack_region_push(&stack, SIZE_MAX, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_LARGE_SIZE, error.code);
 
@@ -52,7 +52,7 @@ TestResult test_stack_region_push_case_3(RegionAPI *api)
 
     return result;
 
-    TEST_FATAL(if (stack) api->stack_region_free(&stack););
+    TEST_FATAL(if (stack) api->stack_region_free(&stack));
 }
 
 TestResult test_stack_region_push_case_4(RegionAPI *api)
@@ -66,7 +66,7 @@ TestResult test_stack_region_push_case_4(RegionAPI *api)
 
     api->test_set_available_memory(TEST_STACK_REGION_CAPACITY / 2);
 
-    api->stack_region_push(stack, TEST_STACK_REGION_CAPACITY * 2, &error);
+    api->stack_region_push(&stack, TEST_STACK_REGION_CAPACITY * 2, &error);
 
     TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION, error.code);
 
@@ -76,7 +76,7 @@ TestResult test_stack_region_push_case_4(RegionAPI *api)
 
     return result;
 
-    TEST_FATAL(if (stack) api->stack_region_free(&stack););
+    TEST_FATAL(if (stack) api->stack_region_free(&stack));
 }
 
 REGISTER_TEST(test_stack_region_push_case_1, 1);

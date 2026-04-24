@@ -13,9 +13,9 @@ TestResult test_region_merge_case_1(RegionAPI *api)
 
     RegionError error = REGION_ERROR_INIT;
 
-    api->region_merge(NULL, 0, &error);
+    Region *merged = api->region_merge(NULL, 0, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_MERGE_NO_REGION, error.code);
+    TEST_RESULT_WRITE_PTR(result, NULL, merged);
 
     return result;
 }
@@ -111,8 +111,8 @@ TestResult test_region_merge_case_5(RegionAPI *api)
     first  = api->region_alloc(sizeof(int) + TEST_REGION_MERGE_CASE_5_GARBAGE_SPACE, &error); UNWRAP;
     second = api->region_alloc(sizeof(int) + TEST_REGION_MERGE_CASE_5_GARBAGE_SPACE, &error); UNWRAP;
 
-    int *first_v  = (int *)api->region_push(first, sizeof(int), &error); UNWRAP;
-    int *second_v = (int *)api->region_push(second, sizeof(int), &error); UNWRAP;
+    int *first_v  = (int *)api->region_push(&first, sizeof(int), &error); UNWRAP;
+    int *second_v = (int *)api->region_push(&second, sizeof(int), &error); UNWRAP;
 
     *first_v  = TEST_REGION_MERGE_CASE_5_RVALUE_INT1;
     *second_v = TEST_REGION_MERGE_CASE_5_RVALUE_INT2;

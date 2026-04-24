@@ -8,9 +8,9 @@ TestResult test_region_get_last_node_case_1(RegionAPI *api)
 
     RegionError error = REGION_ERROR_INIT;
 
-    api->region_get_last_node(NULL, REGION_GET_LAST_NODE_OPTION_DEFAULT, &error);
+    Region *last_node = api->region_get_last_node(NULL, REGION_GET_LAST_NODE_OPTION_DEFAULT, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_GET_LAST_NODE_NO_REGION, error.code);
+    TEST_RESULT_WRITE_PTR(result, NULL, last_node);
 
     return result;
 }
