@@ -1,4 +1,4 @@
-#include "../include/shared.h"
+#include "../include/rt-shared.h"
 
 TestResult test_region_collect_case_1(RegionAPI *api)
 {
@@ -9,7 +9,7 @@ TestResult test_region_collect_case_1(RegionAPI *api)
 
     Region **collection = api->region_collect(NULL, &collected_size, &error);
 
-    TEST_RESULT_WRITE_PTR(result, NULL, collection);
+    RT_TEST_RESULT_WRITE_PTR(result, NULL, collection);
 
     return result;
 }
@@ -23,7 +23,7 @@ TestResult test_region_collect_case_2(RegionAPI *api)
 
     api->region_collect(&region, NULL, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_COLLECTED_SIZE, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_COLLECTED_SIZE, error.code);
 
     return result;
 }
@@ -40,15 +40,15 @@ TestResult test_region_collect_case_3(RegionAPI *api)
 
     api->region_collect(&region, &collected_size, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_COLLECT_MALLOC_COLLECTION, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_COLLECT_MALLOC_COLLECTION, error.code);
 
     api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
     return result;
 }
 
-REGISTER_TEST(test_region_collect_case_1, 1);
-REGISTER_TEST(test_region_collect_case_2, 2);
-REGISTER_TEST(test_region_collect_case_3, 3);
+RT_TEST_MODULE_REGISTER(test_region_collect_case_1, 1);
+RT_TEST_MODULE_REGISTER(test_region_collect_case_2, 2);
+RT_TEST_MODULE_REGISTER(test_region_collect_case_3, 3);
 
-EXPORT_AT_TESTS_SECTION
+RT_TEST_MODULE_EXPORT;

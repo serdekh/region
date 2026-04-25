@@ -1,4 +1,6 @@
-#include "../include/shared.h"
+#include "../include/rt-shared.h"
+
+#define TEST_STACK_REGION_CAPACITY 1
 
 TestResult test_stack_region_push_case_1(RegionAPI *api)
 {
@@ -8,12 +10,10 @@ TestResult test_stack_region_push_case_1(RegionAPI *api)
 
     StackRegionFrame frame = api->stack_region_push(NULL, 1, &error);
 
-    TEST_RESULT_WRITE_PTR(result, NULL, frame.data);
+    RT_TEST_RESULT_WRITE_PTR(result, NULL, frame.data);
 
     return result;
 }
-
-#define TEST_STACK_REGION_CAPACITY 1
 
 TestResult test_stack_region_push_case_2(RegionAPI *api)
 {
@@ -22,17 +22,17 @@ TestResult test_stack_region_push_case_2(RegionAPI *api)
     RegionError error = REGION_ERROR_INIT;
     StackRegion *stack = NULL;
 
-    stack = api->stack_region_alloc(TEST_STACK_REGION_CAPACITY, &error); UNWRAP;
+    stack = api->stack_region_alloc(TEST_STACK_REGION_CAPACITY, &error); RT_TARGET_UNWRAP;
 
     api->stack_region_push(&stack, 0, &error);
 
-    TEST_RESULT_WRITE_INT(result, 0, (int)stack->size);
+    RT_TEST_RESULT_WRITE_INT(result, 0, (int)stack->size);
 
     api->stack_region_free(&stack);
 
     return result;
 
-    TEST_FATAL(if (stack) api->stack_region_free(&stack));
+    RT_TARGET_FATAL_ERROR(if (stack) api->stack_region_free(&stack));
 }
 
 TestResult test_stack_region_push_case_3(RegionAPI *api)
@@ -42,17 +42,17 @@ TestResult test_stack_region_push_case_3(RegionAPI *api)
     RegionError error = REGION_ERROR_INIT;
     StackRegion *stack = NULL;
 
-    stack = api->stack_region_alloc(TEST_STACK_REGION_CAPACITY, &error); UNWRAP;
+    stack = api->stack_region_alloc(TEST_STACK_REGION_CAPACITY, &error); RT_TARGET_UNWRAP;
 
     api->stack_region_push(&stack, SIZE_MAX, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_LARGE_SIZE, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_LARGE_SIZE, error.code);
 
     api->stack_region_free(&stack);
 
     return result;
 
-    TEST_FATAL(if (stack) api->stack_region_free(&stack));
+    RT_TARGET_FATAL_ERROR(if (stack) api->stack_region_free(&stack));
 }
 
 TestResult test_stack_region_push_case_4(RegionAPI *api)
@@ -62,13 +62,13 @@ TestResult test_stack_region_push_case_4(RegionAPI *api)
     RegionError error = REGION_ERROR_INIT;
     StackRegion *stack = NULL;
 
-    stack = api->stack_region_alloc(TEST_STACK_REGION_CAPACITY, &error); UNWRAP;
+    stack = api->stack_region_alloc(TEST_STACK_REGION_CAPACITY, &error); RT_TARGET_UNWRAP;
 
     api->test_set_available_memory(TEST_STACK_REGION_CAPACITY / 2);
 
     api->stack_region_push(&stack, TEST_STACK_REGION_CAPACITY * 2, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION, error.code);
 
     api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
@@ -76,12 +76,12 @@ TestResult test_stack_region_push_case_4(RegionAPI *api)
 
     return result;
 
-    TEST_FATAL(if (stack) api->stack_region_free(&stack));
+    RT_TARGET_FATAL_ERROR(if (stack) api->stack_region_free(&stack));
 }
 
-REGISTER_TEST(test_stack_region_push_case_1, 1);
-REGISTER_TEST(test_stack_region_push_case_2, 2);
-REGISTER_TEST(test_stack_region_push_case_3, 3);
-REGISTER_TEST(test_stack_region_push_case_4, 4);
+RT_TEST_MODULE_REGISTER(test_stack_region_push_case_1, 1);
+RT_TEST_MODULE_REGISTER(test_stack_region_push_case_2, 2);
+RT_TEST_MODULE_REGISTER(test_stack_region_push_case_3, 3);
+RT_TEST_MODULE_REGISTER(test_stack_region_push_case_4, 4);
 
-EXPORT_AT_TESTS_SECTION
+RT_TEST_MODULE_EXPORT;

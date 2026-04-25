@@ -1,4 +1,4 @@
-#include "../include/shared.h"
+#include "../include/rt-shared.h"
 
 #define TEST_STACK_REGION_SWAP_CASE2_CAPACITY sizeof(int)
 #define TEST_STACK_REGION_SWAP_CASE2_VALUE 10
@@ -19,7 +19,7 @@ TestResult test_stack_region_swap_case_1(RegionAPI *api)
 
     api->stack_region_swap(NULL, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_NO_ERROR, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_NO_ERROR, error.code);
 
     return result;
 }
@@ -32,23 +32,23 @@ TestResult test_stack_region_swap_case_2(RegionAPI *api)
 
     StackRegion *stack = NULL;
 
-    stack = api->stack_region_alloc(TEST_STACK_REGION_SWAP_CASE2_CAPACITY, &error); UNWRAP;
+    stack = api->stack_region_alloc(TEST_STACK_REGION_SWAP_CASE2_CAPACITY, &error); RT_TARGET_UNWRAP;
 
-    int *pushed = (int *)(api->stack_region_push(&stack, TEST_STACK_REGION_SWAP_CASE2_CAPACITY, &error)).data; UNWRAP;
+    int *pushed = (int *)(api->stack_region_push(&stack, TEST_STACK_REGION_SWAP_CASE2_CAPACITY, &error)).data; RT_TARGET_UNWRAP;
 
     *pushed = TEST_STACK_REGION_SWAP_CASE2_VALUE;
 
     api->stack_region_swap(stack, &error);
 
-    StackRegionFrame pushed_after_swap = api->stack_region_peek(stack, &error); UNWRAP;
+    StackRegionFrame pushed_after_swap = api->stack_region_peek(stack, &error); RT_TARGET_UNWRAP;
 
-    TEST_RESULT_WRITE_INT(result, TEST_STACK_REGION_SWAP_CASE2_VALUE, *(int *)pushed_after_swap.data);
+    RT_TEST_RESULT_WRITE_INT(result, TEST_STACK_REGION_SWAP_CASE2_VALUE, *(int *)pushed_after_swap.data);
 
     api->stack_region_free(&stack);
 
     return result;
 
-    TEST_FATAL(if (stack) api->stack_region_free(&stack););
+    RT_TARGET_FATAL_ERROR(if (stack) api->stack_region_free(&stack););
 }
 
 TestResult test_stack_region_swap_case_3(RegionAPI *api)
@@ -59,18 +59,18 @@ TestResult test_stack_region_swap_case_3(RegionAPI *api)
 
     StackRegion *stack = NULL;
 
-    stack = api->stack_region_alloc(TEST_STACK_REGION_SWAP_CASE3_CAPACITY, &error); UNWRAP;
+    stack = api->stack_region_alloc(TEST_STACK_REGION_SWAP_CASE3_CAPACITY, &error); RT_TARGET_UNWRAP;
 
-    int *item_2 = (int *)(api->stack_region_push(&stack, sizeof(int), &error)).data; UNWRAP;
-    int *item_1 = (int *)(api->stack_region_push(&stack, sizeof(int), &error)).data; UNWRAP;
+    int *item_2 = (int *)(api->stack_region_push(&stack, sizeof(int), &error)).data; RT_TARGET_UNWRAP;
+    int *item_1 = (int *)(api->stack_region_push(&stack, sizeof(int), &error)).data; RT_TARGET_UNWRAP;
 
     *item_1 = TEST_STACK_REGION_SWAP_CASE3_VALUE1;
     *item_2 = TEST_STACK_REGION_SWAP_CASE3_VALUE2;
 
     api->stack_region_swap(stack, &error);
 
-    int *swapped_item_1 = (int *)(api->stack_region_peek_at(stack, 0, &error)).data; UNWRAP;
-    int *swapped_item_2 = (int *)(api->stack_region_peek_at(stack, 1, &error)).data; UNWRAP;
+    int *swapped_item_1 = (int *)(api->stack_region_peek_at(stack, 0, &error)).data; RT_TARGET_UNWRAP;
+    int *swapped_item_2 = (int *)(api->stack_region_peek_at(stack, 1, &error)).data; RT_TARGET_UNWRAP;
 
     sprintf(result.expected, "Before swap: {%d, %d}, After swap: {%d, %d}", 
         TEST_STACK_REGION_SWAP_CASE3_VALUE2, TEST_STACK_REGION_SWAP_CASE3_VALUE1,
@@ -87,7 +87,7 @@ TestResult test_stack_region_swap_case_3(RegionAPI *api)
 
     return result;
 
-    TEST_FATAL(if (stack) api->stack_region_free(&stack););
+    RT_TARGET_FATAL_ERROR(if (stack) api->stack_region_free(&stack));
 }
 
 TestResult test_stack_region_swap_case_4(RegionAPI *api)
@@ -98,18 +98,18 @@ TestResult test_stack_region_swap_case_4(RegionAPI *api)
 
     StackRegion *stack = NULL;
 
-    stack = api->stack_region_alloc(TEST_STACK_REGION_SWAP_CASE4_CAPACITY, &error); UNWRAP;
+    stack = api->stack_region_alloc(TEST_STACK_REGION_SWAP_CASE4_CAPACITY, &error); RT_TARGET_UNWRAP;
 
-    int   *item_2 = (int *)(api->stack_region_push(&stack, sizeof(int), &error).data); UNWRAP;
-    float *item_1 = (float *)(api->stack_region_push(&stack, sizeof(float), &error)).data; UNWRAP;
+    int   *item_2 = (int *)(api->stack_region_push(&stack, sizeof(int), &error).data); RT_TARGET_UNWRAP;
+    float *item_1 = (float *)(api->stack_region_push(&stack, sizeof(float), &error)).data; RT_TARGET_UNWRAP;
 
     *item_1 = TEST_STACK_REGION_SWAP_CASE4_VALUE_FLOAT;
     *item_2 = TEST_STACK_REGION_SWAP_CASE4_VALUE_INT;
 
     api->stack_region_swap(stack, &error);
 
-    int *swapped_item_1 = (int *)(api->stack_region_pop(stack, &error)).data; UNWRAP;
-    float *swapped_item_2 = (float *)(api->stack_region_pop(stack, &error)).data; UNWRAP;
+    int *swapped_item_1 = (int *)(api->stack_region_pop(stack, &error)).data; RT_TARGET_UNWRAP;
+    float *swapped_item_2 = (float *)(api->stack_region_pop(stack, &error)).data; RT_TARGET_UNWRAP;
 
     sprintf(result.expected, "Before swap: {%d, %f}, After swap: {%f, %d}", 
         TEST_STACK_REGION_SWAP_CASE4_VALUE_INT, TEST_STACK_REGION_SWAP_CASE4_VALUE_FLOAT,
@@ -124,12 +124,12 @@ TestResult test_stack_region_swap_case_4(RegionAPI *api)
 
     return result;
 
-    TEST_FATAL(if (stack) api->stack_region_free(&stack););
+    RT_TARGET_FATAL_ERROR(if (stack) api->stack_region_free(&stack));
 }
 
-REGISTER_TEST(test_stack_region_swap_case_1, 1);
-REGISTER_TEST(test_stack_region_swap_case_2, 2);
-REGISTER_TEST(test_stack_region_swap_case_3, 3);
-REGISTER_TEST(test_stack_region_swap_case_4, 4);
+RT_TEST_MODULE_REGISTER(test_stack_region_swap_case_1, 1);
+RT_TEST_MODULE_REGISTER(test_stack_region_swap_case_2, 2);
+RT_TEST_MODULE_REGISTER(test_stack_region_swap_case_3, 3);
+RT_TEST_MODULE_REGISTER(test_stack_region_swap_case_4, 4);
 
-EXPORT_AT_TESTS_SECTION
+RT_TEST_MODULE_EXPORT;

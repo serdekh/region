@@ -1,17 +1,17 @@
 CC = gcc
 
-SRC = src
-FUNCS = $(SRC)/funcs
-INCLUDE = $(SRC)/include
-TESTER = $(SRC)/tester
+SRC       = src
+TARGETS   = $(SRC)/targets
+INCLUDE   = $(SRC)/include
 
 BUILD = .build
-OBJ = $(BUILD)/obj
-BIN = $(BUILD)/bin
+OBJ   = $(BUILD)/obj
+BIN   = $(BUILD)/bin
 
-FRAMEWORK = tester
-FRAMEWORK_C = $(TESTER)/$(FRAMEWORK).c
-FRAMEWORK_EXEC = $(BIN)/$(FRAMEWORK)
+FRAMEWORK_TAG = rt
+FRAMEWORK_PATH = $(SRC)/framework
+FRAMEWORK_C    = $(FRAMEWORK_PATH)/$(FRAMEWORK_TAG).c
+FRAMEWORK_EXEC = $(BIN)/$(FRAMEWORK_TAG)-exec
 
 REGION_SOBJ = ../.build/sobj/region-test.so
 
@@ -27,17 +27,17 @@ $(BIN): $(BUILD)
 $(REGION_SOBJ):
 	make -C .. build-shared-test
 
-FUNCS_SRCS := $(shell find $(FUNCS) -name '*.c')
+TARGETS_SRCS := $(shell find $(TARGETS) -name '*.c')
 
-$(OBJ)/%.so: $(FUNCS)/%.c $(OBJ)
+$(OBJ)/%.so: $(TARGETS)/%.c $(OBJ)
 	$(CC) -shared -fPIC -o $@ $<
 
-FUNCS_SOS := $(patsubst $(FUNCS)/%.c,$(OBJ)/%.so,$(FUNCS_SRCS))
+TARGETS_SOS := $(patsubst $(TARGETS)/%.c,$(OBJ)/%.so,$(TARGETS_SRCS))
 
 $(FRAMEWORK_EXEC): $(BUILD) $(OBJ) $(BIN)
-	$(CC) $(FRAMEWORK_C) $(SRC)/main.c -o $(FRAMEWORK_EXEC) -ldl
+	$(CC) $(FRAMEWORK_C) $(FRAMEWORK_PATH)/main.c -o $(FRAMEWORK_EXEC) -ldl
 
-build: $(REGION_SOBJ) $(OBJ) $(BIN) $(FUNCS_SOS) $(FRAMEWORK_EXEC)
+build: $(REGION_SOBJ) $(OBJ) $(BIN) $(TARGETS_SOS) $(FRAMEWORK_EXEC)
 
 run: build
 	./$(FRAMEWORK_EXEC)

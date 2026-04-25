@@ -1,4 +1,4 @@
-#include "../include/shared.h"
+#include "../include/rt-shared.h"
 
 #define REGION_TEST_REGION_CLONE_STATIC_DATA "Hello from tests!"
 
@@ -10,7 +10,7 @@ TestResult test_region_clone_case_1(RegionAPI *api)
 
     void *clone = api->region_clone(NULL, &error);
 
-    TEST_RESULT_WRITE_PTR(result, NULL, clone);
+    RT_TEST_RESULT_WRITE_PTR(result, NULL, clone);
 
     return result;
 }
@@ -26,7 +26,7 @@ TestResult test_region_clone_case_2(RegionAPI *api)
 
     api->region_clone(&region, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_ROOT, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_ROOT, error.code);
 
     api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
@@ -47,7 +47,7 @@ TestResult test_region_clone_case_3(RegionAPI *api)
 
     api->region_clone(&root, &error); 
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_NODE, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_NODE, error.code);
 
     api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
@@ -67,22 +67,22 @@ TestResult test_region_clone_case_4(RegionAPI *api)
     region.capacity = region.size = static_data_len;
     region.data = REGION_TEST_REGION_CLONE_STATIC_DATA;
 
-    clone = api->region_clone(&region, &error); UNWRAP;
+    clone = api->region_clone(&region, &error); RT_TARGET_UNWRAP;
 
-    memcpy(result.actual, clone->data, TEST_RESULT_MAX_STRING_SIZE);
-    memcpy(result.expected, REGION_TEST_REGION_CLONE_STATIC_DATA, TEST_RESULT_MAX_STRING_SIZE);
+    memcpy(result.actual, clone->data, RT_TEST_RESULT_MAX_STRING_SIZE);
+    memcpy(result.expected, REGION_TEST_REGION_CLONE_STATIC_DATA, RT_TEST_RESULT_MAX_STRING_SIZE);
     result.success = strcmp(clone->data, REGION_TEST_REGION_CLONE_STATIC_DATA) == 0;
 
     api->region_free(&clone);
 
     return result;
 
-    TEST_FATAL(if (clone) api->region_free(&clone););
+    RT_TARGET_FATAL_ERROR(if (clone) api->region_free(&clone););
 }
 
-REGISTER_TEST(test_region_clone_case_1, 1);
-REGISTER_TEST(test_region_clone_case_2, 2);
-REGISTER_TEST(test_region_clone_case_3, 3);
-REGISTER_TEST(test_region_clone_case_4, 4);
+RT_TEST_MODULE_REGISTER(test_region_clone_case_1, 1);
+RT_TEST_MODULE_REGISTER(test_region_clone_case_2, 2);
+RT_TEST_MODULE_REGISTER(test_region_clone_case_3, 3);
+RT_TEST_MODULE_REGISTER(test_region_clone_case_4, 4);
 
-EXPORT_AT_TESTS_SECTION
+RT_TEST_MODULE_EXPORT;

@@ -1,4 +1,4 @@
-#include "../include/shared.h"
+#include "../include/rt-shared.h"
 
 #define TEST_STACK_REGION_ALLOC_CAPACITY 1
 
@@ -8,7 +8,7 @@ TestResult test_stack_region_alloc_case_1(RegionAPI *api)
 
     RegionError error = REGION_ERROR_INIT;
 
-    StackRegion *stack = api->stack_region_alloc(0, &error); UNWRAP;
+    StackRegion *stack = api->stack_region_alloc(0, &error); RT_TARGET_UNWRAP;
 
     result.success = stack->capacity == STACK_REGION_CACHE_COUNT_SIZE && stack->data != NULL;
 
@@ -16,7 +16,7 @@ TestResult test_stack_region_alloc_case_1(RegionAPI *api)
 
     return result;
 
-    TEST_FATAL(if (stack) api->stack_region_free(&stack));
+    RT_TARGET_FATAL_ERROR(if (stack) api->stack_region_free(&stack));
 }
 
 TestResult test_stack_region_alloc_case_2(RegionAPI *api)
@@ -27,7 +27,7 @@ TestResult test_stack_region_alloc_case_2(RegionAPI *api)
 
     api->stack_region_alloc(SIZE_MAX, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_LARGE_CAPACITY, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_LARGE_CAPACITY, error.code);
 
     return result;
 }
@@ -43,7 +43,7 @@ TestResult test_stack_region_alloc_case_3(RegionAPI *api)
 
     api->stack_region_alloc(TEST_STACK_REGION_ALLOC_CAPACITY, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION, error.code);
 
     api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
@@ -60,16 +60,16 @@ TestResult test_stack_region_alloc_case_4(RegionAPI *api)
 
     api->stack_region_alloc(TEST_STACK_REGION_ALLOC_CAPACITY, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_CAPACITY, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_CAPACITY, error.code);
 
     api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
     return result;
 }
 
-REGISTER_TEST(test_stack_region_alloc_case_1, 1);
-REGISTER_TEST(test_stack_region_alloc_case_2, 2);
-REGISTER_TEST(test_stack_region_alloc_case_3, 3);
-REGISTER_TEST(test_stack_region_alloc_case_4, 4);
+RT_TEST_MODULE_REGISTER(test_stack_region_alloc_case_1, 1);
+RT_TEST_MODULE_REGISTER(test_stack_region_alloc_case_2, 2);
+RT_TEST_MODULE_REGISTER(test_stack_region_alloc_case_3, 3);
+RT_TEST_MODULE_REGISTER(test_stack_region_alloc_case_4, 4);
 
-EXPORT_AT_TESTS_SECTION
+RT_TEST_MODULE_EXPORT;

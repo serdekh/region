@@ -1,4 +1,4 @@
-#include "../include/shared.h"
+#include "../include/rt-shared.h"
 
 #define TEST_REGION_MERGE_CAPACITY 1
 #define TEST_REGION_MERGE_CASE_4_RVALUE_INT1 19
@@ -15,7 +15,7 @@ TestResult test_region_merge_case_1(RegionAPI *api)
 
     Region *merged = api->region_merge(NULL, 0, &error);
 
-    TEST_RESULT_WRITE_PTR(result, NULL, merged);
+    RT_TEST_RESULT_WRITE_PTR(result, NULL, merged);
 
     return result;
 }
@@ -31,7 +31,7 @@ TestResult test_region_merge_case_2(RegionAPI *api)
 
     api->region_merge(&region, 0, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_COLLECTION, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_COLLECTION, error.code);
 
     api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
@@ -49,7 +49,7 @@ TestResult test_region_merge_case_3(RegionAPI *api)
 
     api->region_merge(&region, 0, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_REGION, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_REGION, error.code);
 
     api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
@@ -66,23 +66,23 @@ TestResult test_region_merge_case_4(RegionAPI *api)
     Region *second = NULL;
     Region *merged = NULL;
 
-    first =  api->region_alloc(sizeof(int), &error); UNWRAP;
-    second = api->region_alloc(sizeof(int), &error); UNWRAP;
+    first =  api->region_alloc(sizeof(int), &error); RT_TARGET_UNWRAP;
+    second = api->region_alloc(sizeof(int), &error); RT_TARGET_UNWRAP;
 
     *(int *)(first->data)  = TEST_REGION_MERGE_CASE_4_RVALUE_INT1;
     *(int *)(second->data) = TEST_REGION_MERGE_CASE_4_RVALUE_INT2;
 
     first->next = second;
 
-    merged = api->region_merge(first, REGION_MERGE_OPTION_DEFAULT, &error); UNWRAP;
+    merged = api->region_merge(first, REGION_MERGE_OPTION_DEFAULT, &error); RT_TARGET_UNWRAP;
 
     if (!(result.success = *(int *)(merged->data) != TEST_REGION_MERGE_CASE_4_RVALUE_INT1)) {
-        TEST_RESULT_WRITE_INT(result, TEST_REGION_MERGE_CASE_4_RVALUE_INT1, *(int *)(merged->data));
+        RT_TEST_RESULT_WRITE_INT(result, TEST_REGION_MERGE_CASE_4_RVALUE_INT1, *(int *)(merged->data));
         goto cleanup;
     }
 
     if (!(result.success = *(int *)(merged->data + sizeof(int)) != TEST_REGION_MERGE_CASE_4_RVALUE_INT2)) {
-        TEST_RESULT_WRITE_INT(result, TEST_REGION_MERGE_CASE_4_RVALUE_INT2, *(int *)(merged->data + sizeof(int)));
+        RT_TEST_RESULT_WRITE_INT(result, TEST_REGION_MERGE_CASE_4_RVALUE_INT2, *(int *)(merged->data + sizeof(int)));
         goto cleanup;
     }
 
@@ -92,7 +92,7 @@ cleanup:
 
     return result;
 
-    TEST_FATAL(
+    RT_TARGET_FATAL_ERROR(
         if (first)  api->region_free(&first);
         if (merged) api->region_free(&merged);
     );
@@ -108,26 +108,26 @@ TestResult test_region_merge_case_5(RegionAPI *api)
     Region *second = NULL;
     Region *merged = NULL;
 
-    first  = api->region_alloc(sizeof(int) + TEST_REGION_MERGE_CASE_5_GARBAGE_SPACE, &error); UNWRAP;
-    second = api->region_alloc(sizeof(int) + TEST_REGION_MERGE_CASE_5_GARBAGE_SPACE, &error); UNWRAP;
+    first  = api->region_alloc(sizeof(int) + TEST_REGION_MERGE_CASE_5_GARBAGE_SPACE, &error); RT_TARGET_UNWRAP;
+    second = api->region_alloc(sizeof(int) + TEST_REGION_MERGE_CASE_5_GARBAGE_SPACE, &error); RT_TARGET_UNWRAP;
 
-    int *first_v  = (int *)api->region_push(&first, sizeof(int), &error); UNWRAP;
-    int *second_v = (int *)api->region_push(&second, sizeof(int), &error); UNWRAP;
+    int *first_v  = (int *)api->region_push(&first, sizeof(int), &error); RT_TARGET_UNWRAP;
+    int *second_v = (int *)api->region_push(&second, sizeof(int), &error); RT_TARGET_UNWRAP;
 
     *first_v  = TEST_REGION_MERGE_CASE_5_RVALUE_INT1;
     *second_v = TEST_REGION_MERGE_CASE_5_RVALUE_INT2;
 
     first->next = second;
 
-    merged = api->region_merge(first, REGION_MERGE_OPTION_CONDENSE, &error); UNWRAP;
+    merged = api->region_merge(first, REGION_MERGE_OPTION_CONDENSE, &error); RT_TARGET_UNWRAP;
 
     if (!(result.success = *(int *)(merged->data) != TEST_REGION_MERGE_CASE_5_RVALUE_INT1)) {
-        TEST_RESULT_WRITE_INT(result, TEST_REGION_MERGE_CASE_5_RVALUE_INT1, *(int *)(merged->data));
+        RT_TEST_RESULT_WRITE_INT(result, TEST_REGION_MERGE_CASE_5_RVALUE_INT1, *(int *)(merged->data));
         goto cleanup;
     }
 
     if (!(result.success = *(int *)(merged->data + sizeof(int)) != TEST_REGION_MERGE_CASE_5_RVALUE_INT2)) {
-        TEST_RESULT_WRITE_INT(result, TEST_REGION_MERGE_CASE_5_RVALUE_INT2, *(int *)(merged->data + sizeof(int)));
+        RT_TEST_RESULT_WRITE_INT(result, TEST_REGION_MERGE_CASE_5_RVALUE_INT2, *(int *)(merged->data + sizeof(int)));
         goto cleanup;
     }
 
@@ -137,16 +137,16 @@ cleanup:
 
     return result;
 
-    TEST_FATAL(
+    RT_TARGET_FATAL_ERROR(
         if (first)  api->region_free(&first);
         if (merged) api->region_free(&merged);
     );
 }
 
-REGISTER_TEST(test_region_merge_case_1, 1);
-REGISTER_TEST(test_region_merge_case_2, 2);
-REGISTER_TEST(test_region_merge_case_3, 3);
-REGISTER_TEST(test_region_merge_case_4, 4);
-REGISTER_TEST(test_region_merge_case_5, 5);
+RT_TEST_MODULE_REGISTER(test_region_merge_case_1, 1);
+RT_TEST_MODULE_REGISTER(test_region_merge_case_2, 2);
+RT_TEST_MODULE_REGISTER(test_region_merge_case_3, 3);
+RT_TEST_MODULE_REGISTER(test_region_merge_case_4, 4);
+RT_TEST_MODULE_REGISTER(test_region_merge_case_5, 5);
 
-EXPORT_AT_TESTS_SECTION
+RT_TEST_MODULE_EXPORT;

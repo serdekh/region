@@ -101,6 +101,6 @@ typedef struct {
     FuncPtr__test_set_available_memory test_set_available_memory;
 } RegionAPI;
 
-RegionAPI *try_get_region_api_handle(void *handle);
+RegionAPI *rt_try_get_region_api_handle(void *handle);
 
-void *try_get_symbol(void *handle, const char *symbol_name, bool *is_error);
+void *rt_try_get_symbol(void *handle, const char *symbol_name, bool *is_error);

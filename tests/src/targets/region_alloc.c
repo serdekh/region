@@ -1,4 +1,4 @@
-#include "../include/shared.h"
+#include "../include/rt-shared.h"
 
 TestResult region_alloc_case_1(RegionAPI *api) 
 {
@@ -6,7 +6,7 @@ TestResult region_alloc_case_1(RegionAPI *api)
 
     RegionError error = REGION_ERROR_INIT;
 
-    Region *region = api->region_alloc(0, &error); UNWRAP;
+    Region *region = api->region_alloc(0, &error); RT_TARGET_UNWRAP;
 
     sprintf(result.expected, REGION_STRING_EMPTY);
 
@@ -16,7 +16,7 @@ TestResult region_alloc_case_1(RegionAPI *api)
 
     return result;
 
-    TEST_FATAL(if (region) api->region_free(&region));
+    RT_TARGET_FATAL_ERROR(if (region) api->region_free(&region));
 }
 
 TestResult region_alloc_case_2(RegionAPI *api) 
@@ -27,7 +27,7 @@ TestResult region_alloc_case_2(RegionAPI *api)
 
     api->region_alloc(SIZE_MAX, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY, error.code);
 
     return result;
 }
@@ -42,7 +42,7 @@ TestResult region_alloc_case_3(RegionAPI *api)
 
     api->region_alloc(1, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION, error.code);
 
     api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
@@ -61,16 +61,16 @@ TestResult region_alloc_case_4(RegionAPI *api)
 
     api->region_alloc(capacity, &error);
 
-    TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY, error.code);
 
     api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
 
     return result;
 }
 
-REGISTER_TEST(region_alloc_case_1, 1);
-REGISTER_TEST(region_alloc_case_2, 2);
-REGISTER_TEST(region_alloc_case_3, 3);
-REGISTER_TEST(region_alloc_case_4, 4);
+RT_TEST_MODULE_REGISTER(region_alloc_case_1, 1);
+RT_TEST_MODULE_REGISTER(region_alloc_case_2, 2);
+RT_TEST_MODULE_REGISTER(region_alloc_case_3, 3);
+RT_TEST_MODULE_REGISTER(region_alloc_case_4, 4);
 
-EXPORT_AT_TESTS_SECTION
+RT_TEST_MODULE_EXPORT
