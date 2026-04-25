@@ -1059,6 +1059,9 @@ void stack_region_swap(StackRegion *stack, RegionError *error)
     StackRegionFrame last = stack_region_pop(stack, error);
     StackRegionFrame prev = stack_region_pop(stack, error);
 
+    // TODO: Reimplement buffering by only copying the smaller 
+    // frame and rewrite its contents with the bigger one to 
+    // reduce the amount of memory consumed by this algorithm
     void *temporary_buffer = REGION_MALLOC(last.size + prev.size);
 
     if (!temporary_buffer) {
