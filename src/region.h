@@ -209,6 +209,9 @@ typedef enum {
     // stack_region_push_double.
     REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_DOUBLE_MALLOC_REGION,   // Failed to allocate the `StackRegion` struct for a new item.
 
+    // stack_region_peek
+    REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_CORRUPTED_DATA, // The `data` field of the stack is corrupted 
+
     // stack_region_pop_int
     REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_INT_INVALID_FRAME,   // The last frame's size is not equal to sizeof(int)
 
@@ -282,6 +285,9 @@ static const char *region_error_code_as_strings[] = {
 
     // stack_region_push_double
     "No free space: Failed to allocate a `StackRegion` struct for a new item.",
+
+    // stack_region_peek
+    "Invalid argument: The stack data is corrupted.",
 
     // stack_region_pop_int
     "Invalid argument: The last frame's size is not equal to the size of an integer",
@@ -891,7 +897,6 @@ double *stack_region_push_double(StackRegion **stack, double value, RegionError 
     return NULL;
 }
 
-// TODO: Add an error check when trying to read a corrupted stack
 StackRegionFrame stack_region_peek(StackRegion *stack, RegionError *error)
 {
     if (!stack) return STACK_REGION_FRAME_EMPTY;
@@ -899,6 +904,18 @@ StackRegionFrame stack_region_peek(StackRegion *stack, RegionError *error)
     if (stack_region_get_count(stack) == 0) return STACK_REGION_FRAME_EMPTY;
 
     Region *last_node = region_get_last_node((Region *)stack, REGION_GET_LAST_NODE_OPTION_NON_EMPTY, NULL);
+
+    if (!last_node || !(last_node->data)) return STACK_REGION_FRAME_EMPTY;
+
+    if (last_node->size <= STACK_REGION_CACHE_COUNT_SIZE) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_CORRUPTED_DATA);
+        return STACK_REGION_FRAME_EMPTY;
+    }
+
+    if (last_node->size - STACK_REGION_CACHE_COUNT_SIZE * stack_region_get_count(stack) < stack_region_get_count(stack)) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_CORRUPTED_DATA);
+        return STACK_REGION_FRAME_EMPTY;
+    }
 
     void *last_frame_end = last_node->data + last_node->size;
 
