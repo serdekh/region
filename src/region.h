@@ -176,6 +176,9 @@ typedef enum {
     // region_push_double
     REGION_ERROR_CODE_ENOMEM_REGION_PUSH_DOUBLE_MALLOC_REGION, // Failed to allocate the `Region` struct for a new item.
 
+    // region_push_char
+    REGION_ERROR_CODE_ENOMEM_REGION_PUSH_CHAR_MALLOC_REGION, // Failed to allocate the `Region` struct for a new item.
+
     // region_shrink_capacity
     REGION_ERROR_CODE_ENOMEM_REGION_SHRINK_CAPACITY_MALLOC,    // Failed to allocate memory for the `data` field.
 
@@ -248,6 +251,9 @@ static const char *region_error_code_as_strings[] = {
     "No free space: Failed to allocate a `Region` struct for a new item.",
 
     // region_push_float
+    "No free space: Failed to allocate a `Region` struct for a new item.",
+
+    // region_push_double
     "No free space: Failed to allocate a `Region` struct for a new item.",
 
     // region_push_double
@@ -349,6 +355,7 @@ REGION_API void *region_push(Region **region, size_t size, RegionError *error);
 REGION_API int *region_push_int(Region **region, int value, RegionError *error);
 REGION_API float *region_push_float(Region **region, float value, RegionError *error);
 REGION_API double *region_push_double(Region **region, double value, RegionError *error);
+REGION_API char *region_push_char(Region **region, char value, RegionError *error);
 
 REGION_API void region_reset(Region *region, RegionResetOption option);
 REGION_API void region_free(Region **region);
@@ -543,10 +550,34 @@ float *region_push_float(Region **region, float value, RegionError *error)
 double *region_push_double(Region **region, double value, RegionError *error)
 {
     if (!region) return NULL;
+    
+    RegionError local_error = {0};
+    
+    double *result = (double *)region_push(region, sizeof(double), &local_error);
+    
+    if (result) {
+        *result = value;
+        return result;
+    }
+    
+    switch (local_error.code) {
+        case REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION:
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_DOUBLE_MALLOC_REGION); break;
+        
+        default:
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM); break;
+    }
+    
+    return NULL;
+}
+
+char *region_push_char(Region **region, char value, RegionError *error)
+{
+    if (!region) return NULL;
 
     RegionError local_error = {0};
 
-    double *result = (double *)region_push(region, sizeof(double), &local_error);
+    char *result = (char *)region_push(region, sizeof(char), &local_error);
 
     if (result) {
         *result = value;
@@ -555,7 +586,7 @@ double *region_push_double(Region **region, double value, RegionError *error)
 
     switch (local_error.code) {
         case REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_DOUBLE_MALLOC_REGION); break;
+            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_CHAR_MALLOC_REGION); break;
         
         default:
             REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM); break;

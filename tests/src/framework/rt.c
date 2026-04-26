@@ -50,11 +50,13 @@ RegionAPI *rt_try_get_region_api_handle(void *handle)
     region_api->region_free            = rt_try_get_symbol(handle, SYMBOL_FN_REGION_FREE, &is_error); UNWRAP;
     region_api->region_get_last_node   = rt_try_get_symbol(handle, SYMBOL_FN_REGION_GET_LAST_NODE, &is_error); UNWRAP;
     region_api->region_merge           = rt_try_get_symbol(handle, SYMBOL_FN_REGION_MERGE, &is_error); UNWRAP;
+    region_api->region_shrink_capacity = rt_try_get_symbol(handle, SYMBOL_FN_REGION_SHRINK_CAPACITY, &is_error); UNWRAP;
+
     region_api->region_push            = rt_try_get_symbol(handle, SYMBOL_FN_REGION_PUSH, &is_error); UNWRAP;
     region_api->region_push_int        = rt_try_get_symbol(handle, SYMBOL_FN_REGION_PUSH_INT, &is_error); UNWRAP;
     region_api->region_push_float      = rt_try_get_symbol(handle, SYMBOL_FN_REGION_PUSH_FLOAT, &is_error); UNWRAP;
     region_api->region_push_double     = rt_try_get_symbol(handle, SYMBOL_FN_REGION_PUSH_DOUBLE, &is_error); UNWRAP;
-    region_api->region_shrink_capacity = rt_try_get_symbol(handle, SYMBOL_FN_REGION_SHRINK_CAPACITY, &is_error); UNWRAP;
+    region_api->region_push_char       = rt_try_get_symbol(handle, SYMBOL_FN_REGION_PUSH_CHAR, &is_error); UNWRAP;
 
     region_api->stack_region_alloc   = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_ALLOC, &is_error); UNWRAP;
     region_api->stack_region_free    = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_FREE, &is_error); UNWRAP;

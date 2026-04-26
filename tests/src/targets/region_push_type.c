@@ -1,7 +1,7 @@
 #include "../include/rt-shared.h"
 
-#define TEST_REGION_PUSH_TYPE_CASE_1_VALUE 39985.0
-#define TEST_REGION_PUSH_TYPE_CASE_2_VALUE 2045.0
+#define TEST_REGION_PUSH_TYPE_CASE_1_VALUE 12.0
+#define TEST_REGION_PUSH_TYPE_CASE_2_VALUE 55.0
 
 #define region_push_type(type, region, value, error) region_push_##type(region, value, error)
 
@@ -40,7 +40,9 @@
                                                                                                         \
         api->region_push_type(type, &region, TEST_REGION_PUSH_TYPE_CASE_2_VALUE, &error);               \
                                                                                                         \
-        type *actual = (type *)(region->next->data + region->next->size - sizeof(type));                \
+        type *actual = region->next                                                                     \
+            ? (type *)(region->next->data + region->next->size - sizeof(type))                          \
+            : (type *)(region->data + region->size - sizeof(type));                                     \
                                                                                                         \
         RT_TEST_RESULT_WRITE_FMT(result, fmt, (type)TEST_REGION_PUSH_TYPE_CASE_2_VALUE, (type)*actual); \
                                                                                                         \
@@ -105,6 +107,11 @@ TEST_REGION_PUSH_TYPE_CASE_2(double, "%f");
 TEST_REGION_PUSH_TYPE_CASE_3(double, REGION_ERROR_CODE_NO_ERROR);
 TEST_REGION_PUSH_TYPE_CASE_4(double, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_DOUBLE_MALLOC_REGION);
 
+TEST_REGION_PUSH_TYPE_CASE_1(char, "%c");
+TEST_REGION_PUSH_TYPE_CASE_2(char, "%c");
+TEST_REGION_PUSH_TYPE_CASE_3(char, REGION_ERROR_CODE_NO_ERROR);
+TEST_REGION_PUSH_TYPE_CASE_4(char, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_CHAR_MALLOC_REGION);
+
 RT_TEST_MODULE_REGISTER(test_region_push_int_case_1, 1);
 RT_TEST_MODULE_REGISTER(test_region_push_int_case_2, 2);
 RT_TEST_MODULE_REGISTER(test_region_push_int_case_3, 3);
@@ -119,5 +126,10 @@ RT_TEST_MODULE_REGISTER(test_region_push_double_case_1, 1);
 RT_TEST_MODULE_REGISTER(test_region_push_double_case_2, 2);
 RT_TEST_MODULE_REGISTER(test_region_push_double_case_3, 3);
 RT_TEST_MODULE_REGISTER(test_region_push_double_case_4, 4);
+
+RT_TEST_MODULE_REGISTER(test_region_push_char_case_1, 1);
+RT_TEST_MODULE_REGISTER(test_region_push_char_case_2, 2);
+RT_TEST_MODULE_REGISTER(test_region_push_char_case_3, 3);
+RT_TEST_MODULE_REGISTER(test_region_push_char_case_4, 4);
 
 RT_TEST_MODULE_EXPORT;

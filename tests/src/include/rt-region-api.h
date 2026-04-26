@@ -7,6 +7,7 @@
 #define SYMBOL_FN_REGION_PUSH_INT    "region_push_int"
 #define SYMBOL_FN_REGION_PUSH_FLOAT  "region_push_float"
 #define SYMBOL_FN_REGION_PUSH_DOUBLE "region_push_double"
+#define SYMBOL_FN_REGION_PUSH_CHAR   "region_push_char"
 
 #define SYMBOL_FN_REGION_SHRINK_CAPACITY "region_shrink_capacity"
 #define SYMBOL_FN_REGION_GET_LAST_NODE   "region_get_last_node"
@@ -45,6 +46,7 @@ typedef void *(*FuncPtr_region_push)(Region **region, size_t size, RegionError *
 typedef int *(*FuncPtr_region_push_int)(Region **region, int value, RegionError *error);
 typedef float *(*FuncPtr_region_push_float)(Region **region, float value, RegionError *error);
 typedef double *(*FuncPtr_region_push_double)(Region **region, double value, RegionError *error);
+typedef char *(*FuncPtr_region_push_char)(Region **region, char value, RegionError *error);
 
 typedef void (*FuncPtr_region_shrink_capacity)(Region *region, RegionShrinkCapacityOption option, RegionError *error);
 typedef void (*FuncPtr_region_free)(Region **region);
@@ -76,11 +78,13 @@ typedef struct {
     FuncPtr_region_free            region_free;
     FuncPtr_region_get_last_node   region_get_last_node;
     FuncPtr_region_merge           region_merge;
+    FuncPtr_region_shrink_capacity region_shrink_capacity;
+
     FuncPtr_region_push            region_push;
     FuncPtr_region_push_int        region_push_int;
     FuncPtr_region_push_float      region_push_float;
     FuncPtr_region_push_double     region_push_double;
-    FuncPtr_region_shrink_capacity region_shrink_capacity;
+    FuncPtr_region_push_char       region_push_char;
 
     FuncPtr_stack_region_alloc   stack_region_alloc;
     FuncPtr_stack_region_free    stack_region_free;
