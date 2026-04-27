@@ -68,7 +68,8 @@ RegionAPI *rt_try_get_region_api_handle(void *handle)
     region_api->stack_region_push_int    = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PUSH_INT, &is_error); UNWRAP;
     region_api->stack_region_push_float  = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PUSH_FLOAT, &is_error); UNWRAP;
     region_api->stack_region_push_double = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PUSH_DOUBLE, &is_error); UNWRAP;
-    
+    region_api->stack_region_push_char   = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PUSH_CHAR, &is_error); UNWRAP;
+
     region_api->stack_region_pop        = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_POP, &is_error); UNWRAP;
     region_api->stack_region_pop_int    = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_POP_INT, &is_error); UNWRAP;
     region_api->stack_region_pop_float  = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_POP_FLOAT, &is_error); UNWRAP;

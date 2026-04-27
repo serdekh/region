@@ -3,7 +3,7 @@
 #define TEST_STACK_REGION_PUSH_TYPE_CASE2_STATIC_DATA "TEST_STACK_REGION_PUSH_TYPE_CASE2_STATIC_DATA"
 #define TEST_STACK_REGION_PUSH_TYPE_CASE2_STATIC_DATA_LENGTH sizeof(TEST_STACK_REGION_PUSH_TYPE_CASE2_STATIC_DATA)
 #define TEST_STACK_REGION_PUSH_TYPE_CASE3_VALUE 123
-#define TEST_STACK_REGION_PUSH_TYPE_CASE4_VALUE 456
+#define TEST_STACK_REGION_PUSH_TYPE_CASE4_VALUE 222
 
 #define stack_region_push_type(type, stack, value, error) stack_region_push_##type(stack, value, error)
 
@@ -119,6 +119,11 @@ TEST_STACK_REGION_PUSH_TYPE_CASE_2(double, REGION_ERROR_CODE_ENOMEM_STACK_REGION
 TEST_STACK_REGION_PUSH_TYPE_CASE_3(double, "%f");
 TEST_STACK_REGION_PUSH_TYPE_CASE_4(double, "%f");
 
+TEST_STACK_REGION_PUSH_TYPE_CASE_1(char);
+TEST_STACK_REGION_PUSH_TYPE_CASE_2(char, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_CHAR_MALLOC_REGION);
+TEST_STACK_REGION_PUSH_TYPE_CASE_3(char, "%c");
+TEST_STACK_REGION_PUSH_TYPE_CASE_4(char, "%c");
+
 RT_TEST_MODULE_REGISTER(test_stack_region_push_int_case_1, 1);
 RT_TEST_MODULE_REGISTER(test_stack_region_push_int_case_2, 2);
 RT_TEST_MODULE_REGISTER(test_stack_region_push_int_case_3, 3);
@@ -133,5 +138,10 @@ RT_TEST_MODULE_REGISTER(test_stack_region_push_double_case_1, 1);
 RT_TEST_MODULE_REGISTER(test_stack_region_push_double_case_2, 2);
 RT_TEST_MODULE_REGISTER(test_stack_region_push_double_case_3, 3);
 RT_TEST_MODULE_REGISTER(test_stack_region_push_double_case_4, 4);
+
+RT_TEST_MODULE_REGISTER(test_stack_region_push_char_case_1, 1);
+RT_TEST_MODULE_REGISTER(test_stack_region_push_char_case_2, 2);
+RT_TEST_MODULE_REGISTER(test_stack_region_push_char_case_3, 3);
+RT_TEST_MODULE_REGISTER(test_stack_region_push_char_case_4, 4);
 
 RT_TEST_MODULE_EXPORT;

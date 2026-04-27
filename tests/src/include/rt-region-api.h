@@ -32,6 +32,7 @@
 #define SYMBOL_FN_STACK_REGION_PUSH_INT    "stack_region_push_int"
 #define SYMBOL_FN_STACK_REGION_PUSH_FLOAT  "stack_region_push_float"
 #define SYMBOL_FN_STACK_REGION_PUSH_DOUBLE "stack_region_push_double"
+#define SYMBOL_FN_STACK_REGION_PUSH_CHAR   "stack_region_push_char"
 
 #define SYMBOL_FN_TEST_SET_AVAILABLE_MEMORY "__test_set_available_memory"
 #define SYMBOL_FN_TEST_GET_AVAILABLE_MEMORY "__test_get_available_memory"     
@@ -64,6 +65,7 @@ typedef StackRegionFrame (*FuncPtr_stack_region_push)(StackRegion **stack, size_
 typedef int *(*FuncPtr_stack_region_push_int)(StackRegion **stack, int value, RegionError *error);
 typedef float *(*FuncPtr_stack_region_push_float)(StackRegion **stack, float value, RegionError *error);
 typedef double *(*FuncPtr_stack_region_push_double)(StackRegion **stack, double value, RegionError *error);
+typedef char *(*FuncPtr_stack_region_push_char)(StackRegion **stack, char value, RegionError *error);
 
 typedef void (*FuncPtr_stack_region_swap)(StackRegion *stack, RegionError *error);
 typedef void (*FuncPtr_stack_region_free)(StackRegion **stack);
@@ -96,6 +98,7 @@ typedef struct {
     FuncPtr_stack_region_push_int    stack_region_push_int;
     FuncPtr_stack_region_push_float  stack_region_push_float;
     FuncPtr_stack_region_push_double stack_region_push_double;
+    FuncPtr_stack_region_push_char    stack_region_push_char;
 
     FuncPtr_stack_region_pop        stack_region_pop;
     FuncPtr_stack_region_pop_int    stack_region_pop_int;
