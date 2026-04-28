@@ -6,7 +6,37 @@ CC = gcc
 # as unused since it's only referred to in macros and not in functions
 CC_FLAGS = -std=gnu99 -fvisibility=hidden # -Wall -Wextra
 
+# Note: all the Windows specific commands have to manually
+# configured since every Linux utility has to be replaced
+# with its equivalent from the MinGW environment. If this
+# makefile fails to build the project because it cannot 
+# find mkdir, gcc, etc., then the path to the executable
+# should be explicitly configured in the following if-statement
+
+ifeq ($(OS),Windows_NT)
+	UTILS_BIN_PATH = \MinGW\msys\1.0\bin
+	
+	EXT_EXEC = exe
+	EXT_OBJ  = o
+	EXT_SOBJ = dll
+	
+	TARGET_OBJ_FLAGS = -DREGION_BUILD
+else
+	UTILS_BIN_PATH =
+
+	EXT_EXEC =
+	EXT_OBJ  = o
+	EXT_SOBJ = so
+
+	TARGET_OBJ_FLAGS =
+endif
+
+MKDIR = $(UTILS_BIN_PATH)\mkdir.$(EXT_EXEC)
+RM    = $(UTILS_BIN_PATH)\rm.$(EXT_EXEC)
+MAKE = $(UTILS_BIN_PATH)\make.$(EXT_EXEC)
+
 BUILD := .build
+SRC := src
 OBJ := $(BUILD)/obj
 SOBJ := $(BUILD)/sobj
 BIN := $(BUILD)/bin
@@ -15,40 +45,40 @@ TESTS := tests
 TESTS_BUILD := $(TESTS)/.build
 
 TARGET_TAG := region
+TARGET_FILE := $(SRC)/$(TARGET_TAG).h
 TARGET_TEST_TAG := $(TARGET_TAG)-test
 TARGET_BIN := $(BIN)/$(TARGET_TAG)
-TARGET_OBJ := $(OBJ)/$(TARGET_TAG).o
-TARGET_SOBJ := $(SOBJ)/$(TARGET_TAG).so
-TARGET_TEST_SOBJ := $(SOBJ)/$(TARGET_TEST_TAG).so
+TARGET_OBJ := $(OBJ)/$(TARGET_TAG).$(EXT_OBJ)
+TARGET_SOBJ := $(SOBJ)/$(TARGET_TAG).$(EXT_SOBJ)
+TARGET_TEST_SOBJ := $(SOBJ)/$(TARGET_TEST_TAG).$(EXT_SOBJ)
 
 $(BUILD):
-	mkdir -p $(BUILD)
+	$(MKDIR) -p $(BUILD)
 
 $(OBJ): $(BUILD)
-	mkdir -p $(OBJ)
+	$(MKDIR) -p $(OBJ)
 
 $(BIN): $(BUILD)
-	mkdir -p $(BIN)
+	$(MKDIR) -p $(BIN)
 
 $(SOBJ): $(BUILD)
-	mkdir -p $(SOBJ)
+	$(MKDIR) -p $(SOBJ)
 
 $(TESTS):
-	mkdir -p $(TESTS)
+	$(MKDIR) -p $(TESTS)
 
 $(TARGET_BIN): $(TARGET_OBJ) $(BIN)
-	$(CC) $(CC_FLAGS) src/main.c $(TARGET_OBJ) -o $(TARGET_BIN)
+	$(CC) $(CC_FLAGS) $(TARGET_OBJ_FLAGS) $(TARGET_OBJ) $(SRC)/main.c -o $(TARGET_BIN)
 
-$(TARGET_OBJ): src/region.h $(OBJ)
-	$(CC) $(CC_FLAGS) -DREGION_IMPLEMENTATION -x c -c src/region.h -o $(TARGET_OBJ)
+$(TARGET_OBJ): $(TARGET_FILE) $(OBJ)
+	$(CC) $(CC_FLAGS) $(TARGET_OBJ_FLAGS) -x c -c $(TARGET_FILE) -o $(TARGET_OBJ)
 
-$(TARGET_SOBJ): src/region.h $(SOBJ)
-	$(CC) $(CC_FLAGS) -DREGION_IMPLEMENTATION -DREGION_BUILD -x c -c src/region.h -o $(TARGET_SOBJ)
-	$(CC) -shared -o $(TARGET_SOBJ) -DREGION_IMPLEMENTATION -x c -fPIC src/region.h
+$(TARGET_SOBJ): $(TARGET_FILE) $(SOBJ)
+	$(CC) $(CC_FLAGS) $(TARGET_OBJ_FLAGS) -x c -c $(TARGET_FILE) -o $(TARGET_SOBJ)
+	$(CC) -shared -o $(TARGET_SOBJ) -x c -fPIC $(TARGET_FILE)
 
-$(TARGET_TEST_SOBJ): src/region.h $(SOBJ)
-	$(CC) -shared $(CC_FLAGS) -DREGION_IMPLEMENTATION -DREGION_TEST_IMPLEMENTATION -x c src/region.h -o $(TARGET_TEST_SOBJ)
-	$(CC) -shared -o $(TARGET_SOBJ) -DREGION_IMPLEMENTATION -DREGION_TEST_IMPLEMENTATION -x c -fPIC src/region.h
+$(TARGET_TEST_SOBJ): $(TARGET_FILE) $(SOBJ)
+	$(CC) -shared $(CC_FLAGS) -DREGION_BUILD -DREGION_TEST_IMPLEMENTATION -x c $(TARGET_FILE) -o $(TARGET_TEST_SOBJ)
 
 help:
 	@echo "\tmake run               -- Builds the whole project and runs it"
@@ -69,7 +99,7 @@ help:
 	
 
 clean:
-	rm -rf $(BUILD) $(TESTS_BUILD)
+	$(RM) -rf $(BUILD) $(TESTS_BUILD)
 
 build: $(TARGET_OBJ)
 
@@ -81,4 +111,4 @@ run: $(TARGET_BIN) $(TARGET_OBJ)
 	./$(TARGET_BIN)
 
 test:
-	make -C tests run
+	$(MAKE) -C tests run
