@@ -14,21 +14,33 @@ void *rt_try_load_shared_object(const char *file_path)
 void *rt_try_get_symbol(void *handle, const char *symbol_name, bool *is_error)
 {
     if (!handle || !symbol_name) {
-        RT_LOG_ERROR_LINE("Cannot look up a symbol name: invalid argument.");
+        RT_LOG_ERROR_LINE("Invalid arguments for symbol lookup.");
         if (is_error) *is_error = true;
         return NULL;
     }
 
-    void *symbol = dlsym(handle, symbol_name);
-    
-    if (!symbol) {
-        RT_LOG_ERROR_LINE("Could not find a symbol `%s` in `%s`: %s.",
-            symbol_name, RT_FILE_PATHS_REGION_SO, dlerror());
+#ifdef _WIN32
+    FARPROC proc = GetProcAddress((HMODULE)handle, symbol_name);
+    if (!proc) {
+        RT_LOG_ERROR_LINE("GetProcAddress failed for '%s': %s",
+            symbol_name, dlerror());
         if (is_error) *is_error = true;
         return NULL;
     }
-    
-    return symbol;
+    return (void*)proc;
+#else
+    dlerror(); // clear previous error
+    void *sym = dlsym(handle, symbol_name);
+    const char *err = dlerror();
+
+    if (err != NULL) {
+        RT_LOG_ERROR_LINE("dlsym failed for '%s': %s", symbol_name, err);
+        if (is_error) *is_error = true;
+        return NULL;
+    }
+
+    return sym;
+#endif
 }
 
 #define UNWRAP if (is_error) goto fatal
@@ -125,33 +137,6 @@ fatal:
     return false;
 }
 
-char *append_file_to_directory(const char *directory, char *file_name)
-{
-    if (!directory || !file_name) {
-        RT_LOG_ERROR_LINE("Failed to allocate memory while testing: no directory or file name.");
-        return NULL;   
-    }
-
-    size_t file_name_len = strlen(file_name);
-    size_t directory_len = strlen(directory);
-
-    size_t file_path_len = file_name_len + directory_len + 2;
-
-    char *file_path = (char *)malloc(sizeof(char) * file_path_len);
-
-    if (!file_path) {
-        RT_LOG_ERROR_LINE("Failed to allocate memory while testing.");
-        return NULL;
-    }
-
-    memcpy(file_path, directory, directory_len);
-    memcpy(file_path + directory_len, "/", 1);
-    memcpy(file_path + directory_len + 1, file_name, file_name_len);
-    memcpy(file_path + directory_len + 1 + file_name_len, "\0", 1);
-
-    return file_path;
-}
-
 bool rt_try_load_files_and_test(const char *directory) 
 {
     if (!directory) {
@@ -184,22 +169,18 @@ bool rt_try_load_files_and_test(const char *directory)
     }
 
     while (entry = readdir(dir)) {
-        if (entry->d_type == DT_DIR) continue;
+    	char full_path[1024];
+    	snprintf(full_path, sizeof(full_path), "%s%s%s", directory, PATH_SEP, entry->d_name);
+    	
+        struct stat st;
+        
+		if (stat(full_path, &st) == 0 && S_ISDIR(st.st_mode)) {
+    		continue;
+		}
 
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
 
-        char *file_path = append_file_to_directory(directory, entry->d_name);
-
-        if (!file_path) {
-            closedir(dir);
-            free(api);
-            dlclose(region_api_handle);
-            return false;
-        }
-
-        bool test_result = rt_try_load_file_and_test(api, file_path);
-
-        free(file_path);
+        bool test_result = rt_try_load_file_and_test(api, full_path);
 
         if (!test_result) {
             closedir(dir);

@@ -1,6 +1,6 @@
 #include "rt.h"
 
-#define SO_FOLDER ".build/obj"
+#define SO_FOLDER ".build"PATH_SEP"obj"
 
 int main()
 {
