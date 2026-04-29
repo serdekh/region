@@ -43,24 +43,18 @@
 #define REGION_BOOL_FALSE false
 #endif // REGION_NO_STDBOOL
 
+#if defined(_WIN32)
+    #define REGION_API __declspec(dllexport)
+#else
+    #define REGION_API __attribute__((visibility("default")))
+#endif
+
 #ifdef __cplusplus
   #define REGION_EXTERN_C_BEGIN extern "C" {
   #define REGION_EXTERN_C_END }
 #else
   #define REGION_EXTERN_C_BEGIN
   #define REGION_EXTERN_C_END
-#endif
-
-#if defined(_WIN32) || defined(__CYGWIN__)
-  #ifdef REGION_BUILD
-    #define REGION_API __declspec(dllexport)
-  #else
-    #define REGION_API __declspec(dllimport)
-  #endif
-#elif defined(__GNUC__) || defined(__clang__)
-  #define REGION_API __attribute__((visibility("default")))
-#else
-  #define REGION_API
 #endif
 
 #define REGION_PRIVATE_CORE_FIELDS \

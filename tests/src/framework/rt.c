@@ -22,7 +22,7 @@ void *rt_try_get_symbol(void *handle, const char *symbol_name, bool *is_error)
 #ifdef _WIN32
     FARPROC proc = GetProcAddress((HMODULE)handle, symbol_name);
     if (!proc) {
-        RT_LOG_ERROR_LINE("GetProcAddress failed for '%s': %s",
+        RT_LOG_ERROR("GetProcAddress failed for '%s': %s",
             symbol_name, dlerror());
         if (is_error) *is_error = true;
         return NULL;

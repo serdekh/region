@@ -4,7 +4,7 @@ usage:
 CC = gcc
 # The warnings are temporarily disabled because they treat the `region_error_code_as_strings` array
 # as unused since it's only referred to in macros and not in functions
-CC_FLAGS = -std=gnu99 -fvisibility=hidden # -Wall -Wextra
+CC_FLAGS = -std=gnu99# -Wall -Wextra
 
 # Note: all the Windows specific commands have to manually
 # configured since every Linux utility has to be replaced
@@ -77,18 +77,12 @@ $(TARGET_SOBJ): $(TARGET_FILE) $(SOBJ)
 	$(CC) $(CC_FLAGS) $(TARGET_OBJ_FLAGS) -x c -c $(TARGET_FILE) -o $(TARGET_SOBJ)
 	$(CC) -shared -o $(TARGET_SOBJ) -x c -fPIC $(TARGET_FILE)
 
-$(TARGET_TEST_SOBJ): $(TARGET_FILE) $(SOBJ)
-	$(CC) -shared $(CC_FLAGS) -DREGION_BUILD -DREGION_TEST_IMPLEMENTATION -x c $(TARGET_FILE) -o $(TARGET_TEST_SOBJ)
-
 help:
 	@echo "\tmake run               -- Builds the whole project and runs it"
 	@echo "\t                          \tRequires a 'main.c' file in the '<project>/src/' subdirectory"
 	@echo "\tmake build             -- Builds the region library and produces an object file"
 	@echo "\t                          \tTests are not built, the object file is located at '<project>/.build/obj'"
 	@echo "\tmake build-shared      -- Builds the region library and produces a shared object file"   
-	@echo "\t                          \tTests are not built, the object file is located at '<project>/.build/sobj'"
-	@echo "\tmake build-shared-test -- Builds the region library with the -REGION_TEST_IMPLEMENTATION macro"
-	@echo "\t                          and produces a shared object file"
 	@echo "\t                          \tTests are not built, the object file is located at '<project>/.build/sobj'"
 	@echo "\tmake test              -- Builds a testing system and the region shared object for tests."
 	@echo "\t                          Calls the 'run' command from the inner Makefile. Runs upon success"

@@ -1,6 +1,7 @@
 #include "../include/rt-shared.h"
 
 #define REGION_TEST_REGION_CLONE_STATIC_DATA "Hello from tests!"
+#define REGION_TEST_REGION_CLONE_STATIC_DATA_LENGTH sizeof(REGION_TEST_REGION_CLONE_STATIC_DATA)
 
 TestResult test_region_clone_case_1(RegionAPI *api)
 {  
@@ -69,8 +70,8 @@ TestResult test_region_clone_case_4(RegionAPI *api)
 
     clone = api->region_clone(&region, &error); RT_TARGET_UNWRAP;
 
-    memcpy(result.actual, clone->data, RT_TEST_RESULT_MAX_STRING_SIZE);
-    memcpy(result.expected, REGION_TEST_REGION_CLONE_STATIC_DATA, RT_TEST_RESULT_MAX_STRING_SIZE);
+    memcpy(result.actual, clone->data, REGION_TEST_REGION_CLONE_STATIC_DATA_LENGTH);
+    memcpy(result.expected, REGION_TEST_REGION_CLONE_STATIC_DATA, REGION_TEST_REGION_CLONE_STATIC_DATA_LENGTH);
     result.success = strcmp(clone->data, REGION_TEST_REGION_CLONE_STATIC_DATA) == 0;
 
     api->region_free(&clone);

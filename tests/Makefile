@@ -4,7 +4,7 @@ ifeq ($(OS),Windows_NT)
 	EXT_EXEC = exe
 	EXT_SOBJ = dll
 	
-	FRAMEWORK_EXEC_FLAGS =
+	FRAMEWORK_EXEC_FLAGS = -DREGION_BUILD
 	TARGET_FLAGS = -shared -DREGION_BUILD
 else
 	UTILS_BIN_PATH =
@@ -29,13 +29,16 @@ INCLUDE   = $(SRC)/include
 BUILD = .build
 OBJ   = $(BUILD)/obj
 BIN   = $(BUILD)/bin
+LIB   = $(BUILD)/lib
 
 FRAMEWORK_TAG = rt
 FRAMEWORK_PATH = $(SRC)/framework
 FRAMEWORK_C    = $(FRAMEWORK_PATH)/$(FRAMEWORK_TAG).c
 FRAMEWORK_EXEC = $(BIN)/$(FRAMEWORK_TAG)-exec
 
-REGION_SOBJ = ../.build/sobj/region-test.$(EXT_SOBJ)
+REGION_TEST_TAG = region-test
+REGION_TEST_C = $(SRC)/lib/$(REGION_TEST_TAG).c
+REGION_TEST_SO = $(LIB)/$(REGION_TEST_TAG).$(EXT_SOBJ)
 
 $(BUILD):
 	$(MKDIR) -p .build
@@ -46,8 +49,11 @@ $(OBJ): $(BUILD)
 $(BIN): $(BUILD)
 	$(MKDIR) -p $(BIN)
 
-$(REGION_SOBJ):
-	$(MAKE) -C .. build-shared-test
+$(LIB): $(BUILD)
+	$(MKDIR) -p $(LIB)
+
+$(REGION_TEST_SO): $(LIB)
+	$(CC) -shared -DREGION_BUILD $(REGION_TEST_C) -o $(REGION_TEST_SO)
 
 TARGETS_SRCS := $(wildcard $(TARGETS)/*.c)
 
@@ -59,7 +65,7 @@ TARGETS_SOS := $(patsubst $(TARGETS)/%.c,$(OBJ)/%.$(EXT_SOBJ),$(TARGETS_SRCS))
 $(FRAMEWORK_EXEC): $(BUILD) $(OBJ) $(BIN)
 	$(CC) $(FRAMEWORK_C) $(FRAMEWORK_EXEC_FLAGS) $(FRAMEWORK_PATH)/main.c -o $(FRAMEWORK_EXEC)
 
-build: $(REGION_SOBJ) $(OBJ) $(BIN) $(TARGETS_SOS) $(FRAMEWORK_EXEC)
+build: $(FRAMEWORK_EXEC) $(REGION_TEST_SO) $(OBJ) $(BIN) $(TARGETS_SOS)
 
 run: build
 	./$(FRAMEWORK_EXEC)
