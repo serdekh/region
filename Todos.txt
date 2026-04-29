@@ -1,9 +1,12 @@
 - Daily tasks:
 
-1: Add a 'stack_region_pop_char' function
-2: Add support for Windows using the MinGW environment (for now, without CI)
-3: Reimplement the error code system to incorporate integer bitmasks instead of enums
-4: Add documentation and a separate system that parses and prints it to the console
+1: Finish adding support for Windows:
+	1.1: Clean up Makefiles so that it does not break the Linux version :)
+	1.2: Add a helper module for tests to abstract the OS specifications
+2: Add a 'stack_region_pop_char' function
+3: Add support for Windows using the MinGW environment (for now, without CI)
+4: Reimplement the error code system to incorporate integer bitmasks instead of enums
+5: Add documentation and a separate system that parses and prints it to the console
 
 - Big tasks (Should be Implemented as soon as all the daily tasks are complete)
 
