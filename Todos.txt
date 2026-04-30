@@ -1,8 +1,7 @@
 - Daily tasks:
 
 1: Finish adding support for Windows:
-	1.1: Clean up Makefiles so that it does not break the Linux version :)
-	1.2: Add a helper module for tests to abstract the OS specifications
+	1.1: Add a helper module for tests to abstract the OS specifications
 2: Add a 'stack_region_pop_char' function
 3: Add support for Windows using the MinGW environment (for now, without CI)
 4: Reimplement the error code system to incorporate integer bitmasks instead of enums
@@ -10,12 +9,11 @@
 
 - Big tasks (Should be Implemented as soon as all the daily tasks are complete)
 
-1: Refactor makefiles to support different OSs. Primarly both Linux and Windows
-2: Refactor the testing system to run the tests on different OS environments
+1: Refactor the testing system to run the tests on different OS environments
    by using Github Actions
-3: Write documentation for each function and make it interactive from a cli
+2: Write documentation for each function and make it interactive from a cli
    similar to how the `man` command works 
-4: Integrate Docker to publish the project on DockerHub 
+3: Integrate Docker to publish the project on DockerHub 
 
 - Final tasks (Not essential, but would be a great contribution to the project)
 
