@@ -14,7 +14,6 @@
 #include "../include/rt-shared.h"
 
 #ifdef _WIN32
-    #define PATH_SEP "\\"
     
     typedef HMODULE dl_handle;
 
@@ -39,8 +38,6 @@
     	return buffer;
 	}
 #else
-    #define PATH_SEP "/"
-
 	typedef void* dl_handle;
 #endif
 

@@ -1,38 +1,39 @@
 #pragma once
 #include "../../../src/region.h"
 
-#define SYMBOL_FN_REGION_ALLOC "region_alloc"
+#define SYMBOL_FN_REGION_ALLOC             "region_alloc"
+#define SYMBOL_FN_REGION_FREE              "region_free"
 
-#define SYMBOL_FN_REGION_PUSH        "region_push"
-#define SYMBOL_FN_REGION_PUSH_INT    "region_push_int"
-#define SYMBOL_FN_REGION_PUSH_FLOAT  "region_push_float"
-#define SYMBOL_FN_REGION_PUSH_DOUBLE "region_push_double"
-#define SYMBOL_FN_REGION_PUSH_CHAR   "region_push_char"
+#define SYMBOL_FN_REGION_PUSH              "region_push"
+#define SYMBOL_FN_REGION_PUSH_INT          "region_push_int"
+#define SYMBOL_FN_REGION_PUSH_FLOAT        "region_push_float"
+#define SYMBOL_FN_REGION_PUSH_DOUBLE       "region_push_double"
+#define SYMBOL_FN_REGION_PUSH_CHAR         "region_push_char"
 
-#define SYMBOL_FN_REGION_SHRINK_CAPACITY "region_shrink_capacity"
-#define SYMBOL_FN_REGION_GET_LAST_NODE   "region_get_last_node"
-#define SYMBOL_FN_REGION_COLLECT         "region_collect"
-#define SYMBOL_FN_REGION_CLONE           "region_clone"
-#define SYMBOL_FN_REGION_MERGE           "region_merge"
-#define SYMBOL_FN_REGION_FREE            "region_free"
+#define SYMBOL_FN_REGION_SHRINK_CAPACITY   "region_shrink_capacity"
+#define SYMBOL_FN_REGION_GET_LAST_NODE     "region_get_last_node"
+#define SYMBOL_FN_REGION_COLLECT           "region_collect"
+#define SYMBOL_FN_REGION_CLONE             "region_clone"
+#define SYMBOL_FN_REGION_MERGE             "region_merge"
 
-#define SYMBOL_FN_STACK_REGION_ALLOC   "stack_region_alloc"
-#define SYMBOL_FN_STACK_REGION_PEEK    "stack_region_peek"
-#define SYMBOL_FN_STACK_REGION_PEEK_AT "stack_region_peek_at"
-
-#define SYMBOL_FN_STACK_REGION_POP        "stack_region_pop"
-#define SYMBOL_FN_STACK_REGION_POP_INT    "stack_region_pop_int"
-#define SYMBOL_FN_STACK_REGION_POP_FLOAT  "stack_region_pop_float"
-#define SYMBOL_FN_STACK_REGION_POP_DOUBLE "stack_region_pop_double"
-
-#define SYMBOL_FN_STACK_REGION_SWAP    "stack_region_swap"
-#define SYMBOL_FN_STACK_REGION_FREE    "stack_region_free"
+#define SYMBOL_FN_STACK_REGION_ALLOC       "stack_region_alloc"
+#define SYMBOL_FN_STACK_REGION_FREE        "stack_region_free"
 
 #define SYMBOL_FN_STACK_REGION_PUSH        "stack_region_push"
 #define SYMBOL_FN_STACK_REGION_PUSH_INT    "stack_region_push_int"
 #define SYMBOL_FN_STACK_REGION_PUSH_FLOAT  "stack_region_push_float"
 #define SYMBOL_FN_STACK_REGION_PUSH_DOUBLE "stack_region_push_double"
 #define SYMBOL_FN_STACK_REGION_PUSH_CHAR   "stack_region_push_char"
+
+#define SYMBOL_FN_STACK_REGION_POP         "stack_region_pop"
+#define SYMBOL_FN_STACK_REGION_POP_INT     "stack_region_pop_int"
+#define SYMBOL_FN_STACK_REGION_POP_FLOAT   "stack_region_pop_float"
+#define SYMBOL_FN_STACK_REGION_POP_DOUBLE  "stack_region_pop_double"
+
+#define SYMBOL_FN_STACK_REGION_PEEK        "stack_region_peek"
+#define SYMBOL_FN_STACK_REGION_PEEK_AT     "stack_region_peek_at"
+
+#define SYMBOL_FN_STACK_REGION_SWAP        "stack_region_swap"
 
 #define SYMBOL_FN_TEST_SET_AVAILABLE_MEMORY "__test_set_available_memory"
 #define SYMBOL_FN_TEST_GET_AVAILABLE_MEMORY "__test_get_available_memory"     

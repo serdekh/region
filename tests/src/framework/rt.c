@@ -29,7 +29,7 @@ void *rt_try_get_symbol(void *handle, const char *symbol_name, bool *is_error)
     }
     return (void*)proc;
 #else
-    dlerror(); // clear previous error
+    dlerror();
     void *sym = dlsym(handle, symbol_name);
     const char *err = dlerror();
 
@@ -170,7 +170,7 @@ bool rt_try_load_files_and_test(const char *directory)
 
     while (entry = readdir(dir)) {
     	char full_path[1024];
-    	snprintf(full_path, sizeof(full_path), "%s%s%s", directory, PATH_SEP, entry->d_name);
+    	snprintf(full_path, sizeof(full_path), "%s%s%s", directory, RT_FILE_PATHS_SEP, entry->d_name);
     	
         struct stat st;
         

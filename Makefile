@@ -1,6 +1,3 @@
-usage:
-	@echo "usage: make <command>\n\tuse 'make help' to get more commands"
-
 CC = gcc
 # The warnings are temporarily disabled because they treat the `region_error_code_as_strings` array
 # as unused since it's only referred to in macros and not in functions
@@ -19,6 +16,8 @@ ifeq ($(OS),Windows_NT)
 	EXT_EXEC = exe
 	EXT_OBJ  = o
 	EXT_SOBJ = dll
+	EMPTY= 
+	TAB_CHAR = $(EMPTY)    
 	
 	TARGET_OBJ_FLAGS = -DREGION_BUILD
 else
@@ -27,6 +26,7 @@ else
 	EXT_EXEC =
 	EXT_OBJ  = o
 	EXT_SOBJ = so
+	TAB_CHAR = \t
 
 	TARGET_OBJ_FLAGS =
 endif
@@ -51,6 +51,10 @@ TARGET_BIN := $(BIN)/$(TARGET_TAG)
 TARGET_OBJ := $(OBJ)/$(TARGET_TAG).$(EXT_OBJ)
 TARGET_SOBJ := $(SOBJ)/$(TARGET_TAG).$(EXT_SOBJ)
 TARGET_TEST_SOBJ := $(SOBJ)/$(TARGET_TEST_TAG).$(EXT_SOBJ)
+
+usage:
+	@echo "usage: make <command>$(TAB_CHAR)"
+	@echo "$(TAB_CHAR)use 'make help' to get more commands"
 
 $(BUILD):
 	$(MKDIR) -p $(BUILD)
@@ -78,18 +82,18 @@ $(TARGET_SOBJ): $(TARGET_FILE) $(SOBJ)
 	$(CC) -shared -o $(TARGET_SOBJ) -x c -fPIC $(TARGET_FILE)
 
 help:
-	@echo "\tmake run               -- Builds the whole project and runs it"
-	@echo "\t                          \tRequires a 'main.c' file in the '<project>/src/' subdirectory"
-	@echo "\tmake build             -- Builds the region library and produces an object file"
-	@echo "\t                          \tTests are not built, the object file is located at '<project>/.build/obj'"
-	@echo "\tmake build-shared      -- Builds the region library and produces a shared object file"   
-	@echo "\t                          \tTests are not built, the object file is located at '<project>/.build/sobj'"
-	@echo "\tmake test              -- Builds a testing system and the region shared object for tests."
-	@echo "\t                          Calls the 'run' command from the inner Makefile. Runs upon success"
-	@echo "\t                          \tTests are built, the files are located at       "
-	@echo "\t                          \t\t'<project>/.build'           - region shared object (with the REGION_TEST_IMPLEMENTATION macro defined)"
-	@echo "\t                          \t\t'<project>/tests/.build/obj' - object files with tests  "
-	@echo "\t                          \t\t'<project>/tests/.build/bin' - test framework executable"
+	@echo "$(TAB_CHAR)make run               -- Builds the whole project and runs it"
+	@echo "$(TAB_CHAR)                          $(TAB_CHAR)Requires a 'main.c' file in the '<project>/src/' subdirectory"
+	@echo "$(TAB_CHAR)make build             -- Builds the region library and produces an object file"
+	@echo "$(TAB_CHAR)                          $(TAB_CHAR)Tests are not built, the object file is located at '<project>/.build/obj'"
+	@echo "$(TAB_CHAR)make build-shared      -- Builds the region library and produces a shared object file"   
+	@echo "$(TAB_CHAR)                          $(TAB_CHAR)Tests are not built, the object file is located at '<project>/.build/sobj'"
+	@echo "$(TAB_CHAR)make test              -- Builds a testing system and the region shared object for tests."
+	@echo "$(TAB_CHAR)                          Calls the 'run' command from the inner Makefile. Runs upon success"
+	@echo "$(TAB_CHAR)                          $(TAB_CHAR)Tests are built, the files are located at       "
+	@echo "$(TAB_CHAR)                          $(TAB_CHAR)$(TAB_CHAR)'<project>/.build'           - region shared object (with the REGION_TEST_IMPLEMENTATION macro defined)"
+	@echo "$(TAB_CHAR)                          $(TAB_CHAR)$(TAB_CHAR)'<project>/tests/.build/obj' - object files with tests  "
+	@echo "$(TAB_CHAR)                          $(TAB_CHAR)$(TAB_CHAR)'<project>/tests/.build/bin' - test framework executable"
 	
 
 clean:
