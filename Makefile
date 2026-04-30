@@ -11,46 +11,55 @@ CC_FLAGS = -std=gnu99# -Wall -Wextra
 # should be explicitly configured in the following if-statement
 
 ifeq ($(OS),Windows_NT)
-	UTILS_BIN_PATH = \MinGW\msys\1.0\bin
+	UTILS_BIN_PATH = \MinGW\msys\1.0\bin\
 	
 	EXT_EXEC = exe
 	EXT_OBJ  = o
 	EXT_SOBJ = dll
+	EXT_UTILS = .$(EXT_EXEC)
+
 	EMPTY= 
 	TAB_CHAR = $(EMPTY)    
 	
 	TARGET_OBJ_FLAGS = -DREGION_BUILD
+
+	PATH_SEPARATOR = \\
+
 else
 	UTILS_BIN_PATH =
 
 	EXT_EXEC =
 	EXT_OBJ  = o
 	EXT_SOBJ = so
+	EXT_UTILS = 
+
 	TAB_CHAR = \t
 
 	TARGET_OBJ_FLAGS =
+
+	PATH_SEPARATOR = /
 endif
 
-MKDIR = $(UTILS_BIN_PATH)\mkdir.$(EXT_EXEC)
-RM    = $(UTILS_BIN_PATH)\rm.$(EXT_EXEC)
-MAKE = $(UTILS_BIN_PATH)\make.$(EXT_EXEC)
+MKDIR = $(UTILS_BIN_PATH)mkdir$(EXT_UTILS)
+RM    = $(UTILS_BIN_PATH)rm$(EXT_UTILS)
+MAKE = $(UTILS_BIN_PATH)make$(EXT_UTILS)
 
 BUILD := .build
 SRC := src
-OBJ := $(BUILD)/obj
-SOBJ := $(BUILD)/sobj
-BIN := $(BUILD)/bin
+OBJ := $(BUILD)$(PATH_SEPARATOR)obj
+SOBJ := $(BUILD)$(PATH_SEPARATOR)sobj
+BIN := $(BUILD)$(PATH_SEPARATOR)bin
 
 TESTS := tests
-TESTS_BUILD := $(TESTS)/.build
+TESTS_BUILD := $(TESTS)$(PATH_SEPARATOR).build
 
 TARGET_TAG := region
-TARGET_FILE := $(SRC)/$(TARGET_TAG).h
+TARGET_FILE := $(SRC)$(PATH_SEPARATOR)$(TARGET_TAG).h
 TARGET_TEST_TAG := $(TARGET_TAG)-test
-TARGET_BIN := $(BIN)/$(TARGET_TAG)
-TARGET_OBJ := $(OBJ)/$(TARGET_TAG).$(EXT_OBJ)
-TARGET_SOBJ := $(SOBJ)/$(TARGET_TAG).$(EXT_SOBJ)
-TARGET_TEST_SOBJ := $(SOBJ)/$(TARGET_TEST_TAG).$(EXT_SOBJ)
+TARGET_BIN := $(BIN)$(PATH_SEPARATOR)$(TARGET_TAG)
+TARGET_OBJ := $(OBJ)$(PATH_SEPARATOR)$(TARGET_TAG).$(EXT_OBJ)
+TARGET_SOBJ := $(SOBJ)$(PATH_SEPARATOR)$(TARGET_TAG).$(EXT_SOBJ)
+TARGET_TEST_SOBJ := $(SOBJ)$(PATH_SEPARATOR)$(TARGET_TEST_TAG).$(EXT_SOBJ)
 
 usage:
 	@echo "usage: make <command>$(TAB_CHAR)"
@@ -72,7 +81,7 @@ $(TESTS):
 	$(MKDIR) -p $(TESTS)
 
 $(TARGET_BIN): $(TARGET_OBJ) $(BIN)
-	$(CC) $(CC_FLAGS) $(TARGET_OBJ_FLAGS) $(TARGET_OBJ) $(SRC)/main.c -o $(TARGET_BIN)
+	$(CC) $(CC_FLAGS) $(TARGET_OBJ_FLAGS) $(TARGET_OBJ) $(SRC)$(PATH_SEPARATOR)main.c -o $(TARGET_BIN)
 
 $(TARGET_OBJ): $(TARGET_FILE) $(OBJ)
 	$(CC) $(CC_FLAGS) $(TARGET_OBJ_FLAGS) -x c -c $(TARGET_FILE) -o $(TARGET_OBJ)

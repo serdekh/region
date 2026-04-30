@@ -4,7 +4,6 @@
 
 int main()
 {
-	printf("so folder: %s\n", SO_FOLDER);
     if (!rt_try_load_files_and_test(SO_FOLDER)) {
         RT_LOG_LINE(stderr, "Log", "Not all tests have passed");
         return 1;
