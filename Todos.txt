@@ -1,9 +1,8 @@
 - Daily tasks:
 
-1: Finish adding support for Windows:
-	1.1: Add a helper module for tests to abstract the OS specifications
-2: Add a 'stack_region_pop_char' function
-3: Add support for Windows using the MinGW environment (for now, without CI)
+1: Fix updated shared object handling in the rt framework for Windows
+2: Add logging for the rt framework functions (rt.c)
+3: Add a 'stack_region_pop_char' function
 4: Reimplement the error code system to incorporate integer bitmasks instead of enums
 5: Add documentation and a separate system that parses and prints it to the console
 
