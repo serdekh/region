@@ -14,10 +14,12 @@
 
 - Final tasks (Not essential, but would be a great contribution to the project)
 
-1: Add bindings to different languages
+1: Add an ability to set randomized expected values 
+   instead of hardcoding them during the target testing
+2: Add bindings to different languages
    1.1 Python
    1.2 C++
    1.3 C# 
-2: Add a documentation parser target for the web by reading the docs from
+3: Add a documentation parser target for the web by reading the docs from
    the source code and generating a corresponding html page using a 
    certain JS framework
