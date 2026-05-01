@@ -10,18 +10,37 @@ void *rt_so_open(const char *file_path)
         handle = dlopen(file_path, RTLD_LAZY);
     #endif
     
+    if (!handle) RT_LOG_ERROR_LINE("Could not load a shared object: '%s'", rt_so_get_error());
+
     return handle;
 }
 
 void *rt_so_get_symbol(void *handle, const char *symbol_name)
 {
-    if (!handle || !symbol_name) return NULL;
+    if (!handle) {
+        RT_LOG_ERROR_LINE("Could not get a symbol: a shared object is not loaded");
+        return NULL;
+    }
+
+    if (!symbol_name) {
+        RT_LOG_ERROR_LINE("Could not get a symbol: a symbol name is not provided");
+        return NULL;
+    }
+
+    void *symbol = NULL;
 
     #if defined(_WIN32)      
-        return (void*)GetProcAddress((HMODULE)handle, symbol_name);;
+        symbol = (void*)GetProcAddress((HMODULE)handle, symbol_name);
     #else
-        return dlsym(handle, symbol_name);
+        symbol = dlsym(handle, symbol_name);
     #endif
+
+    if (!symbol) {
+        RT_LOG_ERROR_LINE("Could not find the symbol '%s': %s",
+            symbol_name, rt_so_get_error());
+    }
+
+    return symbol;
 }
 
 char *rt_so_get_error()
@@ -63,9 +82,17 @@ void  rt_so_close(void *handle)
 
 RegionAPI *rt_try_get_region_api_handle(void *handle)
 {
+    if (!handle) {
+        RT_LOG_ERROR_LINE("Could not initialize the region api handle: a shared object is not provided");
+        return NULL;
+    }
+
     RegionAPI *region_api = (RegionAPI *)malloc(sizeof(RegionAPI));
 
-    if (!region_api) return NULL;
+    if (!region_api) {
+        RT_LOG_ERROR_LINE("Could not initialize the region api handle: failed to allocate memory");
+        return NULL;
+    }
 
     TRY_GET_REGION_API_FN_SYMBOL(region_api->region_alloc, handle, SYMBOL_FN_REGION_ALLOC);
     TRY_GET_REGION_API_FN_SYMBOL(region_api->region_free, handle, SYMBOL_FN_REGION_FREE);
@@ -107,19 +134,32 @@ RegionAPI *rt_try_get_region_api_handle(void *handle)
     return region_api;
 
 fatal:
+    RT_LOG_ERROR_LINE("Could not initialize the region api handle: failed find a function api symbol");
+
     if (region_api) free(region_api);
+
     return NULL;
 }
 
 bool rt_try_load_file_and_test(RegionAPI *api, const char *file_path)
 {
     if (!api || !file_path) return false;
+
+    if (!api) {
+        RT_LOG_ERROR_LINE("Could not load and/or test a file: the region api handle is not provided");
+        return false;
+    }
     
+    if (!file_path) {
+        RT_LOG_ERROR_LINE("Could not load and/or test a file: the file path is not provided");
+        return false;
+    }
+
     void *handle = NULL;
     TestContext *(*get_start)(void) = NULL;
     TestContext *(*get_end)(void)   = NULL;
 
-    handle = rt_so_open(file_path); if (!handle) goto fatal;
+    handle    = rt_so_open(file_path); if (!handle) goto fatal;
     get_start = rt_so_get_symbol(handle, RT_GET_TEST_MODULE_START_STR); if (!get_start) goto fatal;
     get_end   = rt_so_get_symbol(handle, RT_GET_TEST_MODULE_END_STR);   if (!get_end)   goto fatal;
 
@@ -142,13 +182,19 @@ bool rt_try_load_file_and_test(RegionAPI *api, const char *file_path)
     return true;
 
 fatal:
+    RT_LOG_ERROR_LINE("Could not load and/or test a file: fatal error. Stopping the tests..");
+  
     if (handle) rt_so_close(handle);
+
     return false;
 }
 
 bool rt_try_load_files_and_test(const char *directory) 
 {
-    if (!directory) return false;
+    if (!directory) {
+        RT_LOG_ERROR_LINE("Could not test files in a directory: the directory path is not provided");
+        return false;
+    }
 
     bool result = true;
 
@@ -157,29 +203,36 @@ bool rt_try_load_files_and_test(const char *directory)
     void *region_api_handle = NULL;
     RegionAPI *api = NULL;
 
-    dir = opendir(directory);
-        if (!dir) { result = false; goto cleanup; }
+    dir = opendir(directory); if (!dir) { 
+        RT_LOG_ERROR_LINE("Could not test files in a directory: failed to open a directory: %s", strerror(errno));
+        result = false; goto cleanup; 
+    }
 
-    region_api_handle = rt_so_open(RT_FILE_PATHS_REGION_SO);
-        if (!region_api_handle) { result = false; goto cleanup; }
+    region_api_handle = rt_so_open(RT_FILE_PATHS_REGION_SO); if (!region_api_handle) { 
+        RT_LOG_ERROR_LINE("Could not test files in a directory: failed to load the region api handle at '%s'", RT_FILE_PATHS_REGION_SO);
+        result = false; goto cleanup; 
+    }
 
-    api = rt_try_get_region_api_handle(region_api_handle);
-        if (!api) { result = false; goto cleanup; }
+    api = rt_try_get_region_api_handle(region_api_handle); if (!api) { 
+        RT_LOG_ERROR_LINE("Could not test files in a directory: failed to init the region api handle");
+        result = false; goto cleanup; 
+    }
 
     while (entry = readdir(dir)) {
     	char full_path[1024];
+
     	snprintf(full_path, sizeof(full_path), "%s%s%s", directory, RT_FILE_PATHS_SEP, entry->d_name);
     	
         struct stat st;
         
-		if (stat(full_path, &st) == 0 && S_ISDIR(st.st_mode)) {
-    		continue;
-		}
-
+		if (stat(full_path, &st) == 0 && S_ISDIR(st.st_mode)) continue;
+		
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
 
-        bool test_result = rt_try_load_file_and_test(api, full_path);
-            if (!test_result) { result = false; goto cleanup; }
+        bool test_result = rt_try_load_file_and_test(api, full_path); if (!test_result) { 
+            RT_LOG_ERROR_LINE("Could not test files in a directory: failed to perfom a test for '%s'", full_path);
+            result = false; goto cleanup; 
+        }
     }
     
 cleanup:
