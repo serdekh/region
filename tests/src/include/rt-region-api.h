@@ -110,5 +110,3 @@ typedef struct {
 } RegionAPI;
 
 RegionAPI *rt_try_get_region_api_handle(void *handle);
-
-void *rt_try_get_symbol(void *handle, const char *symbol_name, bool *is_error);

@@ -1,118 +1,127 @@
 #include "rt.h"
 
-void *rt_try_load_shared_object(const char *file_path)
+void *rt_so_open(const char *file_path)
 {
-    void *handle = dlopen(file_path, RTLD_LAZY);
-    
-    if (!handle) {
-        RT_LOG_ERROR_LINE("Could not load a dynamic executable: %s. Stop.", dlerror());
-    }
+    void *handle = NULL;
 
+    #if defined(_WIN32)
+        handle = (void *)LoadLibrary(file_path);
+    #else
+        handle = dlopen(file_path, RTLD_LAZY);
+    #endif
+    
     return handle;
 }
 
-void *rt_try_get_symbol(void *handle, const char *symbol_name, bool *is_error)
+void *rt_so_get_symbol(void *handle, const char *symbol_name)
 {
-    if (!handle || !symbol_name) {
-        RT_LOG_ERROR_LINE("Invalid arguments for symbol lookup.");
-        if (is_error) *is_error = true;
-        return NULL;
-    }
+    if (!handle || !symbol_name) return NULL;
 
-#ifdef _WIN32
-    FARPROC proc = GetProcAddress((HMODULE)handle, symbol_name);
-    if (!proc) {
-        RT_LOG_ERROR("GetProcAddress failed for '%s': %s",
-            symbol_name, dlerror());
-        if (is_error) *is_error = true;
-        return NULL;
-    }
-    return (void*)proc;
-#else
-    dlerror();
-    void *sym = dlsym(handle, symbol_name);
-    const char *err = dlerror();
-
-    if (err != NULL) {
-        RT_LOG_ERROR_LINE("dlsym failed for '%s': %s", symbol_name, err);
-        if (is_error) *is_error = true;
-        return NULL;
-    }
-
-    return sym;
-#endif
+    #if defined(_WIN32)      
+        return (void*)GetProcAddress((HMODULE)handle, symbol_name);;
+    #else
+        return dlsym(handle, symbol_name);
+    #endif
 }
 
-#define UNWRAP if (is_error) goto fatal
+char *rt_so_get_error()
+{
+    #if defined(_WIN32)
+        static char buffer[256];
+
+	    DWORD error = GetLastError();
+
+    	FormatMessageA(
+	        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+	        NULL,
+	        error,
+	        0,
+	        buffer,
+	        sizeof(buffer),
+	        NULL
+	    );
+
+    	return (char *)buffer;
+    #else
+        return dlerror();
+    #endif
+}
+
+void  rt_so_close(void *handle)
+{
+    if (!handle) return;
+
+    #if defined(_WIN32)
+        FreeLibrary(handle);
+    #else
+        dlclose(handle);
+    #endif
+}
+
+#define TRY_GET_REGION_API_FN_SYMBOL(api_fn_ptr, handle, api_fn_symbol) \
+    (api_fn_ptr) = rt_so_get_symbol((handle), (api_fn_symbol)); if (!(api_fn_ptr)) goto fatal;
 
 RegionAPI *rt_try_get_region_api_handle(void *handle)
 {
     RegionAPI *region_api = (RegionAPI *)malloc(sizeof(RegionAPI));
 
-    if (!region_api) {
-        RT_LOG_ERROR_LINE("Could not allocate memory for the region api handle.");
-        return NULL;
-    }
+    if (!region_api) return NULL;
 
-    bool is_error = false;
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->region_alloc, handle, SYMBOL_FN_REGION_ALLOC);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->region_free, handle, SYMBOL_FN_REGION_FREE);
 
-    region_api->region_alloc           = rt_try_get_symbol(handle, SYMBOL_FN_REGION_ALLOC, &is_error); UNWRAP;
-    region_api->region_clone           = rt_try_get_symbol(handle, SYMBOL_FN_REGION_CLONE, &is_error); UNWRAP;
-    region_api->region_collect         = rt_try_get_symbol(handle, SYMBOL_FN_REGION_COLLECT, &is_error); UNWRAP;
-    region_api->region_free            = rt_try_get_symbol(handle, SYMBOL_FN_REGION_FREE, &is_error); UNWRAP;
-    region_api->region_get_last_node   = rt_try_get_symbol(handle, SYMBOL_FN_REGION_GET_LAST_NODE, &is_error); UNWRAP;
-    region_api->region_merge           = rt_try_get_symbol(handle, SYMBOL_FN_REGION_MERGE, &is_error); UNWRAP;
-    region_api->region_shrink_capacity = rt_try_get_symbol(handle, SYMBOL_FN_REGION_SHRINK_CAPACITY, &is_error); UNWRAP;
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->region_push, handle, SYMBOL_FN_REGION_PUSH);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->region_push_int, handle, SYMBOL_FN_REGION_PUSH_INT);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->region_push_float, handle, SYMBOL_FN_REGION_PUSH_FLOAT);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->region_push_double, handle, SYMBOL_FN_REGION_PUSH_DOUBLE);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->region_push_char, handle, SYMBOL_FN_REGION_PUSH_CHAR);
 
-    region_api->region_push            = rt_try_get_symbol(handle, SYMBOL_FN_REGION_PUSH, &is_error); UNWRAP;
-    region_api->region_push_int        = rt_try_get_symbol(handle, SYMBOL_FN_REGION_PUSH_INT, &is_error); UNWRAP;
-    region_api->region_push_float      = rt_try_get_symbol(handle, SYMBOL_FN_REGION_PUSH_FLOAT, &is_error); UNWRAP;
-    region_api->region_push_double     = rt_try_get_symbol(handle, SYMBOL_FN_REGION_PUSH_DOUBLE, &is_error); UNWRAP;
-    region_api->region_push_char       = rt_try_get_symbol(handle, SYMBOL_FN_REGION_PUSH_CHAR, &is_error); UNWRAP;
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->region_clone, handle, SYMBOL_FN_REGION_CLONE);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->region_collect, handle, SYMBOL_FN_REGION_COLLECT);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->region_get_last_node, handle, SYMBOL_FN_REGION_GET_LAST_NODE);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->region_merge, handle, SYMBOL_FN_REGION_MERGE);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->region_shrink_capacity, handle, SYMBOL_FN_REGION_SHRINK_CAPACITY);
 
-    region_api->stack_region_alloc   = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_ALLOC, &is_error); UNWRAP;
-    region_api->stack_region_free    = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_FREE, &is_error); UNWRAP;
-    region_api->stack_region_peek    = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PEEK, &is_error); UNWRAP;
-    region_api->stack_region_peek_at = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PEEK_AT, &is_error); UNWRAP;
-    region_api->stack_region_swap    = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_SWAP, &is_error); UNWRAP;
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_alloc, handle, SYMBOL_FN_STACK_REGION_ALLOC);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_free, handle, SYMBOL_FN_STACK_REGION_FREE);
+
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_peek, handle, SYMBOL_FN_STACK_REGION_PEEK);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_peek_at, handle, SYMBOL_FN_STACK_REGION_PEEK_AT);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_swap, handle, SYMBOL_FN_STACK_REGION_SWAP);
+
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_push, handle, SYMBOL_FN_STACK_REGION_PUSH);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_push_int, handle, SYMBOL_FN_STACK_REGION_PUSH_INT);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_push_float, handle, SYMBOL_FN_STACK_REGION_PUSH_FLOAT);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_push_double, handle, SYMBOL_FN_STACK_REGION_PUSH_DOUBLE);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_push_char, handle, SYMBOL_FN_STACK_REGION_PUSH_CHAR);
+
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_pop, handle, SYMBOL_FN_STACK_REGION_POP);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_pop_int, handle, SYMBOL_FN_STACK_REGION_POP_INT);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_pop_float, handle, SYMBOL_FN_STACK_REGION_POP_FLOAT);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_pop_double, handle, SYMBOL_FN_STACK_REGION_POP_DOUBLE);
     
-    region_api->stack_region_push        = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PUSH, &is_error); UNWRAP;
-    region_api->stack_region_push_int    = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PUSH_INT, &is_error); UNWRAP;
-    region_api->stack_region_push_float  = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PUSH_FLOAT, &is_error); UNWRAP;
-    region_api->stack_region_push_double = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PUSH_DOUBLE, &is_error); UNWRAP;
-    region_api->stack_region_push_char   = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_PUSH_CHAR, &is_error); UNWRAP;
+ // TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_push_char, handle, SYMBOL_FN_STACK_REGION_PUSH_CHAR);
 
-    region_api->stack_region_pop        = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_POP, &is_error); UNWRAP;
-    region_api->stack_region_pop_int    = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_POP_INT, &is_error); UNWRAP;
-    region_api->stack_region_pop_float  = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_POP_FLOAT, &is_error); UNWRAP;
-    region_api->stack_region_pop_double = rt_try_get_symbol(handle, SYMBOL_FN_STACK_REGION_POP_DOUBLE, &is_error); UNWRAP;
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->test_set_available_memory, handle, SYMBOL_FN_TEST_SET_AVAILABLE_MEMORY);
 
-    region_api->test_set_available_memory = rt_try_get_symbol(handle, SYMBOL_FN_TEST_SET_AVAILABLE_MEMORY, &is_error); UNWRAP; 
     return region_api;
 
 fatal:
     if (region_api) free(region_api);
-    RT_LOG_ERROR_LINE("Could not initialize the region api handle. Stop.");
     return NULL;
 }
 
 bool rt_try_load_file_and_test(RegionAPI *api, const char *file_path)
 {
-    if (!api || !file_path) {
-        RT_LOG_ERROR_LINE("Could not load a file and test: invalid arguments.");
-        return false;
-    }
-
-    bool is_error = false;
-
+    if (!api || !file_path) return false;
+    
     void *handle = NULL;
     TestContext *(*get_start)(void) = NULL;
     TestContext *(*get_end)(void)   = NULL;
 
-    handle = rt_try_load_shared_object(file_path); if (!handle) goto fatal;
-
-    get_start = rt_try_get_symbol(handle, RT_GET_TEST_MODULE_START_STR, &is_error); if (is_error) goto fatal;
-    get_end   = rt_try_get_symbol(handle, RT_GET_TEST_MODULE_END_STR, &is_error);   if (is_error) goto fatal;
+    handle = rt_so_open(file_path); if (!handle) goto fatal;
+    get_start = rt_so_get_symbol(handle, RT_GET_TEST_MODULE_START_STR); if (!get_start) goto fatal;
+    get_end   = rt_so_get_symbol(handle, RT_GET_TEST_MODULE_END_STR);   if (!get_end)   goto fatal;
 
     for (TestContext *t = get_start(); t < get_end(); t++) {
         TestResult result = t->func(api);
@@ -129,44 +138,33 @@ bool rt_try_load_file_and_test(RegionAPI *api, const char *file_path)
         goto fatal;
     }
     
-    dlclose(handle); 
+    rt_so_close(handle);
     return true;
 
 fatal:
-    if (handle) dlclose(handle);
+    if (handle) rt_so_close(handle);
     return false;
 }
 
 bool rt_try_load_files_and_test(const char *directory) 
 {
-    if (!directory) {
-        RT_LOG_ERROR_LINE("Could not load files and test: no directory.");
-        return false;
-    }
+    if (!directory) return false;
+
+    bool result = true;
 
     struct dirent *entry = NULL;
+    DIR *dir = NULL;
+    void *region_api_handle = NULL;
+    RegionAPI *api = NULL;
 
-    DIR *dir = opendir(directory);
+    dir = opendir(directory);
+        if (!dir) { result = false; goto cleanup; }
 
-    if (!dir) {
-        RT_LOG_ERROR_LINE("Could not open a directory \"%s\": %s.", directory, strerror(errno));
-        return false;
-    }
+    region_api_handle = rt_so_open(RT_FILE_PATHS_REGION_SO);
+        if (!region_api_handle) { result = false; goto cleanup; }
 
-    void *region_api_handle = rt_try_load_shared_object(RT_FILE_PATHS_REGION_SO);
-
-    if (!region_api_handle) {
-        closedir(dir);
-        return false;
-    }
-
-    RegionAPI *api = rt_try_get_region_api_handle(region_api_handle);
-
-    if (!api) {
-        closedir(dir);
-        dlclose(region_api_handle);
-        return false;
-    }
+    api = rt_try_get_region_api_handle(region_api_handle);
+        if (!api) { result = false; goto cleanup; }
 
     while (entry = readdir(dir)) {
     	char full_path[1024];
@@ -181,17 +179,12 @@ bool rt_try_load_files_and_test(const char *directory)
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
 
         bool test_result = rt_try_load_file_and_test(api, full_path);
-
-        if (!test_result) {
-            closedir(dir);
-            free(api);
-            dlclose(region_api_handle);
-            return false;
-        }
+            if (!test_result) { result = false; goto cleanup; }
     }
     
-    closedir(dir);
-    dlclose(region_api_handle);
-    free(api);
-    return true;
+cleanup:
+    if (dir) closedir(dir);
+    if (region_api_handle) rt_so_close(region_api_handle);
+    if (api) free(api);
+    return result;
 }

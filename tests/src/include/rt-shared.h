@@ -5,6 +5,7 @@
 #include "rt-TestResult.h"
 #include "rt-TestContext.h"
 
+#include "rt-so.h"
 #include "rt-log.h"
 #include "rt-fmt.h"
 #include "rt-file-paths.h"
