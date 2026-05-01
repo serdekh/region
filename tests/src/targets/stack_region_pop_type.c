@@ -1,8 +1,8 @@
 #include "../include/rt-shared.h"
 
-#define TEST_STACK_REGION_POP_TYPE_CASE_3_VALUE_AT_INDEX_0 232
-#define TEST_STACK_REGION_POP_TYPE_CASE_3_VALUE_AT_INDEX_1 563399
-#define TEST_STACK_REGION_POP_TYPE_CASE_4_VALUE 33219
+#define TEST_STACK_REGION_POP_TYPE_CASE_3_VALUE_AT_INDEX_0 34
+#define TEST_STACK_REGION_POP_TYPE_CASE_3_VALUE_AT_INDEX_1 77
+#define TEST_STACK_REGION_POP_TYPE_CASE_4_VALUE 98
 
 #define stack_region_push_type(type, stack, size, error) stack_region_push_##type(stack, size, error)
 #define stack_region_pop_type(type, stack, error) stack_region_pop_##type(stack, error)
@@ -118,6 +118,11 @@ TEST_STACK_REGION_POP_TYPE_CASE_2(double, REGION_ERROR_CODE_EINVAL_STACK_REGION_
 TEST_STACK_REGION_POP_TYPE_CASE_3(double, "%f");
 TEST_STACK_REGION_POP_TYPE_CASE_4(double, "%f");
 
+TEST_STACK_REGION_POP_TYPE_CASE_1(char);
+TEST_STACK_REGION_POP_TYPE_CASE_2(char, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_CHAR_INVALID_FRAME);
+TEST_STACK_REGION_POP_TYPE_CASE_3(char, "%d");
+TEST_STACK_REGION_POP_TYPE_CASE_4(char, "%d");
+
 RT_TEST_MODULE_REGISTER(test_stack_region_pop_int_case_1, 1);
 RT_TEST_MODULE_REGISTER(test_stack_region_pop_int_case_2, 2);
 RT_TEST_MODULE_REGISTER(test_stack_region_pop_int_case_3, 3);
@@ -132,5 +137,10 @@ RT_TEST_MODULE_REGISTER(test_stack_region_pop_double_case_1, 1);
 RT_TEST_MODULE_REGISTER(test_stack_region_pop_double_case_2, 2);
 RT_TEST_MODULE_REGISTER(test_stack_region_pop_double_case_3, 3);
 RT_TEST_MODULE_REGISTER(test_stack_region_pop_double_case_4, 4);
+
+RT_TEST_MODULE_REGISTER(test_stack_region_pop_char_case_1, 1);
+RT_TEST_MODULE_REGISTER(test_stack_region_pop_char_case_2, 2);
+RT_TEST_MODULE_REGISTER(test_stack_region_pop_char_case_3, 3);
+RT_TEST_MODULE_REGISTER(test_stack_region_pop_char_case_4, 4);
 
 RT_TEST_MODULE_EXPORT;
