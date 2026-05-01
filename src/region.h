@@ -221,6 +221,9 @@ typedef enum {
     // stack_region_pop_double
     REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_DOUBLE_INVALID_FRAME,   // The last frame's size is not equal to sizeof(double)
 
+    // stack_region_pop_char
+    REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_CHAR_INVALID_FRAME,
+
     // stack_region_swap
     REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_MALLOC_TEMPORARY_BUFFER, // Failed to allocate a temporary buffer to which the swapped data gets copied.
     REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_PUSH_LAST,               // Failed to re-push the last frame as a previous one.
@@ -301,6 +304,9 @@ static const char *region_error_code_as_strings[] = {
     // stack_region_pop_double
     "Invalid argument: The last frame's size is not equal to the size of a floating number (double)",
 
+    // stack_region_pop_char
+    "Invalid argument: The last frame's size is not equal to the size of an ascii character",
+
     // stack_region_swap
     "No free space: Failed to allocate a temporary buffer to store the swapped frames",
     "No free space: Failed to re-push the last frame at a previous position",
@@ -370,9 +376,11 @@ REGION_API char *stack_region_push_char(StackRegion **stack, char value, RegionE
 REGION_API StackRegionFrame stack_region_peek(StackRegion *stack, RegionError *error);
 REGION_API StackRegionFrame stack_region_peek_at(StackRegion *stack, size_t index, RegionError *error);
 REGION_API StackRegionFrame stack_region_pop(StackRegion *stack, RegionError *error);
+
 REGION_API int *stack_region_pop_int(StackRegion *stack, RegionError *error);
 REGION_API float *stack_region_pop_float(StackRegion *stack, RegionError *error);
 REGION_API double *stack_region_pop_double(StackRegion *stack, RegionError *error);
+REGION_API char *stack_region_pop_char(StackRegion *stack, RegionError *error);
 
 REGION_API void stack_region_swap(StackRegion *stack, RegionError *error);
 REGION_API void stack_region_free(StackRegion **stack);
@@ -1101,6 +1109,18 @@ double *stack_region_pop_double(StackRegion *stack, RegionError *error)
     }
 
     return (double *)stack_region_pop(stack, NULL).data;
+}
+
+char *stack_region_pop_char(StackRegion *stack, RegionError *error)
+{
+    if (!stack) return NULL;
+
+    if (stack_region_peek(stack, NULL).size != sizeof(char)) {
+        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_CHAR_INVALID_FRAME);
+        return NULL;
+    }
+
+    return (char *)stack_region_pop(stack, NULL).data;
 }
 
 void stack_region_swap(StackRegion *stack, RegionError *error)
