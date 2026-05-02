@@ -1,7 +1,8 @@
 - Daily tasks:
 
-1: Reimplement the error code system to incorporate integer bitmasks instead of enums
-2: Add documentation and a separate system that parses and prints it to the console
+1: Extract the testing function from src/region.h to the lib/region-test.c 
+2: Reimplement the error code system to incorporate integer bitmasks instead of enums
+3: Add documentation and a separate system that parses and prints it to the console
 
 - Big tasks (Should be Implemented as soon as all the daily tasks are complete)
 
