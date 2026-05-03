@@ -98,6 +98,7 @@ help:
 	@echo "$(TAB_CHAR)make build-shared      -- Builds the region library and produces a shared object file"   
 	@echo "$(TAB_CHAR)                          $(TAB_CHAR)Tests are not built, the object file is located at '<project>/.build/sobj'"
 	@echo "$(TAB_CHAR)make test              -- Builds a testing system and the region shared object for tests."
+	@echo "$(TAB_CHAR)make clean             -- Removes the '.build' and the 'tests/.build' folders"
 	@echo "$(TAB_CHAR)                          Calls the 'run' command from the inner Makefile. Runs upon success"
 	@echo "$(TAB_CHAR)                          $(TAB_CHAR)Tests are built, the files are located at       "
 	@echo "$(TAB_CHAR)                          $(TAB_CHAR)$(TAB_CHAR)'<project>/.build'           - region shared object (with the REGION_TEST_IMPLEMENTATION macro defined)"
