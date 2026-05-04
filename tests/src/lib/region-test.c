@@ -49,7 +49,6 @@ void *test_malloc(size_t capacity)
 {
     if (capacity > __test_available_memory) return NULL;
 
-    // overflow-safe check
     if (__test_available_memory - capacity > __test_available_memory) {
         __test_available_memory = 0;
         return NULL;
