@@ -23,12 +23,8 @@
 
 #ifndef REGION_NO_STDLIB
 #include <stdlib.h>
+#define REGION_MALLOC malloc
 #define REGION_FREE free
-    #ifndef REGION_TEST_IMPLEMENTATION
-        #define REGION_MALLOC malloc
-    #else
-        #define REGION_MALLOC test_malloc
-    #endif // REGION_TEST_IMPLEMENTATION
 #endif // REGION_NO_STDLIB
 
 #ifndef REGION_NO_ASSERT
@@ -107,41 +103,6 @@ typedef enum {
     REGION_GET_LAST_NODE_OPTION_DEFAULT = 0,
     REGION_GET_LAST_NODE_OPTION_NON_EMPTY
 } RegionGetLastNodeOption;
-
-#define REGION_TEST_AVAILABLE_MEMORY_DEFAULT 2048
-
-REGION_API void __test_set_available_memory(size_t value);
-REGION_API size_t __test_get_available_memory();
-REGION_API void *test_malloc(size_t capacity);
-
-#ifdef REGION_TEST_IMPLEMENTATION
-    // Emulates the amount of memory a process can request from an OS
-    static size_t __test_available_memory = REGION_TEST_AVAILABLE_MEMORY_DEFAULT;
-
-    void __test_set_available_memory(size_t value) 
-    {
-        __test_available_memory = value;
-    }
-
-    size_t __test_get_available_memory()
-    {
-        return __test_available_memory;
-    }
-
-    void *test_malloc(size_t capacity)
-    {
-        if (capacity > __test_available_memory) return NULL;
-
-        if (__test_available_memory - capacity > __test_available_memory) {
-            __test_available_memory = 0;
-            return NULL;
-        }
-
-        __test_available_memory -= capacity;
-
-        return malloc(capacity);
-    }
-#endif // REGION_TEST_IMPLEMENTATION
 
 // ----- DATA STRUCTS FOR ERRORS -----
 

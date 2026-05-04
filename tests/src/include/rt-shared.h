@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rt-region-api.h"
+#include "rt-RegionAPI.h"
 
 #include "rt-TestResult.h"
 #include "rt-TestContext.h"

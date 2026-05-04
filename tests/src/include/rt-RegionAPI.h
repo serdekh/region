@@ -37,6 +37,8 @@
 #define SYMBOL_FN_STACK_REGION_SWAP        "stack_region_swap"
 
 #define SYMBOL_FN_TEST_SET_AVAILABLE_MEMORY "__test_set_available_memory"
+#define SYMBOL_FN_TEST_SET_DEFAULT_MEMORY "__test_set_default_memory"
+
 #define SYMBOL_FN_TEST_GET_AVAILABLE_MEMORY "__test_get_available_memory"     
 
 typedef Region *(*FuncPtr_region_alloc)(size_t, RegionError*);
@@ -74,6 +76,7 @@ typedef void (*FuncPtr_stack_region_swap)(StackRegion *stack, RegionError *error
 typedef void (*FuncPtr_stack_region_free)(StackRegion **stack);
 
 typedef void (*FuncPtr__test_set_available_memory)(size_t value);
+typedef void (*FuncPtr__test_set_default_memory)();
 typedef size_t (*FuncPtr__test_get_available_memory)(size_t value);
 
 typedef struct {
@@ -110,6 +113,7 @@ typedef struct {
     FuncPtr_stack_region_pop_char   stack_region_pop_char;
 
     FuncPtr__test_set_available_memory test_set_available_memory;
+    FuncPtr__test_set_default_memory test_set_default_memory;
 } RegionAPI;
 
 RegionAPI *rt_try_get_region_api_handle(void *handle);

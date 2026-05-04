@@ -37,7 +37,7 @@
         api->test_set_available_memory(0);                                     \
             StackRegion *pstack = &stack;                                      \
             api->stack_region_push_type(type, &pstack, 0, &error);             \
-        api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);  \
+        api->test_set_default_memory();                                        \
                                                                                \
         RT_TEST_RESULT_WRITE_INT(result, expected_error_code, error.code);     \
                                                                                \

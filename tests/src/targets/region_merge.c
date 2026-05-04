@@ -33,7 +33,7 @@ TestResult test_region_merge_case_2(RegionAPI *api)
 
     RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_COLLECTION, error.code);
 
-    api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
+    api->test_set_default_memory();
 
     return result;
 }
@@ -51,7 +51,7 @@ TestResult test_region_merge_case_3(RegionAPI *api)
 
     RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_REGION, error.code);
 
-    api->test_set_available_memory(REGION_TEST_AVAILABLE_MEMORY_DEFAULT);
+    api->test_set_default_memory();
 
     return result;
 }
