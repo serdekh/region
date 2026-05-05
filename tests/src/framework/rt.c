@@ -128,6 +128,9 @@ RegionAPI *rt_try_get_region_api_handle(void *handle)
     TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_pop_double, handle, SYMBOL_FN_STACK_REGION_POP_DOUBLE);
     TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_pop_char, handle, SYMBOL_FN_STACK_REGION_POP_CHAR);
 
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->region_error_print_to, handle, SYMBOL_FN_REGION_ERROR_PRINT_TO);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->region_error_print, handle, SYMBOL_FN_REGION_ERROR_PRINT);
+
     TRY_GET_REGION_API_FN_SYMBOL(region_api->test_set_available_memory, handle, SYMBOL_FN_TEST_SET_AVAILABLE_MEMORY);
     TRY_GET_REGION_API_FN_SYMBOL(region_api->test_set_default_memory, handle, SYMBOL_FN_TEST_SET_DEFAULT_MEMORY);
 

@@ -36,6 +36,9 @@
 
 #define SYMBOL_FN_STACK_REGION_SWAP        "stack_region_swap"
 
+#define SYMBOL_FN_REGION_ERROR_PRINT_TO    "region_error_print_to"
+#define SYMBOL_FN_REGION_ERROR_PRINT       "region_error_print"
+
 #define SYMBOL_FN_TEST_SET_AVAILABLE_MEMORY "__test_set_available_memory"
 #define SYMBOL_FN_TEST_SET_DEFAULT_MEMORY "__test_set_default_memory"
 
@@ -75,6 +78,10 @@ typedef char *(*FuncPtr_stack_region_push_char)(StackRegion **stack, char value,
 typedef void (*FuncPtr_stack_region_swap)(StackRegion *stack, RegionError *error);
 typedef void (*FuncPtr_stack_region_free)(StackRegion **stack);
 
+typedef void (*FuncPtr_region_error_print_to)(REGION_FILE *stream, RegionError error);
+typedef void (*FuncPtr_region_error_print)(RegionError error);
+
+
 typedef void (*FuncPtr__test_set_available_memory)(size_t value);
 typedef void (*FuncPtr__test_set_default_memory)();
 typedef size_t (*FuncPtr__test_get_available_memory)(size_t value);
@@ -111,6 +118,9 @@ typedef struct {
     FuncPtr_stack_region_pop_float  stack_region_pop_float;
     FuncPtr_stack_region_pop_double stack_region_pop_double;
     FuncPtr_stack_region_pop_char   stack_region_pop_char;
+
+    FuncPtr_region_error_print_to   region_error_print_to;
+    FuncPtr_region_error_print      region_error_print;
 
     FuncPtr__test_set_available_memory test_set_available_memory;
     FuncPtr__test_set_default_memory test_set_default_memory;

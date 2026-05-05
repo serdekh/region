@@ -6,8 +6,8 @@
 #include "rt-TestResult.h"
 #include "rt-TestContext.h"
 
-#define RT_LOG(stream, type, message, ...)      fprintf((stream), "[Test]["type"]: "message,     ##__VA_ARGS__)
-#define RT_LOG_LINE(stream, type, message, ...) fprintf((stream), "[Test]["type"]: "message"\n", ##__VA_ARGS__)
+#define RT_LOG(stream, type, message, ...)      fprintf((stream), "[RT]["type"]: "message,     ##__VA_ARGS__)
+#define RT_LOG_LINE(stream, type, message, ...) fprintf((stream), "[RT]["type"]: "message"\n", ##__VA_ARGS__)
 
 #define RT_LOG_ERROR(message, ...)      RT_LOG(stderr, "Error", message,     ##__VA_ARGS__)
 #define RT_LOG_ERROR_LINE(message, ...) RT_LOG(stderr, "Error", message"\n", ##__VA_ARGS__)
@@ -20,6 +20,6 @@
 
 #define RT_LOG_ERROR_FAILED_TEST_FATAL_ERROR                       \
     RT_LOG(stderr, "Error", "Could not perfom a test. Stop.\n\t"); \
-    REGION_LOG_ERROR(error)
+    api->region_error_print(error)
     
 #define RT_LOG_PASSED_ALL_TESTS RT_LOG_LINE(stdout, "Log", "All tests have passed!")
