@@ -1,5 +1,6 @@
 #ifndef REGION_NO_STDIO
 #include <stdio.h>
+#define REGION_FILE FILE
 #define REGION_STDIN stdin
 #define REGION_STDOUT stdout
 #define REGION_STDERR stderr
@@ -290,19 +291,6 @@ typedef struct {
 #define REGION_ERROR_INIT_LOCATION(error) (error)->location = REGION_GET_CURRENT_FILE_LOCATION          
 #define REGION_ERROR_INIT (RegionError){.code = 0, .location.file_name = __FILE__, .location.line = __LINE__, .location.func_name = __func__}
 
-#define REGION_LOG_ERROR_TO(error, out)                              \
-    if (REGION_NO_ERROR((error))) {                                  \
-        REGION_FPRINTF((out), "[Region][Log]: No error\n");            \
-    } else {                                                         \
-        REGION_FPRINTF((out), "[Region][ERROR](\"%s:%d:%s\"): %s\n", \
-            (error).location.file_name,                              \
-            (error).location.line,                                   \
-            (error).location.func_name,                              \
-            region_error_code_as_strings[(error).code]);             \
-    }                                                                \
-
-#define REGION_LOG_ERROR(error) REGION_LOG_ERROR_TO((error), REGION_STDERR)
-
 #define REGION_NO_ERROR(error) (error).code == REGION_ERROR_CODE_NO_ERROR
 #define REGION_ERROR(error)    (error).code != REGION_ERROR_CODE_NO_ERROR
 
@@ -345,6 +333,10 @@ REGION_API char *stack_region_pop_char(StackRegion *stack, RegionError *error);
 
 REGION_API void stack_region_swap(StackRegion *stack, RegionError *error);
 REGION_API void stack_region_free(StackRegion **stack);
+
+// Error
+REGION_API void region_error_print_to(REGION_FILE *stream, RegionError error);
+REGION_API void region_error_print(RegionError error);
 
 #define STACK_REGION_CACHE_COUNT_SIZE sizeof(size_t)
 
@@ -1136,6 +1128,28 @@ void stack_region_free(StackRegion **stack)
 
     region_free((Region **)stack);
 }
+
+void region_error_print_to(REGION_FILE *stream, RegionError error)
+{
+    if (REGION_NO_ERROR(error)) {
+        REGION_FPRINTF(stream, "[Region][Log]: No error\n");
+        return;
+    }
+
+    if (error.code >= sizeof(region_error_code_as_strings) / sizeof(region_error_code_as_strings[0])) {
+        REGION_FPRINTF(stream, "[Region][Error]: Unknown error code\n");
+        return;
+    }
+
+    REGION_FPRINTF(stream, "[Region][Error](\"%s\":%s():%d): %s\n", 
+        error.location.file_name,
+        error.location.func_name,
+        error.location.line,
+        region_error_code_as_strings[error.code]
+    );
+}
+
+void region_error_print(RegionError error) { region_error_print_to(REGION_STDERR, error); }
 
 #endif // REGION_IMPLEMENTATION
 REGION_EXTERN_C_END
