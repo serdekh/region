@@ -1,11 +1,16 @@
 - Daily tasks:
 
-1: Reimplement the error code system to incorporate integer bitmasks instead of enums
-   1.1: Define a 16 bit integer in which the specific bits would refer to the following
+1: Add tests for the following functions:
+   1.1: `region_get_size`,
+   1.2: `region_get_capacity`,
+   1.3: `stack_region_get_size`,
+   1.4: `stack_region_get_capacity`
+2: Reimplement the error code system to incorporate integer bitmasks instead of enums
+   2.1: Define a 16 bit integer in which the specific bits would refer to the following
    attributes: boolean (is error | no error), error type (einval, enomem), function class
    (region_*, stack_region_*), narrowed error (malloc region type, malloc region type memeber),
    function subclass (push, pop, free, alloc, ...) 
-2: Add documentation and a separate system that parses and prints it to the console
+3: Add documentation and a separate system that parses and prints it to the console
 
 - Big tasks (Should be Implemented as soon as all the daily tasks are complete)
 
