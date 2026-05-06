@@ -54,36 +54,14 @@
   #define REGION_EXTERN_C_END
 #endif
 
-#define REGION_PRIVATE_CORE_FIELDS \
-    size_t capacity;               \
-    size_t size;                   \
-    char *data;                    \
-    struct __Region *next;         \
+typedef struct __Region Region;
 
-typedef struct __Region {
-    REGION_PRIVATE_CORE_FIELDS
-} Region;
-
-typedef struct __StackRegion {
-    REGION_PRIVATE_CORE_FIELDS
-} StackRegion;
+typedef struct __StackRegion StackRegion;
 
 typedef struct _StackRegionFrame {
     void *data;
     size_t size;
 } StackRegionFrame;
-
-#define REGION_IS_EMPTY(region)\
-    ((region)->capacity == 0 && (region)->size == 0 && (region)->data == NULL && (region)->next == NULL)
-
-#define REGION_TO_STRING(dest, region)\
-    REGION_SPRINTF((dest), "{.capacity = %zu, .size = %zu, .data = %p, .next = %p}",\
-        (region)->capacity, (region)->size, (region)->data, (region)->next)
-
-#define REGION_STRING_EMPTY "{.capacity = 0, .size = 0, .data = (nil), .next = (nil)}"
-
-#define STACK_REGION_FRAME_EMPTY (StackRegionFrame){ .data = NULL, .size = 0}
-#define STACK_REGION_FRAME_IS_EMPTY(frame) ((frame).data == NULL && (frame).size == 0)
 
 typedef enum {
     REGION_RESET_OPTION_SOFT = 0,
@@ -298,6 +276,10 @@ REGION_EXTERN_C_BEGIN
 
 // Region
 REGION_API Region *region_alloc(size_t capacity, RegionError *error);
+
+REGION_API size_t region_get_capacity(Region *region);
+REGION_API size_t region_get_size(Region *region);
+
 REGION_API Region *region_clone(Region *region, RegionError *error);
 REGION_API Region *region_merge(Region *region, RegionMergeOption option, RegionError *error);
 REGION_API Region *region_get_last_node(Region *region, RegionGetLastNodeOption option, RegionError *error);
@@ -315,6 +297,11 @@ REGION_API void region_shrink_capacity(Region *region, RegionShrinkCapacityOptio
 
 // Stack Region
 REGION_API StackRegion *stack_region_alloc(size_t capacity, RegionError *error);
+
+REGION_API size_t stack_region_get_capacity(StackRegion *region);
+REGION_API size_t stack_region_get_size(StackRegion *region);
+REGION_API size_t stack_region_get_count(StackRegion *region);
+REGION_API size_t *stack_region_get_count_ref(StackRegion *region);
 
 REGION_API StackRegionFrame stack_region_push(StackRegion **stack, size_t size, RegionError *error);
 REGION_API int *stack_region_push_int(StackRegion **stack, int value, RegionError *error);
@@ -338,14 +325,26 @@ REGION_API void stack_region_free(StackRegion **stack);
 REGION_API void region_error_print_to(REGION_FILE *stream, RegionError error);
 REGION_API void region_error_print(RegionError error);
 
-#define STACK_REGION_CACHE_COUNT_SIZE sizeof(size_t)
-
-#define stack_region_get_ref_count(stack) (size_t *)((stack)->data - STACK_REGION_CACHE_COUNT_SIZE)
-#define stack_region_get_count(stack) *(stack_region_get_ref_count(stack))
+#define REGION_IS_EMPTY(region)\
+    region_get_capacity(region) == 0 && region_get_size(region) == 0;
 
 // ----- * -----
 
 #ifdef REGION_IMPLEMENTATION
+
+#define REGION_CORE_FIELDS \
+    size_t capacity;       \
+    size_t size;           \
+    char *data;            \
+    struct __Region *next; \
+
+typedef struct __Region      { REGION_CORE_FIELDS } Region;
+typedef struct __StackRegion { REGION_CORE_FIELDS } StackRegion;
+
+#define STACK_REGION_CACHE_COUNT_SIZE sizeof(size_t)
+
+#define STACK_REGION_FRAME_EMPTY (StackRegionFrame){ .data = NULL, .size = 0}
+#define STACK_REGION_FRAME_IS_EMPTY(frame) ((frame).data == NULL && (frame).size == 0)
 
 Region *region_alloc(size_t capacity, RegionError *error)
 {
@@ -382,6 +381,9 @@ Region *region_alloc(size_t capacity, RegionError *error)
     
     return region;
 }
+
+size_t region_get_capacity(Region *region) { if (!region) return 0; return region->capacity; }
+size_t region_get_size(Region *region) { if (!region) return 0; return region->size; }
 
 void region_free(Region **region)
 {
@@ -776,6 +778,23 @@ StackRegion *stack_region_alloc(size_t capacity, RegionError *error)
     return NULL;
 }
 
+size_t stack_region_get_capacity(StackRegion *region) { if (!region) return 0; return region->capacity; }
+size_t stack_region_get_size(StackRegion *region) { if (!region) return 0; return region->size; }
+
+size_t *stack_region_get_count_ref(StackRegion *region)
+{
+    if (!region || !region->data) return NULL;
+
+    return (size_t *)(region->data - STACK_REGION_CACHE_COUNT_SIZE);
+}
+
+size_t stack_region_get_count(StackRegion *region)
+{
+    if (!region || !region->data) return 0;
+
+    return *(size_t *)(region->data - STACK_REGION_CACHE_COUNT_SIZE);    
+}
+
 StackRegionFrame stack_region_push(StackRegion **stack, size_t size, RegionError *error)
 {
     if (!stack) return STACK_REGION_FRAME_EMPTY;
@@ -792,7 +811,7 @@ StackRegionFrame stack_region_push(StackRegion **stack, size_t size, RegionError
     void *frame_data = region_push((Region **)stack, size + sizeof(size_t), &local_error);
 
     if (REGION_NO_ERROR(local_error)) {
-        *stack_region_get_ref_count(*stack) += 1;
+        *stack_region_get_count_ref(*stack) += 1;
         *(size_t *)(frame_data + size) = size;
 
         StackRegionFrame frame = {0};
@@ -1014,7 +1033,7 @@ StackRegionFrame stack_region_pop(StackRegion *stack, RegionError *error)
 
     void *last_frame_start = last_frame_end - sizeof(size_t) - last_frame_size;
     
-    (*stack_region_get_ref_count(stack))--;
+    (*stack_region_get_count_ref(stack))--;
 
     last_node->size -= (last_frame_size + sizeof(size_t));
 
