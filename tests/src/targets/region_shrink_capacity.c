@@ -28,7 +28,8 @@ TestResult test_region_shrink_capacity_case_2(RegionAPI *api)
     RegionError error = REGION_ERROR_INIT;
     Region r = {0};
 
-    r.size = SIZE_MAX;
+    r.size = SIZE_MAX - 1;
+    r.capacity = SIZE_MAX;
 
     api->region_shrink_capacity(&r, REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT, &error);
 

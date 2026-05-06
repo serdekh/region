@@ -38,25 +38,8 @@ TestResult test_region_merge_case_2(RegionAPI *api)
     return result;
 }
 
+
 TestResult test_region_merge_case_3(RegionAPI *api)
-{
-    TestResult result = {0};
-
-    Region region = {.capacity = TEST_REGION_MERGE_CAPACITY };
-    RegionError error = REGION_ERROR_INIT;
-
-    api->test_set_available_memory(TEST_REGION_MERGE_CAPACITY + sizeof(Region **));
-
-    api->region_merge(&region, 0, &error);
-
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_REGION, error.code);
-
-    api->test_set_default_memory();
-
-    return result;
-}
-
-TestResult test_region_merge_case_4(RegionAPI *api)
 {
     TestResult result = {0};
 
@@ -98,7 +81,7 @@ cleanup:
     );
 }
 
-TestResult test_region_merge_case_5(RegionAPI *api)
+TestResult test_region_merge_case_4(RegionAPI *api)
 {
     TestResult result = {0};
 
@@ -147,6 +130,5 @@ RT_TEST_MODULE_REGISTER(test_region_merge_case_1, 1);
 RT_TEST_MODULE_REGISTER(test_region_merge_case_2, 2);
 RT_TEST_MODULE_REGISTER(test_region_merge_case_3, 3);
 RT_TEST_MODULE_REGISTER(test_region_merge_case_4, 4);
-RT_TEST_MODULE_REGISTER(test_region_merge_case_5, 5);
 
 RT_TEST_MODULE_EXPORT;

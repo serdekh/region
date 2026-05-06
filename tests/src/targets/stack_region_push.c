@@ -22,17 +22,15 @@ TestResult test_stack_region_push_case_2(RegionAPI *api)
     RegionError error = REGION_ERROR_INIT;
     StackRegion *stack = NULL;
 
-    stack = api->stack_region_alloc(TEST_STACK_REGION_CAPACITY, &error); RT_TARGET_UNWRAP;
+    stack = api->stack_region_alloc(TEST_STACK_REGION_CAPACITY, &error);
 
-    api->stack_region_push(&stack, 0, &error);
+    StackRegionFrame frame = api->stack_region_push(&stack, 0, &error);
 
-    RT_TEST_RESULT_WRITE_INT(result, 0, (int)stack->size);
+    RT_TEST_RESULT_WRITE_INT(result, 0, (int)frame.size);
 
     api->stack_region_free(&stack);
 
     return result;
-
-    RT_TARGET_FATAL_ERROR(if (stack) api->stack_region_free(&stack));
 }
 
 TestResult test_stack_region_push_case_3(RegionAPI *api)

@@ -41,8 +41,8 @@
         api->region_push_type(type, &region, TEST_REGION_PUSH_TYPE_CASE_2_VALUE, &error);               \
                                                                                                         \
         type *actual = region->next                                                                     \
-            ? (type *)(region->next->data + region->next->size - sizeof(type))                          \
-            : (type *)(region->data + region->size - sizeof(type));                                     \
+            ? (type *)(region->next->data )                                                             \
+            : (type *)(region->data);                                                                   \
                                                                                                         \
         RT_TEST_RESULT_WRITE_FMT(result, fmt, (type)TEST_REGION_PUSH_TYPE_CASE_2_VALUE, (type)*actual); \
                                                                                                         \

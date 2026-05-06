@@ -29,7 +29,7 @@ TestResult test_stack_region_pop_case_2(RegionAPI *api)
     
     api->stack_region_pop(stack, &error); RT_TARGET_UNWRAP;
     
-    RT_TEST_RESULT_WRITE_INT(result, (int)(sizeof(int) + sizeof(size_t)), (int)stack->size);
+    RT_TEST_RESULT_WRITE_INT(result, (int)(sizeof(int) + sizeof(size_t)), (int)api->stack_region_get_size(stack));
     
     api->stack_region_free(&stack);
 

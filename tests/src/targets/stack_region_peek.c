@@ -51,7 +51,7 @@ TestResult test_stack_region_peek_case_3(RegionAPI *api)
     RegionError error = {0};
     StackRegion *stack = api->stack_region_alloc(TEST_STACK_REGION_PEEK_CASE_3_CAPACITY, &error); RT_TARGET_UNWRAP;
 
-    *stack_region_get_ref_count(stack) = TEST_STACK_REGION_PEEK_CASE_3_CORRUPTED_COUNT;
+    *api->stack_region_get_count_ref(stack) = TEST_STACK_REGION_PEEK_CASE_3_CORRUPTED_COUNT;
 
     api->stack_region_peek(stack, &error);
 
@@ -71,7 +71,7 @@ TestResult test_stack_region_peek_case_4(RegionAPI *api)
     RegionError error = {0};
     StackRegion *stack = api->stack_region_alloc(TEST_STACK_REGION_PEEK_CASE_4_CAPACITY, &error); RT_TARGET_UNWRAP;
 
-    *stack_region_get_ref_count(stack) = TEST_STACK_REGION_PEEK_CASE_4_CORRUPTED_COUNT;
+    *api->stack_region_get_count_ref(stack) = TEST_STACK_REGION_PEEK_CASE_4_CORRUPTED_COUNT;
 
     api->stack_region_peek(stack, &error);
 

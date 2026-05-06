@@ -19,4 +19,12 @@
         cleanup_code;                            \
         result.fatal = true;                     \
         return result;                           
-        
+
+#define RT_REGION_CORE_FIELDS \
+    size_t size;              \
+    size_t capacity;          \
+    char *data;               \
+    struct __Region *next;    \
+
+typedef struct __Region      { RT_REGION_CORE_FIELDS } Region;
+typedef struct __StackRegion { RT_REGION_CORE_FIELDS } StackRegion;

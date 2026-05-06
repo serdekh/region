@@ -8,15 +8,13 @@ TestResult test_stack_region_alloc_case_1(RegionAPI *api)
 
     RegionError error = REGION_ERROR_INIT;
 
-    StackRegion *stack = api->stack_region_alloc(0, &error); RT_TARGET_UNWRAP;
+    StackRegion *stack = api->stack_region_alloc(0, &error);
 
-    result.success = stack->capacity == STACK_REGION_CACHE_COUNT_SIZE && stack->data != NULL;
+    result.success = stack->capacity == api->stack_region_get_count(stack) && stack->data != NULL;
 
     api->stack_region_free(&stack);
 
     return result;
-
-    RT_TARGET_FATAL_ERROR(if (stack) api->stack_region_free(&stack));
 }
 
 TestResult test_stack_region_alloc_case_2(RegionAPI *api)

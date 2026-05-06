@@ -97,6 +97,9 @@ RegionAPI *rt_try_get_region_api_handle(void *handle)
     TRY_GET_REGION_API_FN_SYMBOL(region_api->region_alloc, handle, SYMBOL_FN_REGION_ALLOC);
     TRY_GET_REGION_API_FN_SYMBOL(region_api->region_free, handle, SYMBOL_FN_REGION_FREE);
 
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->region_get_capacity, handle, SYMBOL_FN_REGION_GET_CAPACITY);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->region_get_size, handle, SYMBOL_FN_REGION_GET_SIZE);
+
     TRY_GET_REGION_API_FN_SYMBOL(region_api->region_push, handle, SYMBOL_FN_REGION_PUSH);
     TRY_GET_REGION_API_FN_SYMBOL(region_api->region_push_int, handle, SYMBOL_FN_REGION_PUSH_INT);
     TRY_GET_REGION_API_FN_SYMBOL(region_api->region_push_float, handle, SYMBOL_FN_REGION_PUSH_FLOAT);
@@ -111,6 +114,11 @@ RegionAPI *rt_try_get_region_api_handle(void *handle)
 
     TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_alloc, handle, SYMBOL_FN_STACK_REGION_ALLOC);
     TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_free, handle, SYMBOL_FN_STACK_REGION_FREE);
+
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_get_capacity, handle, SYMBOL_FN_STACK_REGION_GET_CAPACITY);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_get_size, handle, SYMBOL_FN_STACK_REGION_GET_SIZE);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_get_count, handle, SYMBOL_FN_STACK_REGION_GET_COUNT);
+    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_get_count_ref, handle, SYMBOL_FN_STACK_REGION_GET_COUNT_REF);
 
     TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_peek, handle, SYMBOL_FN_STACK_REGION_PEEK);
     TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_peek_at, handle, SYMBOL_FN_STACK_REGION_PEEK_AT);
