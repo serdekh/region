@@ -25,7 +25,6 @@
 #define SYMBOL_FN_STACK_REGION_GET_CAPACITY  "stack_region_get_capacity"
 #define SYMBOL_FN_STACK_REGION_GET_SIZE      "stack_region_get_size"
 #define SYMBOL_FN_STACK_REGION_GET_COUNT     "stack_region_get_count"
-#define SYMBOL_FN_STACK_REGION_GET_COUNT_REF "stack_region_get_count_ref"
 
 #define SYMBOL_FN_STACK_REGION_PUSH          "stack_region_push"
 #define SYMBOL_FN_STACK_REGION_PUSH_INT      "stack_region_push_int"
@@ -76,7 +75,6 @@ typedef StackRegion *(*FuncPtr_stack_region_alloc)(size_t capacity, RegionError 
 typedef size_t (*FuncPtr_stack_region_get_capacity)(StackRegion *region);
 typedef size_t (*FuncPtr_stack_region_get_size)(StackRegion *region);
 typedef size_t (*FuncPtr_stack_region_get_count)(StackRegion *region);
-typedef size_t *(*FuncPtr_stack_region_get_count_ref)(StackRegion *region);
 
 typedef StackRegionFrame (*FuncPtr_stack_region_peek)(StackRegion *stack, RegionError *error);
 typedef StackRegionFrame (*FuncPtr_stack_region_peek_at)(StackRegion *stack, size_t index, RegionError *error);
@@ -128,7 +126,6 @@ typedef struct {
     FuncPtr_stack_region_get_capacity  stack_region_get_capacity;
     FuncPtr_stack_region_get_size      stack_region_get_size;
     FuncPtr_stack_region_get_count     stack_region_get_count;
-    FuncPtr_stack_region_get_count_ref stack_region_get_count_ref;
 
     FuncPtr_stack_region_free          stack_region_free;
     FuncPtr_stack_region_peek          stack_region_peek;

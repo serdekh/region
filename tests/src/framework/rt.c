@@ -118,7 +118,6 @@ RegionAPI *rt_try_get_region_api_handle(void *handle)
     TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_get_capacity, handle, SYMBOL_FN_STACK_REGION_GET_CAPACITY);
     TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_get_size, handle, SYMBOL_FN_STACK_REGION_GET_SIZE);
     TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_get_count, handle, SYMBOL_FN_STACK_REGION_GET_COUNT);
-    TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_get_count_ref, handle, SYMBOL_FN_STACK_REGION_GET_COUNT_REF);
 
     TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_peek, handle, SYMBOL_FN_STACK_REGION_PEEK);
     TRY_GET_REGION_API_FN_SYMBOL(region_api->stack_region_peek_at, handle, SYMBOL_FN_STACK_REGION_PEEK_AT);
