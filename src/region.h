@@ -301,7 +301,6 @@ REGION_API StackRegion *stack_region_alloc(size_t capacity, RegionError *error);
 REGION_API size_t stack_region_get_capacity(StackRegion *region);
 REGION_API size_t stack_region_get_size(StackRegion *region);
 REGION_API size_t stack_region_get_count(StackRegion *region);
-REGION_API size_t *stack_region_get_count_ref(StackRegion *region);
 
 REGION_API StackRegionFrame stack_region_push(StackRegion **stack, size_t size, RegionError *error);
 REGION_API int *stack_region_push_int(StackRegion **stack, int value, RegionError *error);
@@ -343,6 +342,7 @@ typedef struct __StackRegion { REGION_CORE_FIELDS } StackRegion;
 
 #define STACK_REGION_CACHE_COUNT_SIZE sizeof(size_t)
 
+#define STACK_REGION_GET_COUNT_REF(stack) (size_t *)((stack)->data - STACK_REGION_CACHE_COUNT_SIZE)
 #define STACK_REGION_FRAME_EMPTY (StackRegionFrame){ .data = NULL, .size = 0}
 #define STACK_REGION_FRAME_IS_EMPTY(frame) ((frame).data == NULL && (frame).size == 0)
 
@@ -781,13 +781,6 @@ StackRegion *stack_region_alloc(size_t capacity, RegionError *error)
 size_t stack_region_get_capacity(StackRegion *region) { if (!region) return 0; return region->capacity; }
 size_t stack_region_get_size(StackRegion *region) { if (!region) return 0; return region->size; }
 
-size_t *stack_region_get_count_ref(StackRegion *region)
-{
-    if (!region || !region->data) return NULL;
-
-    return (size_t *)(region->data - STACK_REGION_CACHE_COUNT_SIZE);
-}
-
 size_t stack_region_get_count(StackRegion *region)
 {
     if (!region || !region->data) return 0;
@@ -811,7 +804,7 @@ StackRegionFrame stack_region_push(StackRegion **stack, size_t size, RegionError
     void *frame_data = region_push((Region **)stack, size + sizeof(size_t), &local_error);
 
     if (REGION_NO_ERROR(local_error)) {
-        *stack_region_get_count_ref(*stack) += 1;
+        *STACK_REGION_GET_COUNT_REF(*stack) += 1;
         *(size_t *)(frame_data + size) = size;
 
         StackRegionFrame frame = {0};
@@ -1033,7 +1026,7 @@ StackRegionFrame stack_region_pop(StackRegion *stack, RegionError *error)
 
     void *last_frame_start = last_frame_end - sizeof(size_t) - last_frame_size;
     
-    (*stack_region_get_count_ref(stack))--;
+    (*STACK_REGION_GET_COUNT_REF(stack))--;
 
     last_node->size -= (last_frame_size + sizeof(size_t));
 
