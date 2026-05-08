@@ -346,6 +346,39 @@ typedef struct __StackRegion { REGION_CORE_FIELDS } StackRegion;
 #define STACK_REGION_FRAME_EMPTY (StackRegionFrame){ .data = NULL, .size = 0}
 #define STACK_REGION_FRAME_IS_EMPTY(frame) ((frame).data == NULL && (frame).size == 0)
 
+/**
+ * @brief Returns a newly allocated region.
+ *
+ * @param capacity Number of bytes for region data
+ * @param error Optional error output
+ * 
+ * @return Pointer to allocated `Region` struct. Ownership is passed to the caller.
+ * Must be freed with `region_free`
+ * 
+ * @warning Memory leak if returned pointer is not freed
+ * 
+ * @note Region fields are initialized to
+ *  `0`    - for `numeric` types..
+ *  `NULL` - for pointers.
+ * 
+ * @note If `capacity` equals to zero, then `data` gets initialized to `NULL`
+ * and other functions that modify `data` will try to allocate memory to this
+ * field. It's recommended to preallocate enough memory to avoid extra nodes
+ * creation when new data gets pushed.
+ * 
+ * @note In case of errors, the following opcodes may be returned:
+ *  `REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY` - `capacity` is too large
+ *  `REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION` - failed to allocate `Region` struct
+ *  `REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY` - failed to allocate `capacity` bytes for `Region` data.
+ * 
+ * @code{.c}
+ * Region *region = region_alloc(4 *sizeof(int), NULL);
+ * if (!region) {
+ *      // error handling...
+ * }
+ * region_free(&region);
+ * @endcode
+ */
 Region *region_alloc(size_t capacity, RegionError *error)
 {
     if (capacity > REGION_SIZE_MAX - sizeof(Region)) {
