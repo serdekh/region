@@ -172,88 +172,6 @@ typedef enum {
 
 } RegionErrorCode;
 
-static const char *region_error_code_as_strings[] = {
-    "No error",
-
-    // General
-    "Invalid argument.",
-    "No free space.",
-
-    // region_alloc
-    "Invalid argument: The value of `capacity` is too large. Cannot allocate memory.",
-    "No free space: Failed to allocate a `Region` struct.",
-    "No free space: Failed to allocate `capacity` bytes into the `Region` struct.",
-
-    // region_push
-    "Invalid argument: The value of `size` is too large. Cannot allocate memory.",
-    "No free space: Failed to allocate a `Region` struct for a new item.",
-
-    // region_push_int
-    "No free space: Failed to allocate a `Region` struct for a new item.",
-
-    // region_push_float
-    "No free space: Failed to allocate a `Region` struct for a new item.",
-
-    // region_push_double
-    "No free space: Failed to allocate a `Region` struct for a new item.",
-
-    // region_push_double
-    "No free space: Failed to allocate a `Region` struct for a new item.",
-
-    // region_shrink_capacity
-    "No free space: Failed to allocate a new shrinked buffer.",
-
-    // region_collect
-    "Invalid argument: The value of `collected_size` cannot equal to `NULL`.", 
-    "No free space: Failed to allocate an array to collect all the nodes in the `region`.", 
-
-    // region_clone
-    "No free space: Failed to clone the `region` argument.",
-    "No free space: Failed to clone a node from the `region` argument.",
-
-    // region_merge
-    "No free space: Failed to allocate a temporary buffer to store a collection of `region`'s nodes.",
-    "No free space: Failed to allocate a region with the combined capacity",
-
-    // stack_region_alloc
-    "Invalid argument: The value of `capacity` is too large. Cannot allocate memory.",
-    "No free space: Failed to allocate a `StackRegion` struct.",
-    "No free space: Failed to allocate `capacity` bytes into the `StackRegion` struct.",
-
-    // stack_region_push
-    "Invalid argument: The value of `size` is too large. Cannot allocate memory.",
-    "No free space: Failed to allocate a `Region` struct for a new item.",
-
-    // stack_region_push_int
-    "No free space: Failed to allocate a `StackRegion` struct for a new item.",
-
-    // stack_region_push_float
-    "No free space: Failed to allocate a `StackRegion` struct for a new item.",
-
-    // stack_region_push_double
-    "No free space: Failed to allocate a `StackRegion` struct for a new item.",
-
-    // stack_region_peek
-    "Invalid argument: The stack data is corrupted.",
-
-    // stack_region_pop_int
-    "Invalid argument: The last frame's size is not equal to the size of an integer",
-
-    // stack_region_pop_float
-    "Invalid argument: The last frame's size is not equal to the size of a floating number",
-
-    // stack_region_pop_double
-    "Invalid argument: The last frame's size is not equal to the size of a floating number (double)",
-
-    // stack_region_pop_char
-    "Invalid argument: The last frame's size is not equal to the size of an ascii character",
-
-    // stack_region_swap
-    "No free space: Failed to allocate a temporary buffer to store the swapped frames",
-    "No free space: Failed to re-push the last frame at a previous position",
-    "No free space: Failed to re-push the previous frame at a last position",
-};
-
 typedef struct {
     int line;
     const char *file_name;
@@ -320,10 +238,13 @@ typedef enum {
 
 typedef struct {
     RegionLocation location;
-    RegionErrorCode code;
+    RegionErrorCode code; // obsolete, has to be removed
+
+    RegionErrorType type;
+    RegionErrorClass function_class;
+    RegionErrorFunction function;
+    RegionErrorMessage message;
 } RegionError;
-
-
 
 #define REGION_SET_ERROR(error, error_code) if ((error)) (error)->code = (error_code);        
 #define REGION_GET_CURRENT_FILE_LOCATION (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}
@@ -1235,6 +1156,7 @@ void stack_region_free(StackRegion **stack)
     region_free((Region **)stack);
 }
 
+// TODO: Split the string convertions into separate functions
 void region_error_print_to(REGION_FILE *stream, RegionError error)
 {
     if (REGION_NO_ERROR(error)) {
@@ -1242,16 +1164,104 @@ void region_error_print_to(REGION_FILE *stream, RegionError error)
         return;
     }
 
-    if (error.code >= sizeof(region_error_code_as_strings) / sizeof(region_error_code_as_strings[0])) {
-        REGION_FPRINTF(stream, "[Region][Error]: Unknown error code\n");
-        return;
+    char type_string[32];
+    char class_string[32];
+    char function_string[32];
+    char message_string[128];
+
+    switch (error.type) {
+        case REGION_ERROR_TYPE_INVALID_ARGUMENT:
+            REGION_SPRINTF(type_string, "%s: ", "Invalid argument"); break;
+        case REGION_ERROR_TYPE_NO_MEMORY:
+            REGION_SPRINTF(type_string, "%s: ", "No available memory"); break;
+        default:
+            REGION_SPRINTF(type_string, "%s: ", "Unknown error type"); break;
     }
 
-    REGION_FPRINTF(stream, "[Region][Error](\"%s\":%s():%d): %s\n", 
+    switch (error.function_class) {
+        case REGION_ERROR_CLASS_REGION:
+            REGION_SPRINTF(class_string, "%s_", "region"); break;
+        case REGION_ERROR_CLASS_STACK_REGION:
+            REGION_SPRINTF(class_string, "%s_", "stack_region"); break;
+        default:
+            REGION_SPRINTF(class_string, "%s_", "<unknown>"); break;
+    }
+
+    switch (error.function) {
+        case REGION_ERROR_FUNCTION_ALLOC:
+            REGION_SPRINTF(function_string, "%s: ", "alloc"); break;
+        case REGION_ERROR_FUNCTION_CLONE:
+            REGION_SPRINTF(function_string, "%s: ", "clone"); break;
+        case REGION_ERROR_FUNCTION_COLLECT:
+            REGION_SPRINTF(function_string, "%s: ", "collect"); break;
+        case REGION_ERROR_FUNCTION_MERGE:
+            REGION_SPRINTF(function_string, "%s: ", "merge"); break;
+        case REGION_ERROR_FUNCTION_PEEK:
+            REGION_SPRINTF(function_string, "%s: ", "peek"); break;
+        case REGION_ERROR_FUNCTION_PEEK_AT:
+            REGION_SPRINTF(function_string, "%s: ", "peek_at"); break;
+        case REGION_ERROR_FUNCTION_POP:
+            REGION_SPRINTF(function_string, "%s: ", "pop"); break;
+        case REGION_ERROR_FUNCTION_POP_CHAR:
+            REGION_SPRINTF(function_string, "%s: ", "pop_char"); break;
+        case REGION_ERROR_FUNCTION_POP_DOUBLE:
+            REGION_SPRINTF(function_string, "%s: ", "pop_double"); break;
+        case REGION_ERROR_FUNCTION_POP_FLOAT:
+            REGION_SPRINTF(function_string, "%s: ", "pop_float"); break;
+        case REGION_ERROR_FUNCTION_POP_INT:
+            REGION_SPRINTF(function_string, "%s: ", "pop_int"); break;
+        case REGION_ERROR_FUNCTION_PUSH:
+            REGION_SPRINTF(function_string, "%s: ", "push"); break;
+        case REGION_ERROR_FUNCTION_PUSH_CHAR:
+            REGION_SPRINTF(function_string, "%s: ", "push_char"); break;
+        case REGION_ERROR_FUNCTION_PUSH_DOUBLE:
+            REGION_SPRINTF(function_string, "%s: ", "push_double"); break;
+        case REGION_ERROR_FUNCTION_PUSH_FLOAT:
+            REGION_SPRINTF(function_string, "%s: ", "push_float"); break;
+        case REGION_ERROR_FUNCTION_PUSH_INT:
+            REGION_SPRINTF(function_string, "%s: ", "push_int"); break;
+        case REGION_ERROR_FUNCTION_SHRINK_CAPACITY:
+            REGION_SPRINTF(function_string, "%s: ", "shrink_capacity"); break;
+        case REGION_ERROR_FUNCTION_SWAP:
+            REGION_SPRINTF(function_string, "%s: ", "swap"); break;
+        default:
+            REGION_SPRINTF(function_string, "%s: ", "<unknown>"); break;
+    }
+
+    switch (error.message) {
+        case REGION_ERROR_MESSAGE_ARG_LARGE_CAPACITY:
+            REGION_SPRINTF(message_string, "%s.", "The value of `capacity` is too large. Cannot allocate memory"); break;
+        case REGION_ERROR_MESSAGE_ARG_LARGE_SIZE:
+            REGION_SPRINTF(message_string, "%s.", "The value of `size` is too large. Cannot allocate memory"); break;
+        case REGION_ERROR_MESSAGE_ARG_SMALL_SIZE:
+            REGION_SPRINTF(message_string, "%s.", "The value of `size` cannot be equal to `0`"); break;
+        case REGION_ERROR_MESSAGE_CORRUPTED_STACK_REGION_DATA:
+            REGION_SPRINTF(message_string, "%s.", "The stack frame's size or data has been corrupted or misinterpretted"); break;
+        case REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION:
+            REGION_SPRINTF(message_string, "%s.", "Failed to allocate a `Region` struct"); break;
+        case REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_ARRAY:
+            REGION_SPRINTF(message_string, "%s.", "Failed to allocate a an array of `Region` structs"); break;
+        case REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_DATA:
+            REGION_SPRINTF(message_string, "%s.", "Failed to allocate data for the `Region` struct"); break;
+        case REGION_ERROR_MESSAGE_MALLOC_FAILURE_STACK_REGION:
+            REGION_SPRINTF(message_string, "%s.", "Failed to allocate a `StackRegion` struct"); break;
+        case REGION_ERROR_MESSAGE_MALLOC_FAILURE_STACK_REGION_DATA:
+            REGION_SPRINTF(message_string, "%s.", "Failed to allocate data for the `Region` struct"); break;
+        case REGION_ERROR_MESSAGE_MALLOC_FAILURE_TEMPORARY_BUFFER:
+            REGION_SPRINTF(message_string, "%s.", "Failed to allocate a temporary buffer"); break;
+        default: 
+            REGION_SPRINTF(message_string, "%s.", "Unknown error message"); break;
+    }
+
+    REGION_FPRINTF(stream, "[Region][Error](\"%s\":%s():%d): %s%s%s%s\n", 
         error.location.file_name,
         error.location.func_name,
         error.location.line,
-        region_error_code_as_strings[error.code]
+        
+        type_string,
+        class_string,
+        function_string,
+        message_string
     );
 }
 
