@@ -22,8 +22,8 @@ TestResult region_alloc_case_2(RegionAPI *api)
     RegionError error = REGION_ERROR_INIT;
 
     api->region_alloc(SIZE_MAX, &error);
-
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY, error.code);
+    
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_MESSAGE_ARG_LARGE_CAPACITY, error.message);
 
     return result;
 }
@@ -38,7 +38,7 @@ TestResult region_alloc_case_3(RegionAPI *api)
 
     api->region_alloc(1, &error);
 
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION, error.message);
 
     api->test_set_default_memory();
 
@@ -57,7 +57,7 @@ TestResult region_alloc_case_4(RegionAPI *api)
 
     api->region_alloc(capacity, &error);
 
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_DATA, error.message);
 
     api->test_set_default_memory();
 

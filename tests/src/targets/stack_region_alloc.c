@@ -44,6 +44,7 @@ TestResult test_stack_region_alloc_case_3(RegionAPI *api)
     RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION, error.code);
 
     api->test_set_default_memory();
+    
 
     return result;
 }
