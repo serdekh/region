@@ -3,7 +3,6 @@
 1: Finish the reimplementation of the error system
    1.1. In the region.h file
    1.2. In tests
-2: Add documentation and a separate system that parses and prints it to the console
 
 - Big tasks (Should be Implemented as soon as all the daily tasks are complete)
 
