@@ -86,17 +86,19 @@ typedef enum {
 
 // ----- DATA STRUCTS FOR ERRORS -----
 
+
+// NOTE:
+// This enum is obsolete and the error system has to be transitioned 
+// towards initializing separate fields. The `region_alloc` function is
+// already fixed and it's error messages have been removed from this enum.
+// Same thing has to be done for all other functions that are listed below.
+// As soon as the enum no longer has its fields, it'll have to be removed
 typedef enum {
     REGION_ERROR_CODE_NO_ERROR = 0,
 
     // general
     REGION_ERROR_CODE_EINVAL,
     REGION_ERROR_CODE_ENOMEM,
-
-    // region_alloc
-    REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY,  // The `Capacity` argument equals to `__SIZE_MAX__`.
-    REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION,   // Failed to allocate the `Region` struct.
-    REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY, // Failed to allocate `capacity` bytes into the `Region->data` field.
 
     // region_push
     REGION_ERROR_CODE_EINVAL_REGION_PUSH_LARGE_SIZE,    // The `size` argument equals to `__SIZE_MAX__`.
@@ -246,10 +248,12 @@ typedef struct {
     RegionErrorMessage message;
 } RegionError;
 
-#define REGION_SET_ERROR(error, error_code) if ((error)) (error)->code = (error_code);        
+// Note: This macro has to be removed as soon as the error system is refactored
+#define REGION_SET_ERROR(error, error_code) if ((error)) (error)->code = (error_code);       
+ 
 #define REGION_GET_CURRENT_FILE_LOCATION (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}
 #define REGION_ERROR_INIT_LOCATION(error) (error)->location = REGION_GET_CURRENT_FILE_LOCATION          
-#define REGION_ERROR_INIT (RegionError){.code = 0, .location.file_name = __FILE__, .location.line = __LINE__, .location.func_name = __func__}
+#define REGION_ERROR_INIT (RegionError){.code = 0, .function = 0, .function_class = 0, .message = 0, .type = 0, .location.file_name = __FILE__, .location.line = __LINE__, .location.func_name = __func__}
 
 #define REGION_NO_ERROR(error) (error).code == REGION_ERROR_CODE_NO_ERROR
 #define REGION_ERROR(error)    (error).code != REGION_ERROR_CODE_NO_ERROR
@@ -328,6 +332,14 @@ typedef struct __StackRegion { REGION_CORE_FIELDS } StackRegion;
 #define STACK_REGION_FRAME_EMPTY (StackRegionFrame){ .data = NULL, .size = 0}
 #define STACK_REGION_FRAME_IS_EMPTY(frame) ((frame).data == NULL && (frame).size == 0)
 
+#define REGION_ERROR_SET(error, _type, _function_class, _function, _message) \
+    if ((error)) {                                                       \
+        (error)->type = _type;                                            \
+        (error)->function_class = _function_class;                        \
+        (error)->function = _function;                                    \
+        (error)->message = _message;                                      \
+    }                                                                    \
+
 /**
  * @brief Returns a newly allocated region.
  *
@@ -348,10 +360,17 @@ typedef struct __StackRegion { REGION_CORE_FIELDS } StackRegion;
  * field. It's recommended to preallocate enough memory to avoid extra nodes
  * creation when new data gets pushed.
  * 
- * @note In case of errors, the following opcodes may be returned:
- *  `REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY` - `capacity` is too large
- *  `REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION` - failed to allocate `Region` struct
- *  `REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY` - failed to allocate `capacity` bytes for `Region` data.
+ * @note If any errors occur, the `error` fields will be initialized as follows:
+ *  - `type`           = REGION_ERROR_TYPE_INVALID_ARGUMENT (If capacity is too large)
+ *                       REGION_ERROR_TYPE_NO_MEMORY (If failed to allocate a region or its data)
+ * 
+ *  - `function_class` = REGION_ERROR_CLASS_REGION
+ * 
+ *  - `function`       = REGION_ERROR_FUNCTION_ALLOC
+ * 
+ *  - `message`        = REGION_ERROR_MESSAGE_ARG_LARGE_CAPACITY (If capacity is too large)
+ *                       REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION (If failed to allocate a region)
+ *                       REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_DATA (If failed to allocate data for the region)
  * 
  * @code{.c}
  * Region *region = region_alloc(4 *sizeof(int), NULL);
@@ -364,14 +383,22 @@ typedef struct __StackRegion { REGION_CORE_FIELDS } StackRegion;
 Region *region_alloc(size_t capacity, RegionError *error)
 {
     if (capacity > REGION_SIZE_MAX - sizeof(Region)) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_ALLOC_LARGE_CAPACITY);
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_INVALID_ARGUMENT, 
+            REGION_ERROR_CLASS_REGION, 
+            REGION_ERROR_FUNCTION_ALLOC, 
+            REGION_ERROR_MESSAGE_ARG_LARGE_CAPACITY);
         return NULL;
     }
 
     Region *region = (Region *)REGION_MALLOC(sizeof(Region));
 
     if (!region) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION);
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_NO_MEMORY, 
+            REGION_ERROR_CLASS_REGION, 
+            REGION_ERROR_FUNCTION_ALLOC, 
+            REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION);
         return NULL;
     }
     
@@ -388,7 +415,11 @@ Region *region_alloc(size_t capacity, RegionError *error)
     
     if (!region->data) {
         REGION_FREE(region);
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY);
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_NO_MEMORY, 
+            REGION_ERROR_CLASS_REGION, 
+            REGION_ERROR_FUNCTION_ALLOC, 
+            REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_DATA);
         return NULL;
     }
 
@@ -769,21 +800,21 @@ StackRegion *stack_region_alloc(size_t capacity, RegionError *error)
         return NULL;
     }
     
-    RegionError local_error = {0};
+    RegionError local_error = REGION_ERROR_INIT;
     Region *stack = region_alloc(capacity + STACK_REGION_CACHE_COUNT_SIZE, &local_error);
     
-    if (REGION_NO_ERROR(local_error)) {
+    if (local_error.type == REGION_ERROR_TYPE_NONE) {
         size_t *count = (size_t *)stack->data;
         *count = 0;
         stack->data += STACK_REGION_CACHE_COUNT_SIZE;
         return (StackRegion *)stack;
     }
 
-    switch (local_error.code) {
-        case REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_REGION:
+    switch (local_error.message) {
+        case REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION:
             REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION); break;
 
-        case REGION_ERROR_CODE_ENOMEM_REGION_ALLOC_MALLOC_CAPACITY:
+        case REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_DATA:
             REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_CAPACITY); break;
         
         default:
