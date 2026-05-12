@@ -48,7 +48,7 @@ TestResult test_region_push_case_3(RegionAPI *api)
 
     api->region_push(&region, SIZE_MAX, &error);
 
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_PUSH_LARGE_SIZE, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_MESSAGE_ARG_LARGE_SIZE, error.message);
 
     api->region_free(&region);
 
@@ -70,7 +70,7 @@ TestResult test_region_push_case_4(RegionAPI *api)
 
     api->region_push(&region, TEST_REGION_PUSH_CASE_4_CAPACITY * 2, &error);
 
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION, error.message);
 
     api->test_set_default_memory();
 

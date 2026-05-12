@@ -11,7 +11,8 @@
 #include "rt-file-paths.h"
 #include "rt-test-module.h"
 
-#define RT_TARGET_UNWRAP if (REGION_ERROR(error)) goto fatal
+// NOTE: The first condition has to be removed as soon as error system migration finishes
+#define RT_TARGET_UNWRAP if (REGION_ERROR(error) || (error).type != REGION_ERROR_TYPE_NONE) goto fatal
 
 #define RT_TARGET_FATAL_ERROR(cleanup_code)      \
     fatal:                                       \

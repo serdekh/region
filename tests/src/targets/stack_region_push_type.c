@@ -20,7 +20,7 @@
         return result;                                                  \
     }                                                                   \
 
-#define TEST_STACK_REGION_PUSH_TYPE_CASE_2(type, expected_error_code)          \
+#define TEST_STACK_REGION_PUSH_TYPE_CASE_2(type)                               \
     TestResult test_stack_region_push_## type ##_case_2(RegionAPI *api)        \
     {                                                                          \
         TestResult result = {0};                                               \
@@ -39,7 +39,8 @@
             api->stack_region_push_type(type, &pstack, 0, &error);             \
         api->test_set_default_memory();                                        \
                                                                                \
-        RT_TEST_RESULT_WRITE_INT(result, expected_error_code, error.code);     \
+        RT_TEST_RESULT_WRITE_INT(result,                                       \
+            REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION, error.message);        \
                                                                                \
         return result;                                                         \
     }                                                                          \
@@ -105,22 +106,22 @@
     }                                                                                                             \
 
 TEST_STACK_REGION_PUSH_TYPE_CASE_1(int);
-TEST_STACK_REGION_PUSH_TYPE_CASE_2(int, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_INT_MALLOC_REGION);
+TEST_STACK_REGION_PUSH_TYPE_CASE_2(int);
 TEST_STACK_REGION_PUSH_TYPE_CASE_3(int, "%d");
 TEST_STACK_REGION_PUSH_TYPE_CASE_4(int, "%d");
 
 TEST_STACK_REGION_PUSH_TYPE_CASE_1(float);
-TEST_STACK_REGION_PUSH_TYPE_CASE_2(float, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_FLOAT_MALLOC_REGION);
+TEST_STACK_REGION_PUSH_TYPE_CASE_2(float);
 TEST_STACK_REGION_PUSH_TYPE_CASE_3(float, "%f");
 TEST_STACK_REGION_PUSH_TYPE_CASE_4(float, "%f");
 
 TEST_STACK_REGION_PUSH_TYPE_CASE_1(double);
-TEST_STACK_REGION_PUSH_TYPE_CASE_2(double, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_DOUBLE_MALLOC_REGION);
+TEST_STACK_REGION_PUSH_TYPE_CASE_2(double);
 TEST_STACK_REGION_PUSH_TYPE_CASE_3(double, "%f");
 TEST_STACK_REGION_PUSH_TYPE_CASE_4(double, "%f");
 
 TEST_STACK_REGION_PUSH_TYPE_CASE_1(char);
-TEST_STACK_REGION_PUSH_TYPE_CASE_2(char, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_CHAR_MALLOC_REGION);
+TEST_STACK_REGION_PUSH_TYPE_CASE_2(char);
 TEST_STACK_REGION_PUSH_TYPE_CASE_3(char, "%c");
 TEST_STACK_REGION_PUSH_TYPE_CASE_4(char, "%c");
 

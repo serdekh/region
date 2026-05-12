@@ -44,7 +44,7 @@ TestResult test_stack_region_push_case_3(RegionAPI *api)
 
     api->stack_region_push(&stack, SIZE_MAX, &error);
 
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_LARGE_SIZE, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_MESSAGE_ARG_LARGE_SIZE, error.message);
 
     api->stack_region_free(&stack);
 
@@ -64,11 +64,11 @@ TestResult test_stack_region_push_case_4(RegionAPI *api)
 
     api->test_set_available_memory(TEST_STACK_REGION_CAPACITY / 2);
 
-    api->stack_region_push(&stack, TEST_STACK_REGION_CAPACITY * 2, &error);
-
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION, error.code);
+        api->stack_region_push(&stack, TEST_STACK_REGION_CAPACITY * 2, &error);
 
     api->test_set_default_memory();
+
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION, error.message);
 
     api->stack_region_free(&stack);
 
