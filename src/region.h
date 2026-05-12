@@ -100,22 +100,6 @@ typedef enum {
     REGION_ERROR_CODE_EINVAL,
     REGION_ERROR_CODE_ENOMEM,
 
-    // region_push
-    REGION_ERROR_CODE_EINVAL_REGION_PUSH_LARGE_SIZE,    // The `size` argument equals to `__SIZE_MAX__`.
-    REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION, // Failed to allocate the `Region` struct for a new item.
-
-    // region_push_int
-    REGION_ERROR_CODE_ENOMEM_REGION_PUSH_INT_MALLOC_REGION, // Failed to allocate the `Region` struct for a new item.
-
-    // region_push_float
-    REGION_ERROR_CODE_ENOMEM_REGION_PUSH_FLOAT_MALLOC_REGION, // Failed to allocate the `Region` struct for a new item.
-
-    // region_push_double
-    REGION_ERROR_CODE_ENOMEM_REGION_PUSH_DOUBLE_MALLOC_REGION, // Failed to allocate the `Region` struct for a new item.
-
-    // region_push_char
-    REGION_ERROR_CODE_ENOMEM_REGION_PUSH_CHAR_MALLOC_REGION, // Failed to allocate the `Region` struct for a new item.
-
     // region_shrink_capacity
     REGION_ERROR_CODE_ENOMEM_REGION_SHRINK_CAPACITY_MALLOC,    // Failed to allocate memory for the `data` field.
 
@@ -135,22 +119,6 @@ typedef enum {
     REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_LARGE_CAPACITY,  // The value of `capacity` is too large.
     REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION,   // Failed to allocate the `StackRegion` struct.
     REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_CAPACITY, // Failed to allocate `capacity` bytes into the `StackRegion->data` field.
-
-    // stack_region_push
-    REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_LARGE_SIZE,      // The `size` argument equals to `__SIZE_MAX__`.
-    REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION,   // Failed to allocate the `Region` struct for a new item.
-
-    // stack_region_push_int
-    REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_INT_MALLOC_REGION,   // Failed to allocate the `StackRegion` struct for a new item.
-
-    // stack_region_push_float
-    REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_FLOAT_MALLOC_REGION,   // Failed to allocate the `StackRegion` struct for a new item.
-
-    // stack_region_push_double.
-    REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_DOUBLE_MALLOC_REGION,   // Failed to allocate the `StackRegion` struct for a new item.
-
-    // stack_region_push_char
-    REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_CHAR_MALLOC_REGION,
 
     // stack_region_peek
     REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_CORRUPTED_DATA, // The `data` field of the stack is corrupted 
@@ -228,9 +196,6 @@ typedef enum {
 
     REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION,
     REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_DATA,
-
-    REGION_ERROR_MESSAGE_MALLOC_FAILURE_STACK_REGION,
-    REGION_ERROR_MESSAGE_MALLOC_FAILURE_STACK_REGION_DATA,
 
     REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_ARRAY,
     REGION_ERROR_MESSAGE_MALLOC_FAILURE_TEMPORARY_BUFFER,
@@ -452,6 +417,7 @@ void region_free(Region **region)
     *region = NULL;
 }
 
+// TODO: Add documentation similar to region_alloc
 void *region_push(Region **region, size_t size, RegionError *error)
 {
     if (!region) return NULL;
@@ -459,14 +425,21 @@ void *region_push(Region **region, size_t size, RegionError *error)
     if (size == 0) return NULL;
 
     if (size > REGION_SIZE_MAX - sizeof(Region)) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_PUSH_LARGE_SIZE);
+        REGION_ERROR_SET(error,
+            REGION_ERROR_TYPE_INVALID_ARGUMENT,
+            REGION_ERROR_CLASS_REGION,
+            REGION_ERROR_FUNCTION_PUSH,
+            REGION_ERROR_MESSAGE_ARG_LARGE_SIZE);
         return NULL;
     }
 
     if (!(*region)) {
-        *region = region_alloc(size, NULL);
-        if (!(*region)) REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION);
-        return NULL;
+        *region = region_alloc(size, error);
+
+        if (!(*region)) {
+            if (error) error->function = REGION_ERROR_FUNCTION_PUSH;
+            return NULL;
+        }
     }
 
     Region *current = *region;
@@ -475,7 +448,11 @@ void *region_push(Region **region, size_t size, RegionError *error)
         current->data = (char *)REGION_MALLOC(size * sizeof(char));
 
         if (!current->data) {
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION);
+            REGION_ERROR_SET(error,
+            REGION_ERROR_TYPE_INVALID_ARGUMENT,
+            REGION_ERROR_CLASS_REGION,
+            REGION_ERROR_FUNCTION_PUSH,
+            REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION);
             return NULL;
         }
 
@@ -488,10 +465,10 @@ void *region_push(Region **region, size_t size, RegionError *error)
             continue;
         }
         
-        current->next = region_alloc(current->capacity * 2 + size, NULL);
+        current->next = region_alloc(current->capacity * 2 + size, error);
 
         if (!current->next) {
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION);
+            if (error) error->function = REGION_ERROR_FUNCTION_PUSH;
             return NULL;
         }
 
@@ -514,17 +491,14 @@ int *region_push_int(Region **region, int value, RegionError *error)
 
     int *result = (int *)region_push(region, sizeof(int), &local_error);
 
-    if (result) {
+    if (local_error.type == REGION_ERROR_TYPE_NONE) {
         *result = value;
         return result;
     }
 
-    switch (local_error.code) {
-        case REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_INT_MALLOC_REGION); break;
-        
-        default:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM); break;
+    if (error) {
+        local_error.function = REGION_ERROR_FUNCTION_PUSH_INT;
+        *error = local_error;
     }
 
     return NULL;
@@ -538,17 +512,14 @@ float *region_push_float(Region **region, float value, RegionError *error)
 
     float *result = (float *)region_push(region, sizeof(float), &local_error);
 
-    if (result) {
+    if (local_error.type == REGION_ERROR_TYPE_NONE) {
         *result = value;
         return result;
     }
 
-    switch (local_error.code) {
-        case REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_FLOAT_MALLOC_REGION); break;
-        
-        default:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM); break;
+    if (error) {
+        local_error.function = REGION_ERROR_FUNCTION_PUSH_FLOAT;
+        *error = local_error;
     }
 
     return NULL;
@@ -562,17 +533,14 @@ double *region_push_double(Region **region, double value, RegionError *error)
     
     double *result = (double *)region_push(region, sizeof(double), &local_error);
     
-    if (result) {
+    if (local_error.type == REGION_ERROR_TYPE_NONE) {
         *result = value;
         return result;
     }
-    
-    switch (local_error.code) {
-        case REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION:
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_DOUBLE_MALLOC_REGION); break;
-        
-        default:
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM); break;
+
+    if (error) {
+        local_error.function = REGION_ERROR_FUNCTION_PUSH_DOUBLE;
+        *error = local_error;
     }
     
     return NULL;
@@ -586,17 +554,14 @@ char *region_push_char(Region **region, char value, RegionError *error)
 
     char *result = (char *)region_push(region, sizeof(char), &local_error);
 
-    if (result) {
+    if (local_error.type == REGION_ERROR_TYPE_NONE) {
         *result = value;
         return result;
     }
 
-    switch (local_error.code) {
-        case REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_PUSH_CHAR_MALLOC_REGION); break;
-        
-        default:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM); break;
+    if (error) {
+        local_error.function = REGION_ERROR_FUNCTION_PUSH_CHAR;
+        *error = local_error;
     }
 
     return NULL;
@@ -841,7 +806,11 @@ StackRegionFrame stack_region_push(StackRegion **stack, size_t size, RegionError
     if (size == 0) return STACK_REGION_FRAME_EMPTY;
     
     if (size + sizeof(size_t) < size) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PUSH_LARGE_SIZE);
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_INVALID_ARGUMENT, 
+            REGION_ERROR_CLASS_STACK_REGION, 
+            REGION_ERROR_FUNCTION_PUSH, 
+            REGION_ERROR_MESSAGE_ARG_LARGE_SIZE);
         return STACK_REGION_FRAME_EMPTY;
     }
 
@@ -849,7 +818,7 @@ StackRegionFrame stack_region_push(StackRegion **stack, size_t size, RegionError
 
     void *frame_data = region_push((Region **)stack, size + sizeof(size_t), &local_error);
 
-    if (REGION_NO_ERROR(local_error)) {
+    if (local_error.type == REGION_ERROR_TYPE_NONE) {
         *STACK_REGION_GET_COUNT_REF(*stack) += 1;
         *(size_t *)(frame_data + size) = size;
 
@@ -860,12 +829,9 @@ StackRegionFrame stack_region_push(StackRegion **stack, size_t size, RegionError
         return frame;
     }
 
-    switch (local_error.code) {
-        case REGION_ERROR_CODE_ENOMEM_REGION_PUSH_MALLOC_REGION:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION); break;
-
-        default: 
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM); break;
+    if (error) {
+        local_error.function_class = REGION_ERROR_CLASS_STACK_REGION;
+        *error = local_error;
     }
 
     return STACK_REGION_FRAME_EMPTY;
@@ -881,17 +847,14 @@ int *stack_region_push_int(StackRegion **stack, int value, RegionError *error)
 
     StackRegionFrame result = stack_region_push(stack, sizeof(int), &local_error);
 
-    if (REGION_NO_ERROR(local_error)) {
+    if (local_error.type == REGION_ERROR_TYPE_NONE) {
         *(int *)result.data = value;
         return (int *)result.data;
     }
 
-    switch (local_error.code) {
-        case REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_INT_MALLOC_REGION); break;
-        
-        default:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM); break;
+    if (error) {
+        local_error.function = REGION_ERROR_FUNCTION_PUSH_INT;
+        *error = local_error;
     }
 
     return NULL;
@@ -905,17 +868,14 @@ float *stack_region_push_float(StackRegion **stack, float value, RegionError *er
 
     StackRegionFrame result = stack_region_push(stack, sizeof(float), &local_error);
 
-    if (REGION_NO_ERROR(local_error)) {
+    if (local_error.type == REGION_ERROR_TYPE_NONE) {
         *(float *)result.data = value;
         return (float *)result.data;
     }
 
-    switch (local_error.code) {
-        case REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_FLOAT_MALLOC_REGION); break;
-        
-        default:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM); break;
+    if (error) {
+        local_error.function = REGION_ERROR_FUNCTION_PUSH_FLOAT;
+        *error = local_error;
     }
 
     return NULL;
@@ -929,17 +889,14 @@ double *stack_region_push_double(StackRegion **stack, double value, RegionError 
 
     StackRegionFrame result = stack_region_push(stack, sizeof(double), &local_error);
 
-    if (REGION_NO_ERROR(local_error)) {
+    if (local_error.type == REGION_ERROR_TYPE_NONE) {
         *(double *)result.data = value;
         return (double *)result.data;
     }
 
-    switch (local_error.code) {
-        case REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_DOUBLE_MALLOC_REGION); break;
-        
-        default:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM); break;
+    if (error) {
+        local_error.function = REGION_ERROR_FUNCTION_PUSH_DOUBLE;
+        *error = local_error;
     }
 
     return NULL;
@@ -953,17 +910,14 @@ char *stack_region_push_char(StackRegion **stack, char value, RegionError *error
 
     StackRegionFrame result = stack_region_push(stack, sizeof(char), &local_error);
 
-    if (REGION_NO_ERROR(local_error)) {
+    if (local_error.type == REGION_ERROR_TYPE_NONE) {
         *(char *)result.data = value;
         return (char *)result.data;
     }
 
-    switch (local_error.code) {
-        case REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_MALLOC_REGION:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_PUSH_CHAR_MALLOC_REGION); break;
-        
-        default:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM); break;
+    if (error) {
+        local_error.function = REGION_ERROR_FUNCTION_PUSH_CHAR;
+        *error = local_error;
     }
 
     return NULL;
@@ -1273,10 +1227,6 @@ void region_error_print_to(REGION_FILE *stream, RegionError error)
         case REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_ARRAY:
             REGION_SPRINTF(message_string, "%s.", "Failed to allocate a an array of `Region` structs"); break;
         case REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_DATA:
-            REGION_SPRINTF(message_string, "%s.", "Failed to allocate data for the `Region` struct"); break;
-        case REGION_ERROR_MESSAGE_MALLOC_FAILURE_STACK_REGION:
-            REGION_SPRINTF(message_string, "%s.", "Failed to allocate a `StackRegion` struct"); break;
-        case REGION_ERROR_MESSAGE_MALLOC_FAILURE_STACK_REGION_DATA:
             REGION_SPRINTF(message_string, "%s.", "Failed to allocate data for the `Region` struct"); break;
         case REGION_ERROR_MESSAGE_MALLOC_FAILURE_TEMPORARY_BUFFER:
             REGION_SPRINTF(message_string, "%s.", "Failed to allocate a temporary buffer"); break;
