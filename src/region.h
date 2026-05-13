@@ -86,22 +86,6 @@ typedef enum {
 
 // ----- DATA STRUCTS FOR ERRORS -----
 
-
-// NOTE:
-// This enum is obsolete and the error system has to be transitioned 
-// towards initializing separate fields. The `region_alloc` function is
-// already fixed and it's error messages have been removed from this enum.
-// Same thing has to be done for all other functions that are listed below.
-// As soon as the enum no longer has its fields, it'll have to be removed
-typedef enum {
-    REGION_ERROR_CODE_NO_ERROR = 0,
-
-    // general
-    REGION_ERROR_CODE_EINVAL,
-    REGION_ERROR_CODE_ENOMEM,
-
-} RegionErrorCode;
-
 typedef struct {
     int line;
     const char *file_name;
@@ -166,22 +150,16 @@ typedef enum {
 
 typedef struct {
     RegionLocation location;
-    RegionErrorCode code; // obsolete, has to be removed
 
     RegionErrorType type;
     RegionErrorClass function_class;
     RegionErrorFunction function;
     RegionErrorMessage message;
 } RegionError;
-
-// Note: Thess macros have to be removed as soon as the error system is refactored
-#define REGION_SET_ERROR(error, error_code) if ((error)) (error)->code = (error_code);       
-#define REGION_NO_ERROR(error) (error).code == REGION_ERROR_CODE_NO_ERROR
-#define REGION_ERROR(error)    (error).code != REGION_ERROR_CODE_NO_ERROR
  
 #define REGION_GET_CURRENT_FILE_LOCATION (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}
 #define REGION_ERROR_INIT_LOCATION(error) (error)->location = REGION_GET_CURRENT_FILE_LOCATION          
-#define REGION_ERROR_INIT (RegionError){.code = 0, .function = 0, .function_class = 0, .message = 0, .type = 0, .location.file_name = __FILE__, .location.line = __LINE__, .location.func_name = __func__}
+#define REGION_ERROR_INIT (RegionError){.function = 0, .function_class = 0, .message = 0, .type = 0, .location.file_name = __FILE__, .location.line = __LINE__, .location.func_name = __func__}
 
 REGION_EXTERN_C_BEGIN
 
@@ -1160,7 +1138,7 @@ void stack_region_free(StackRegion **stack)
 // TODO: Split the string convertions into separate functions
 void region_error_print_to(REGION_FILE *stream, RegionError error)
 {
-    if (REGION_NO_ERROR(error)) {
+    if (error.type == REGION_ERROR_TYPE_NONE) {
         REGION_FPRINTF(stream, "[Region][Log]: No error\n");
         return;
     }
