@@ -100,11 +100,6 @@ typedef enum {
     REGION_ERROR_CODE_EINVAL,
     REGION_ERROR_CODE_ENOMEM,
 
-    // stack_region_swap
-    REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_MALLOC_TEMPORARY_BUFFER, // Failed to allocate a temporary buffer to which the swapped data gets copied.
-    REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_PUSH_LAST,               // Failed to re-push the last frame as a previous one.
-    REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_PUSH_PREV,               // Failed to re-push the previous frame as a last one.
-
 } RegionErrorCode;
 
 typedef struct {
@@ -1120,7 +1115,11 @@ void stack_region_swap(StackRegion *stack, RegionError *error)
     void *temporary_buffer = REGION_MALLOC(last.size + prev.size);
 
     if (!temporary_buffer) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_MALLOC_TEMPORARY_BUFFER);
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_NO_MEMORY, 
+            REGION_ERROR_CLASS_STACK_REGION, 
+            REGION_ERROR_FUNCTION_SWAP, 
+            REGION_ERROR_MESSAGE_MALLOC_FAILURE_TEMPORARY_BUFFER);
         return;
     }
 
@@ -1131,7 +1130,7 @@ void stack_region_swap(StackRegion *stack, RegionError *error)
 
     if (STACK_REGION_FRAME_IS_EMPTY(repushed_last)) {
         REGION_FREE(temporary_buffer);
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_PUSH_LAST);
+        if (error) error->function = REGION_ERROR_FUNCTION_SWAP;
         return;
     }
     
@@ -1140,7 +1139,7 @@ void stack_region_swap(StackRegion *stack, RegionError *error)
     if (STACK_REGION_FRAME_IS_EMPTY(repushed_prev)) {
         stack_region_pop(stack, NULL);
         REGION_FREE(temporary_buffer);
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_PUSH_LAST);
+        if (error) error->function = REGION_ERROR_FUNCTION_SWAP;
         return;
     }
 
