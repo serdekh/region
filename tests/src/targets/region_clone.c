@@ -27,7 +27,7 @@ TestResult test_region_clone_case_2(RegionAPI *api)
 
     api->region_clone(&region, &error);
 
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_ROOT, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION, error.message);
 
     api->test_set_default_memory();
 
@@ -48,7 +48,7 @@ TestResult test_region_clone_case_3(RegionAPI *api)
 
     api->region_clone(&root, &error); 
 
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_NODE, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION, error.message);
 
     api->test_set_default_memory();
 
