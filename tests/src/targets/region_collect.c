@@ -23,7 +23,7 @@ TestResult test_region_collect_case_2(RegionAPI *api)
 
     api->region_collect(&region, NULL, &error);
 
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_COLLECTED_SIZE, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_MESSAGE_ARG_NULLPTR, error.message);
 
     return result;
 }
@@ -40,7 +40,7 @@ TestResult test_region_collect_case_3(RegionAPI *api)
 
     api->region_collect(&region, &collected_size, &error);
 
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_COLLECT_MALLOC_COLLECTION, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_ARRAY, error.message);
 
     api->test_set_default_memory();
 
