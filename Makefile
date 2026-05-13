@@ -1,7 +1,5 @@
 CC = gcc
-# The warnings are temporarily disabled because they treat the `region_error_code_as_strings` array
-# as unused since it's only referred to in macros and not in functions
-CC_FLAGS = -std=gnu99# -Wall -Wextra
+CC_FLAGS = -std=gnu99 -Wall -Wextra
 
 # Note: all the Windows specific commands have to manually
 # configured since every Linux utility has to be replaced
