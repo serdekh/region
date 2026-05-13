@@ -56,7 +56,7 @@ typedef Region *(*FuncPtr_region_alloc)(size_t, RegionError*);
 typedef size_t (*FuncPtr_region_get_capacity)(Region *region);
 typedef size_t (*FuncPtr_region_get_size)(Region *region);
 
-typedef Region *(*FuncPtr_region_get_last_node)(Region *region, RegionGetLastNodeOption option, RegionError *error);
+typedef Region *(*FuncPtr_region_get_last_node)(Region *region, RegionGetLastNodeOption option);
 typedef Region *(*FuncPtr_region_clone)(Region *region, RegionError *error);
 typedef Region *(*FuncPtr_region_merge)(Region *region, RegionMergeOption option, RegionError *error);
 typedef Region **(*FuncPtr_region_collect)(Region *region, size_t *collected_size, RegionError *error);
