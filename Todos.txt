@@ -1,8 +1,4 @@
-- Daily tasks:
-
-1: Finish the reimplementation of the error system
-   1.1. In the region.h file
-   1.2. In tests
+- Daily tasks: (None)
 
 - Big tasks (Should be Implemented as soon as all the daily tasks are complete)
 
