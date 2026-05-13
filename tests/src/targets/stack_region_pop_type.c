@@ -20,7 +20,7 @@
         return result;                                                  \
     }                                                                   \
 
-#define TEST_STACK_REGION_POP_TYPE_CASE_2(type, expected_error_code)                                  \
+#define TEST_STACK_REGION_POP_TYPE_CASE_2(type)                                                       \
     TestResult test_stack_region_pop_## type ##_case_2(RegionAPI *api)                                \
     {                                                                                                 \
         TestResult result = {0};                                                                      \
@@ -37,7 +37,8 @@
                                                                                                       \
         api->stack_region_free(&stack);                                                               \
                                                                                                       \
-        RT_TEST_RESULT_WRITE_INT(result, expected_error_code, error.code);                            \
+        RT_TEST_RESULT_WRITE_INT(result,                                                              \
+            REGION_ERROR_MESSAGE_CORRUPTED_STACK_REGION_DATA, error.message);                         \
                                                                                                       \
         return result;                                                                                \
                                                                                                       \
@@ -104,22 +105,22 @@
     }                                                                                                                 \
 
 TEST_STACK_REGION_POP_TYPE_CASE_1(int);
-TEST_STACK_REGION_POP_TYPE_CASE_2(int, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_INT_INVALID_FRAME);
+TEST_STACK_REGION_POP_TYPE_CASE_2(int);
 TEST_STACK_REGION_POP_TYPE_CASE_3(int, "%d");
 TEST_STACK_REGION_POP_TYPE_CASE_4(int, "%d");
 
 TEST_STACK_REGION_POP_TYPE_CASE_1(float);
-TEST_STACK_REGION_POP_TYPE_CASE_2(float, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_FLOAT_INVALID_FRAME);
+TEST_STACK_REGION_POP_TYPE_CASE_2(float);
 TEST_STACK_REGION_POP_TYPE_CASE_3(float, "%f");
 TEST_STACK_REGION_POP_TYPE_CASE_4(float, "%f");
 
 TEST_STACK_REGION_POP_TYPE_CASE_1(double);
-TEST_STACK_REGION_POP_TYPE_CASE_2(double, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_DOUBLE_INVALID_FRAME);
+TEST_STACK_REGION_POP_TYPE_CASE_2(double);
 TEST_STACK_REGION_POP_TYPE_CASE_3(double, "%f");
 TEST_STACK_REGION_POP_TYPE_CASE_4(double, "%f");
 
 TEST_STACK_REGION_POP_TYPE_CASE_1(char);
-TEST_STACK_REGION_POP_TYPE_CASE_2(char, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_CHAR_INVALID_FRAME);
+TEST_STACK_REGION_POP_TYPE_CASE_2(char);
 TEST_STACK_REGION_POP_TYPE_CASE_3(char, "%d");
 TEST_STACK_REGION_POP_TYPE_CASE_4(char, "%d");
 

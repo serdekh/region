@@ -55,7 +55,7 @@ TestResult test_stack_region_peek_case_3(RegionAPI *api)
 
     api->stack_region_peek(stack, &error);
 
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_CORRUPTED_DATA, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_MESSAGE_CORRUPTED_STACK_REGION_DATA, error.message);
 
     api->stack_region_free(&stack);
 
@@ -75,7 +75,7 @@ TestResult test_stack_region_peek_case_4(RegionAPI *api)
 
     api->stack_region_peek(stack, &error);
 
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_CORRUPTED_DATA, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_MESSAGE_CORRUPTED_STACK_REGION_DATA, error.message);
 
     api->stack_region_free(&stack);
 

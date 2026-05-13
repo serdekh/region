@@ -6,9 +6,7 @@ TestResult test_region_get_last_node_case_1(RegionAPI *api)
 {
     TestResult result = {0};
 
-    RegionError error = REGION_ERROR_INIT;
-
-    Region *last_node = api->region_get_last_node(NULL, REGION_GET_LAST_NODE_OPTION_DEFAULT, &error);
+    Region *last_node = api->region_get_last_node(NULL, REGION_GET_LAST_NODE_OPTION_DEFAULT);
 
     RT_TEST_RESULT_WRITE_PTR(result, NULL, last_node);
 
@@ -44,7 +42,7 @@ TestResult test_region_get_last_node_case_2(RegionAPI *api)
 
     Region *region_with_two_nodes = _alloc_region_with_two_nodes(api, &error); RT_TARGET_UNWRAP;
 
-    Region *last_node = api->region_get_last_node(region_with_two_nodes, REGION_GET_LAST_NODE_OPTION_DEFAULT, &error); RT_TARGET_UNWRAP;
+    Region *last_node = api->region_get_last_node(region_with_two_nodes, REGION_GET_LAST_NODE_OPTION_DEFAULT); 
 
     RT_TEST_RESULT_WRITE_PTR(result, region_with_two_nodes->next, last_node);
 
@@ -67,7 +65,7 @@ TestResult test_region_get_last_node_case_3(RegionAPI *api)
 
     region_with_two_nodes->next->size = 0;
 
-    Region *last_node = api->region_get_last_node(region_with_two_nodes, REGION_GET_LAST_NODE_OPTION_NON_EMPTY, &error); RT_TARGET_UNWRAP;
+    Region *last_node = api->region_get_last_node(region_with_two_nodes, REGION_GET_LAST_NODE_OPTION_NON_EMPTY);
 
     RT_TEST_RESULT_WRITE_PTR(result, region_with_two_nodes, last_node);
 
