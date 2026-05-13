@@ -100,26 +100,6 @@ typedef enum {
     REGION_ERROR_CODE_EINVAL,
     REGION_ERROR_CODE_ENOMEM,
 
-    // stack_region_alloc
-    REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_LARGE_CAPACITY,  // The value of `capacity` is too large.
-    REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION,   // Failed to allocate the `StackRegion` struct.
-    REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_CAPACITY, // Failed to allocate `capacity` bytes into the `StackRegion->data` field.
-
-    // stack_region_peek
-    REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_CORRUPTED_DATA, // The `data` field of the stack is corrupted 
-
-    // stack_region_pop_int
-    REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_INT_INVALID_FRAME,   // The last frame's size is not equal to sizeof(int)
-
-    // stack_region_pop_float
-    REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_FLOAT_INVALID_FRAME,   // The last frame's size is not equal to sizeof(float)
-
-    // stack_region_pop_double
-    REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_DOUBLE_INVALID_FRAME,   // The last frame's size is not equal to sizeof(double)
-
-    // stack_region_pop_char
-    REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_CHAR_INVALID_FRAME,
-
     // stack_region_swap
     REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_MALLOC_TEMPORARY_BUFFER, // Failed to allocate a temporary buffer to which the swapped data gets copied.
     REGION_ERROR_CODE_ENOMEM_STACK_REGION_SWAP_PUSH_LAST,               // Failed to re-push the last frame as a previous one.
@@ -218,7 +198,7 @@ REGION_API size_t region_get_size(Region *region);
 
 REGION_API Region *region_clone(Region *region, RegionError *error);
 REGION_API Region *region_merge(Region *region, RegionMergeOption option, RegionError *error);
-REGION_API Region *region_get_last_node(Region *region, RegionGetLastNodeOption option, RegionError *error);
+REGION_API Region *region_get_last_node(Region *region, RegionGetLastNodeOption option);
 REGION_API Region **region_collect(Region *region, size_t *collected_size, RegionError *error);
 
 REGION_API void *region_push(Region **region, size_t size, RegionError *error);
@@ -746,7 +726,7 @@ Region *region_merge(Region *region, RegionMergeOption option, RegionError *erro
     return merged_region;
 }
 
-Region *region_get_last_node(Region *region, RegionGetLastNodeOption option, RegionError *error)
+Region *region_get_last_node(Region *region, RegionGetLastNodeOption option)
 {
     if (!region) return NULL;
 
@@ -766,32 +746,26 @@ Region *region_get_last_node(Region *region, RegionGetLastNodeOption option, Reg
 StackRegion *stack_region_alloc(size_t capacity, RegionError *error)
 {
     if (capacity > REGION_SIZE_MAX - sizeof(StackRegion)) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_LARGE_CAPACITY);
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_INVALID_ARGUMENT, 
+            REGION_ERROR_CLASS_STACK_REGION, 
+            REGION_ERROR_FUNCTION_ALLOC, 
+            REGION_ERROR_MESSAGE_ARG_LARGE_CAPACITY);
         return NULL;
     }
     
-    RegionError local_error = REGION_ERROR_INIT;
-    Region *stack = region_alloc(capacity + STACK_REGION_CACHE_COUNT_SIZE, &local_error);
+    Region *stack = region_alloc(capacity + STACK_REGION_CACHE_COUNT_SIZE, error);
     
-    if (local_error.type == REGION_ERROR_TYPE_NONE) {
-        size_t *count = (size_t *)stack->data;
-        *count = 0;
-        stack->data += STACK_REGION_CACHE_COUNT_SIZE;
-        return (StackRegion *)stack;
-    }
-
-    switch (local_error.message) {
-        case REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION); break;
-
-        case REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_DATA:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_CAPACITY); break;
-        
-        default:
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM); break;
+    if (!stack) {
+        if (error) error->function_class = REGION_ERROR_CLASS_STACK_REGION;
+        return NULL;
     }
     
-    return NULL;
+    size_t *count = (size_t *)stack->data;
+    *count = 0;
+    stack->data += STACK_REGION_CACHE_COUNT_SIZE;
+
+    return (StackRegion *)stack;
 }
 
 size_t stack_region_get_capacity(StackRegion *region) { if (!region) return 0; return region->capacity; }
@@ -934,17 +908,25 @@ StackRegionFrame stack_region_peek(StackRegion *stack, RegionError *error)
 
     if (stack_region_get_count(stack) == 0) return STACK_REGION_FRAME_EMPTY;
 
-    Region *last_node = region_get_last_node((Region *)stack, REGION_GET_LAST_NODE_OPTION_NON_EMPTY, NULL);
+    Region *last_node = region_get_last_node((Region *)stack, REGION_GET_LAST_NODE_OPTION_NON_EMPTY);
 
     if (!last_node || !(last_node->data)) return STACK_REGION_FRAME_EMPTY;
 
     if (last_node->size <= STACK_REGION_CACHE_COUNT_SIZE) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_CORRUPTED_DATA);
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_INVALID_ARGUMENT, 
+            REGION_ERROR_CLASS_STACK_REGION, 
+            REGION_ERROR_FUNCTION_PEEK, 
+            REGION_ERROR_MESSAGE_CORRUPTED_STACK_REGION_DATA);
         return STACK_REGION_FRAME_EMPTY;
     }
 
     if (last_node->size - STACK_REGION_CACHE_COUNT_SIZE * stack_region_get_count(stack) < stack_region_get_count(stack)) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_PEEK_CORRUPTED_DATA);
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_INVALID_ARGUMENT, 
+            REGION_ERROR_CLASS_STACK_REGION, 
+            REGION_ERROR_FUNCTION_PEEK, 
+            REGION_ERROR_MESSAGE_CORRUPTED_STACK_REGION_DATA);
         return STACK_REGION_FRAME_EMPTY;
     }
 
@@ -966,6 +948,7 @@ StackRegionFrame stack_region_peek_at(StackRegion *stack, size_t index, RegionEr
 {
     if (!stack) return STACK_REGION_FRAME_EMPTY;
 
+    if (error) {}
     if (stack_region_get_count(stack) == 0 || 
         stack_region_get_count(stack) <= index) return STACK_REGION_FRAME_EMPTY;
 
@@ -1022,6 +1005,11 @@ StackRegionFrame stack_region_pop(StackRegion *stack, RegionError *error)
     }
 
     if (sizeof(size_t) >= last_node->size) {
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_INVALID_ARGUMENT, 
+            REGION_ERROR_CLASS_STACK_REGION, 
+            REGION_ERROR_FUNCTION_POP, 
+            REGION_ERROR_MESSAGE_CORRUPTED_STACK_REGION_DATA);
         return STACK_REGION_FRAME_EMPTY;
     }
 
@@ -1048,7 +1036,11 @@ int *stack_region_pop_int(StackRegion *stack, RegionError *error)
     if (!stack) return NULL;
 
     if (stack_region_peek(stack, NULL).size != sizeof(int)) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_INT_INVALID_FRAME);
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_INVALID_ARGUMENT, 
+            REGION_ERROR_CLASS_STACK_REGION, 
+            REGION_ERROR_FUNCTION_POP_INT, 
+            REGION_ERROR_MESSAGE_CORRUPTED_STACK_REGION_DATA);
         return NULL;
     }
 
@@ -1062,7 +1054,11 @@ float *stack_region_pop_float(StackRegion *stack, RegionError *error)
     if (!stack) return NULL;
     
     if (stack_region_peek(stack, NULL).size != sizeof(float)) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_FLOAT_INVALID_FRAME);
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_INVALID_ARGUMENT, 
+            REGION_ERROR_CLASS_STACK_REGION, 
+            REGION_ERROR_FUNCTION_POP_FLOAT, 
+            REGION_ERROR_MESSAGE_CORRUPTED_STACK_REGION_DATA);
         return NULL;
     }
 
@@ -1074,7 +1070,11 @@ double *stack_region_pop_double(StackRegion *stack, RegionError *error)
     if (!stack) return NULL;
 
     if (stack_region_peek(stack, NULL).size != sizeof(double)) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_DOUBLE_INVALID_FRAME);
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_INVALID_ARGUMENT, 
+            REGION_ERROR_CLASS_STACK_REGION, 
+            REGION_ERROR_FUNCTION_POP_DOUBLE, 
+            REGION_ERROR_MESSAGE_CORRUPTED_STACK_REGION_DATA);
         return NULL;
     }
 
@@ -1086,7 +1086,11 @@ char *stack_region_pop_char(StackRegion *stack, RegionError *error)
     if (!stack) return NULL;
 
     if (stack_region_peek(stack, NULL).size != sizeof(char)) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_STACK_REGION_POP_CHAR_INVALID_FRAME);
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_INVALID_ARGUMENT, 
+            REGION_ERROR_CLASS_STACK_REGION, 
+            REGION_ERROR_FUNCTION_POP_CHAR, 
+            REGION_ERROR_MESSAGE_CORRUPTED_STACK_REGION_DATA);
         return NULL;
     }
 
@@ -1226,7 +1230,7 @@ void region_error_print_to(REGION_FILE *stream, RegionError error)
         case REGION_ERROR_MESSAGE_ARG_SMALL_SIZE:
             REGION_SPRINTF(message_string, "%s.", "The value of `size` cannot be equal to `0`"); break;
         case REGION_ERROR_MESSAGE_ARG_NULLPTR:
-            REGION_SPRINTF(message_string, "%s.", "Null reference in an argument");
+            REGION_SPRINTF(message_string, "%s.", "Null reference in an argument"); break;
         case REGION_ERROR_MESSAGE_CORRUPTED_STACK_REGION_DATA:
             REGION_SPRINTF(message_string, "%s.", "The stack frame's size or data has been corrupted or misinterpretted"); break;
         case REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION:
