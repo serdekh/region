@@ -28,7 +28,7 @@ TestResult test_region_push_case_2(RegionAPI *api)
 
     api->region_push(&region, 0, &error);
 
-    result.success = (REGION_NO_ERROR(error) && region->size == size_before_push);
+    result.success = (error.type == REGION_ERROR_TYPE_NONE && region->size == size_before_push);
 
     api->region_free(&region);
 

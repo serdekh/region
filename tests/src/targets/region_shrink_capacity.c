@@ -16,7 +16,7 @@ TestResult test_region_shrink_capacity_case_1(RegionAPI *api)
 
     api->region_shrink_capacity(NULL, REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT, &error);
    
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_NO_ERROR, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_TYPE_NONE, error.type);
     
     return result;
 }

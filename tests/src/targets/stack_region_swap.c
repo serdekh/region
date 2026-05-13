@@ -19,7 +19,7 @@ TestResult test_stack_region_swap_case_1(RegionAPI *api)
 
     api->stack_region_swap(NULL, &error);
 
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_NO_ERROR, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_TYPE_NONE, error.type);
 
     return result;
 }
