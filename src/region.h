@@ -100,17 +100,9 @@ typedef enum {
     REGION_ERROR_CODE_EINVAL,
     REGION_ERROR_CODE_ENOMEM,
 
-    // region_collect
-    REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_COLLECTED_SIZE, // The pointer to the `collected_size` argument equals to `NULL`.
-    REGION_ERROR_CODE_ENOMEM_REGION_COLLECT_MALLOC_COLLECTION, // Failed to allocate memory for the array collection.
-
     // region_clone
     REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_ROOT, // Failed to allocate the root region provided as an argument.
     REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_NODE, // Failed to allocate a node from the source region.
-
-    // region_merge
-    REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_COLLECTION, // Failed to allocate a temporary buffer to store nodes' references.
-    REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_REGION,     // Failed to allocate a region with combined capacity.
 
     // stack_region_alloc
     REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_LARGE_CAPACITY,  // The value of `capacity` is too large.
@@ -190,6 +182,7 @@ typedef enum {
     REGION_ERROR_MESSAGE_ARG_LARGE_CAPACITY,
     REGION_ERROR_MESSAGE_ARG_LARGE_SIZE,
     REGION_ERROR_MESSAGE_ARG_SMALL_SIZE,
+    REGION_ERROR_MESSAGE_ARG_NULLPTR,
 
     REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION,
     REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_DATA,
@@ -625,7 +618,11 @@ Region **region_collect(Region *region, size_t *collected_size, RegionError *err
     if (!region) return NULL;
 
     if (!collected_size) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_COLLECTED_SIZE);
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_INVALID_ARGUMENT, 
+            REGION_ERROR_CLASS_REGION, 
+            REGION_ERROR_FUNCTION_COLLECT, 
+            REGION_ERROR_MESSAGE_ARG_NULLPTR);
         return NULL;
     }
 
@@ -638,7 +635,11 @@ Region **region_collect(Region *region, size_t *collected_size, RegionError *err
     Region **collection = (Region **)REGION_MALLOC(sizeof(Region *) * nodes_count);
 
     if (!collection) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_COLLECT_MALLOC_COLLECTION);
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_INVALID_ARGUMENT, 
+            REGION_ERROR_CLASS_REGION, 
+            REGION_ERROR_FUNCTION_COLLECT, 
+            REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_ARRAY);
         return NULL;
     }
 
@@ -698,10 +699,10 @@ Region *region_merge(Region *region, RegionMergeOption option, RegionError *erro
     if (!region) return NULL;
 
     size_t collected_size = 0;
-    Region **collection = region_collect(region, &collected_size, NULL);
+    Region **collection = region_collect(region, &collected_size, error);
 
     if (!collection) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_COLLECTION);
+        if (error) error->function = REGION_ERROR_FUNCTION_MERGE;
         return NULL;
     }
 
@@ -717,14 +718,19 @@ Region *region_merge(Region *region, RegionMergeOption option, RegionError *erro
 
     if (merged_capacity == 0) {
         REGION_FREE(collection);
-        return region_alloc(0, NULL);
+
+        Region *result = region_alloc(0, error);
+
+        if (!result && error) error->function = REGION_ERROR_FUNCTION_MERGE;
+
+        return result;
     }
 
-    Region *merged_region = region_alloc(merged_capacity, NULL);
+    Region *merged_region = region_alloc(merged_capacity, error);
 
     if (!merged_region) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_MERGE_MALLOC_REGION);
         REGION_FREE(collection);
+        if (error) error->function = REGION_ERROR_FUNCTION_MERGE;
         return NULL;
     }
 
@@ -1223,6 +1229,8 @@ void region_error_print_to(REGION_FILE *stream, RegionError error)
             REGION_SPRINTF(message_string, "%s.", "The value of `size` is too large. Cannot allocate memory"); break;
         case REGION_ERROR_MESSAGE_ARG_SMALL_SIZE:
             REGION_SPRINTF(message_string, "%s.", "The value of `size` cannot be equal to `0`"); break;
+        case REGION_ERROR_MESSAGE_ARG_NULLPTR:
+            REGION_SPRINTF(message_string, "%s.", "Null reference in an argument");
         case REGION_ERROR_MESSAGE_CORRUPTED_STACK_REGION_DATA:
             REGION_SPRINTF(message_string, "%s.", "The stack frame's size or data has been corrupted or misinterpretted"); break;
         case REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION:
