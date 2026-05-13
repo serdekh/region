@@ -100,9 +100,6 @@ typedef enum {
     REGION_ERROR_CODE_EINVAL,
     REGION_ERROR_CODE_ENOMEM,
 
-    // region_shrink_capacity
-    REGION_ERROR_CODE_ENOMEM_REGION_SHRINK_CAPACITY_MALLOC,    // Failed to allocate memory for the `data` field.
-
     // region_collect
     REGION_ERROR_CODE_EINVAL_REGION_COLLECT_NO_COLLECTED_SIZE, // The pointer to the `collected_size` argument equals to `NULL`.
     REGION_ERROR_CODE_ENOMEM_REGION_COLLECT_MALLOC_COLLECTION, // Failed to allocate memory for the array collection.
@@ -213,15 +210,14 @@ typedef struct {
     RegionErrorMessage message;
 } RegionError;
 
-// Note: This macro has to be removed as soon as the error system is refactored
+// Note: Thess macros have to be removed as soon as the error system is refactored
 #define REGION_SET_ERROR(error, error_code) if ((error)) (error)->code = (error_code);       
+#define REGION_NO_ERROR(error) (error).code == REGION_ERROR_CODE_NO_ERROR
+#define REGION_ERROR(error)    (error).code != REGION_ERROR_CODE_NO_ERROR
  
 #define REGION_GET_CURRENT_FILE_LOCATION (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}
 #define REGION_ERROR_INIT_LOCATION(error) (error)->location = REGION_GET_CURRENT_FILE_LOCATION          
 #define REGION_ERROR_INIT (RegionError){.code = 0, .function = 0, .function_class = 0, .message = 0, .type = 0, .location.file_name = __FILE__, .location.line = __LINE__, .location.func_name = __func__}
-
-#define REGION_NO_ERROR(error) (error).code == REGION_ERROR_CODE_NO_ERROR
-#define REGION_ERROR(error)    (error).code != REGION_ERROR_CODE_NO_ERROR
 
 REGION_EXTERN_C_BEGIN
 
@@ -588,7 +584,11 @@ void __region_shrink_capacity_helper(Region *region, RegionError *error)
     char *shrinked_buffer = (char *)REGION_MALLOC(sizeof(char) * region->size);
 
     if (!shrinked_buffer) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_SHRINK_CAPACITY_MALLOC);
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_NO_MEMORY, 
+            REGION_ERROR_CLASS_REGION,
+            REGION_ERROR_FUNCTION_SHRINK_CAPACITY,
+            REGION_ERROR_MESSAGE_MALLOC_FAILURE_TEMPORARY_BUFFER);
         return;
     }
 
@@ -597,23 +597,26 @@ void __region_shrink_capacity_helper(Region *region, RegionError *error)
 
     region->capacity = region->size;
     region->data = shrinked_buffer;
-
-    return;
 }
 
 void region_shrink_capacity(Region *region, RegionShrinkCapacityOption option, RegionError *error)
 {
     if (!region) return;
 
+    RegionError local_error = REGION_ERROR_INIT;
+    
     if (option == REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT) {
         __region_shrink_capacity_helper(region, error);
         return;
     }
 
     for (Region *t = region; t; t = t->next) {
-        __region_shrink_capacity_helper(t, error);
+        __region_shrink_capacity_helper(t, &local_error);
             
-        if (error->code != REGION_ERROR_CODE_NO_ERROR) return;
+        if (local_error.type != REGION_ERROR_TYPE_NONE) {
+            if (error) *error = local_error;
+            return;
+        }
     }
 }
 
