@@ -33,7 +33,7 @@ TestResult test_region_shrink_capacity_case_2(RegionAPI *api)
 
     api->region_shrink_capacity(&r, REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT, &error);
 
-    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_CODE_ENOMEM_REGION_SHRINK_CAPACITY_MALLOC, error.code);
+    RT_TEST_RESULT_WRITE_INT(result, REGION_ERROR_MESSAGE_MALLOC_FAILURE_TEMPORARY_BUFFER, error.message);
 
     return result;
 }
