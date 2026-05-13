@@ -948,7 +948,6 @@ StackRegionFrame stack_region_peek_at(StackRegion *stack, size_t index, RegionEr
 {
     if (!stack) return STACK_REGION_FRAME_EMPTY;
 
-    if (error) {}
     if (stack_region_get_count(stack) == 0 || 
         stack_region_get_count(stack) <= index) return STACK_REGION_FRAME_EMPTY;
 
@@ -959,6 +958,15 @@ StackRegionFrame stack_region_peek_at(StackRegion *stack, size_t index, RegionEr
         last_node = last_node->next;
         last_node_index++;
     } if (last_node_index != 0) last_node_index--;
+
+    if (last_node->size <= STACK_REGION_CACHE_COUNT_SIZE) {
+        REGION_ERROR_SET(error, 
+            REGION_ERROR_TYPE_INVALID_ARGUMENT, 
+            REGION_ERROR_CLASS_STACK_REGION, 
+            REGION_ERROR_FUNCTION_PEEK_AT, 
+            REGION_ERROR_MESSAGE_CORRUPTED_STACK_REGION_DATA);
+        return STACK_REGION_FRAME_EMPTY;
+    }
 
     size_t bytes_to_read = last_node->size;
 
