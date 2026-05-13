@@ -100,10 +100,6 @@ typedef enum {
     REGION_ERROR_CODE_EINVAL,
     REGION_ERROR_CODE_ENOMEM,
 
-    // region_clone
-    REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_ROOT, // Failed to allocate the root region provided as an argument.
-    REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_NODE, // Failed to allocate a node from the source region.
-
     // stack_region_alloc
     REGION_ERROR_CODE_EINVAL_STACK_REGION_ALLOC_LARGE_CAPACITY,  // The value of `capacity` is too large.
     REGION_ERROR_CODE_ENOMEM_STACK_REGION_ALLOC_MALLOC_REGION,   // Failed to allocate the `StackRegion` struct.
@@ -659,10 +655,10 @@ Region *region_clone(Region *region, RegionError *error)
 {
     if (!region) return NULL;
 
-    Region *clone = region_alloc(region->capacity, NULL);
+    Region *clone = region_alloc(region->capacity, error);
 
     if (!clone) {
-        REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_ROOT);
+        if (error) error->function = REGION_ERROR_FUNCTION_CLONE;
         return NULL;
     }
 
@@ -674,11 +670,11 @@ Region *region_clone(Region *region, RegionError *error)
     Region *clone_i = clone;
 
     for (Region *t = region->next; t; t = t->next) {
-        Region *node = region_alloc(t->capacity, NULL);
+        Region *node = region_alloc(t->capacity, error);
 
         if (!node) {
             region_free(&clone);
-            REGION_SET_ERROR(error, REGION_ERROR_CODE_ENOMEM_REGION_CLONE_MALLOC_NODE);
+            if (error) error->function = REGION_ERROR_FUNCTION_CLONE;
             return NULL;
         }
 
