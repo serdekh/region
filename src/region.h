@@ -159,7 +159,7 @@ typedef struct {
  
 #define REGION_GET_CURRENT_FILE_LOCATION (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}
 #define REGION_ERROR_INIT_LOCATION(error) (error)->location = REGION_GET_CURRENT_FILE_LOCATION          
-#define REGION_ERROR_INIT (RegionError){.function = 0, .function_class = 0, .message = 0, .type = 0, .location.file_name = __FILE__, .location.line = __LINE__, .location.func_name = __func__}
+#define REGION_ERROR_INIT (RegionError){.function = 0, .function_class = 0, .message = 0, .type = 0, .location = REGION_GET_CURRENT_FILE_LOCATION }
 
 REGION_EXTERN_C_BEGIN
 
@@ -425,20 +425,15 @@ int *region_push_int(Region **region, int value, RegionError *error)
 {
     if (!region) return NULL;
 
-    RegionError local_error = {0};
+    int *result = (int *)region_push(region, sizeof(int), error);
 
-    int *result = (int *)region_push(region, sizeof(int), &local_error);
-
-    if (local_error.type == REGION_ERROR_TYPE_NONE) {
+    if (result) {
         *result = value;
         return result;
     }
 
-    if (error) {
-        local_error.function = REGION_ERROR_FUNCTION_PUSH_INT;
-        *error = local_error;
-    }
-
+    if (error) error->function = REGION_ERROR_FUNCTION_PUSH_INT;
+    
     return NULL;
 }
 
@@ -446,19 +441,14 @@ float *region_push_float(Region **region, float value, RegionError *error)
 {
     if (!region) return NULL;
 
-    RegionError local_error = {0};
+    float *result = (float *)region_push(region, sizeof(float), error);
 
-    float *result = (float *)region_push(region, sizeof(float), &local_error);
-
-    if (local_error.type == REGION_ERROR_TYPE_NONE) {
+    if (result) {
         *result = value;
         return result;
     }
 
-    if (error) {
-        local_error.function = REGION_ERROR_FUNCTION_PUSH_FLOAT;
-        *error = local_error;
-    }
+    if (error) error->function = REGION_ERROR_FUNCTION_PUSH_FLOAT;
 
     return NULL;
 }
@@ -467,19 +457,14 @@ double *region_push_double(Region **region, double value, RegionError *error)
 {
     if (!region) return NULL;
     
-    RegionError local_error = {0};
+    double *result = (double *)region_push(region, sizeof(double), error);
     
-    double *result = (double *)region_push(region, sizeof(double), &local_error);
-    
-    if (local_error.type == REGION_ERROR_TYPE_NONE) {
+    if (result) {
         *result = value;
         return result;
     }
 
-    if (error) {
-        local_error.function = REGION_ERROR_FUNCTION_PUSH_DOUBLE;
-        *error = local_error;
-    }
+    if (error) error->function = REGION_ERROR_FUNCTION_PUSH_DOUBLE;
     
     return NULL;
 }
@@ -488,19 +473,14 @@ char *region_push_char(Region **region, char value, RegionError *error)
 {
     if (!region) return NULL;
 
-    RegionError local_error = {0};
+    char *result = (char *)region_push(region, sizeof(char), error);
 
-    char *result = (char *)region_push(region, sizeof(char), &local_error);
-
-    if (local_error.type == REGION_ERROR_TYPE_NONE) {
+    if (result) {
         *result = value;
         return result;
     }
 
-    if (error) {
-        local_error.function = REGION_ERROR_FUNCTION_PUSH_CHAR;
-        *error = local_error;
-    }
+    if (error) error->function = REGION_ERROR_FUNCTION_PUSH_CHAR;
 
     return NULL;
 }
