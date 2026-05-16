@@ -1,0 +1,33 @@
+name: C CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup MSYS2
+      if: runner.os == 'Windows'
+      uses: msys2/setup-msys2@v2
+      with:
+        install: make gcc
+
+    - name: Run tests (Linux)
+      if: runner.os != 'Windows'
+      run: make test
+
+    - name: Run tests (Windows)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
+      run: make test
