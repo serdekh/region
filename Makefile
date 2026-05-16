@@ -9,7 +9,7 @@ CC_FLAGS = -std=gnu99 -Wall -Wextra
 # should be explicitly configured in the following if-statement
 
 ifeq ($(OS),Windows_NT)
-	UTILS_BIN_PATH = \MinGW\msys\1.0\bin\\
+	UTILS_BIN_PATH =
 	
 	EXT_EXEC = exe
 	EXT_OBJ  = o
