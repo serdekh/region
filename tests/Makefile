@@ -1,5 +1,5 @@
 ifeq ($(OS),Windows_NT)
-	UTILS_BIN_PATH = \MinGW\msys\1.0\bin\\
+	UTILS_BIN_PATH =
 	
 	EXT_EXEC = exe
 	EXT_SOBJ = dll
