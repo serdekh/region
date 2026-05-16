@@ -1,6 +1,4 @@
 ifeq ($(OS),Windows_NT)
-	UTILS_BIN_PATH =
-	
 	EXT_EXEC = exe
 	EXT_SOBJ = dll
 	EXT_UTILS = .$(EXT_EXEC)
@@ -9,8 +7,6 @@ ifeq ($(OS),Windows_NT)
 	TARGET_FLAGS = -shared -DREGION_BUILD
 	REGION_TEST_SO_FLAGS = -shared -DREGION_BUILD
 else
-	UTILS_BIN_PATH =
-
 	EXT_EXEC =
 	EXT_SOBJ = so
 	EXT_UTILS = 
@@ -20,15 +16,15 @@ else
 	REGION_TEST_SO_FLAGS = -shared -fPIC
 endif
 
-MKDIR = $(UTILS_BIN_PATH)mkdir$(EXT_UTILS)
-RM    = $(UTILS_BIN_PATH)rm$(EXT_UTILS)
-MAKE = $(UTILS_BIN_PATH)make$(EXT_UTILS)
+MKDIR = mkdir$(EXT_UTILS)
+RM    = rm$(EXT_UTILS)
+MAKE  = make$(EXT_UTILS)
 
 CC = gcc
 
-SRC       = src
-TARGETS   = $(SRC)/targets
-INCLUDE   = $(SRC)/include
+SRC     = src
+TARGETS = $(SRC)/targets
+INCLUDE = $(SRC)/include
 
 BUILD = .build
 OBJ   = $(BUILD)/obj

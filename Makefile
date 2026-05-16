@@ -1,16 +1,7 @@
 CC = gcc
 CC_FLAGS = -std=gnu99 -Wall -Wextra
 
-# Note: all the Windows specific commands have to manually
-# configured since every Linux utility has to be replaced
-# with its equivalent from the MinGW environment. If this
-# makefile fails to build the project because it cannot 
-# find mkdir, gcc, etc., then the path to the executable
-# should be explicitly configured in the following if-statement
-
 ifeq ($(OS),Windows_NT)
-	UTILS_BIN_PATH =
-	
 	EXT_EXEC = exe
 	EXT_OBJ  = o
 	EXT_SOBJ = dll
@@ -22,8 +13,6 @@ ifeq ($(OS),Windows_NT)
 	PATH_SEPARATOR = \\
 
 else
-	UTILS_BIN_PATH =
-
 	EXT_EXEC =
 	EXT_OBJ  = o
 	EXT_SOBJ = so
@@ -34,9 +23,9 @@ else
 	PATH_SEPARATOR = /
 endif
 
-MKDIR = $(UTILS_BIN_PATH)mkdir$(EXT_UTILS)
-RM    = $(UTILS_BIN_PATH)rm$(EXT_UTILS)
-MAKE = $(UTILS_BIN_PATH)make$(EXT_UTILS)
+MKDIR = mkdir$(EXT_UTILS)
+RM    = rm$(EXT_UTILS)
+MAKE  = make$(EXT_UTILS)
 
 BUILD := .build
 SRC := src
