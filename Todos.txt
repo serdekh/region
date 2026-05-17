@@ -2,11 +2,10 @@
 
 - Big tasks (Should be Implemented as soon as all the daily tasks are complete)
 
-1: Refactor the testing system to run the tests on different OS environments
-   by using Github Actions
-2: Write documentation for each function and make it interactive from a cli
-   similar to how the `man` command works 
-3: Integrate Docker to publish the project on DockerHub 
+1 Complete documenting the main region.h file
+    1.1 Provide documentation for the function declarations
+    1.2 Add a Doxygen file for generating a web page
+2: Integrate Docker to publish the project on DockerHub 
 
 - Final tasks (Not essential, but would be a great contribution to the project)
 

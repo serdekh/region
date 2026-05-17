@@ -1,6 +1,31 @@
+/**
+ * @file region.h
+ * @author Serhii Dekhtiarov (@SerhiiDekhtiarov - telegram)
+ * @brief The source code for the region library
+ * 
+ *     C library for managing dynamic memory using the 
+ *     region (aka arena) data structure.
+ * 
+ *     This library is written in the stb-style meaning 
+ *     both declarations and implementations are defined
+ *     in a single file. The implementation is guarded by the 
+ *     REGION_IMPLEMENTATION macro. It only has to be defined once,
+ *     usually in the main file of a project. To get more 
+ *     information about stb-style libraries, go to the `see` 
+ *     section.
+ * 
+ * @see 
+ *    stb single-file public domain libraries: https://github.com/nothings/stb
+ *    stb libraries explained: https://youtu.be/kS_GqDp6IT4?si=gxoRAqRc_B2nmfEb
+ * 
+ * @date 5/17/2026
+ * @copyright Copyright (c) 2026
+ * 
+ */
+
 #ifndef REGION_NO_STDIO
 #include <stdio.h>
-#define REGION_FILE FILE
+#define REGION_FILE FILE 
 #define REGION_STDIN stdin
 #define REGION_STDOUT stdout
 #define REGION_STDERR stderr
@@ -42,11 +67,35 @@
 #endif // REGION_NO_STDBOOL
 
 #if defined(_WIN32)
+    /**
+     * @brief Applies OS-specific attributes for the library functions
+     * 
+     * @details 
+     *     By default all symbols on Windows are not exported
+     *     and therefore the functions cannot be called. This attribute
+     *     solves this issue by exporting the function api's. 
+     */
     #define REGION_API __declspec(dllexport)
 #else
+    /**
+     * @brief Applies OS-specific attributes for the library functions
+     * 
+     * @details 
+     *     Linux symbols are exported by default but not on Windows.
+     *     In case of Linux, this macro provides a function with the 
+     *     default visibility attribute making function api's accessible
+     */
     #define REGION_API __attribute__((visibility("default")))
 #endif
 
+/**
+ * @brief Prevents symbol lookup errors when using C++
+ * 
+ * @details Specifies that the library functions should 
+ * use the C-language calling convention when the project
+ * is being compilied for C++. This way, no mangling is 
+ * applied and the symbols are exported as they are defined
+ */
 #ifdef __cplusplus
   #define REGION_EXTERN_C_BEGIN extern "C" {
   #define REGION_EXTERN_C_END }
@@ -55,15 +104,68 @@
   #define REGION_EXTERN_C_END
 #endif
 
+/**
+ * @brief The main struct for storing and manipulating dynamic data
+ * 
+ * @typedef Region
+ * 
+ * @details 
+ *     The struct is defined as an opaque type. All the fields
+ *     and logic has to be provided by the consumer that implements
+ *     the definition. The default implementation defines `Region` as
+ *     a linked list of character arrays where the data resides.
+ */
 typedef struct __Region Region;
 
+/**
+ * @brief Derivative of the `Region` data structure
+ * 
+ * @typedef StackRegion
+ * 
+ *    Represents a region that is capable of popping items
+ *    from the top of the data section (LIFO order).
+ * 
+ *    Similar to the program stack, the data gets pushed to
+ *    the data array but in this case it also includes the
+ *    size of a data represented with the size_t data type. 
+ *    In other words, when you push `capacity` bytes to the 
+ *    stack, in reality `capacity + sizeof(size_t)` gets 
+ *    pushed. The reason lies in necessity to pop items with
+ *    an arbitrary size. Without additional size, it would not
+ *    be possible to correctly identify the amount of bytes
+ *    to pop when needed. 
+ * 
+ *    This data structure is recommended if additional memory
+ *    overhead is not as significant as an ability of dynamic
+ *    data array mutation.
+ * 
+ * @details 
+ *     This type (in the standard implementation) is identical
+ *     to the `Region` struct. The core difference lies in the
+ *     logic that is associated with the type in its 
+ *     corresponding functions such as `stack_region_alloc`.
+ *     Another difference lies in data shadowing used to store
+ *     metadata such as the stack `count`. This provides a unified 
+ *     pattern and allows using the `Region` function calls in
+ *     the inner implementations for the `StackRegion`. 
+ *     Although manually casting between `Region` and 
+ *     `StackRegion` is generally not recommended.
+ */
 typedef struct __StackRegion StackRegion;
 
+/**
+ * @typedef StackRegionFrame
+ * @brief Data type for representing stack values
+ */
 typedef struct _StackRegionFrame {
-    void *data;
-    size_t size;
+
+    void *data; /** Pointer to the beginning of the frame */
+
+    size_t size; /** Length of the `data` type member */
+
 } StackRegionFrame;
 
+// TODO: Replace these enums with macros
 typedef enum {
     REGION_RESET_OPTION_SOFT = 0,
     REGION_RESET_OPTION_HARD = 1,
@@ -84,26 +186,77 @@ typedef enum {
     REGION_GET_LAST_NODE_OPTION_NON_EMPTY
 } RegionGetLastNodeOption;
 
-// ----- DATA STRUCTS FOR ERRORS -----
 
+/**
+ * @brief 
+ *     Collection of data to represent the exact location 
+ *     where an error has occured.
+ * 
+ * @typedef RegionLocation
+ * 
+ * @note 
+ *     This type is generally only used internally. 
+ *     The `RegionError` type already contains a
+ *     member of type `RegionLocation` that automatically
+ *     gets initialized by the `REGION_ERROR_INIT` macro
+ *     which is achieved using the C preprocessor and gcc
+ *     macros. 
+ */
 typedef struct {
+
+    /** File line where an error has occured*/
     int line;
+
+    /** File name where an error has occured*/
     const char *file_name;
+
+    /** Function that has thrown an error */
     const char *func_name;
+
 } RegionLocation;
 
+/**
+ * @brief Represents the general category an error falls into
+ * 
+ * @typedef RegionErrorType
+ * 
+ * @details
+ *     The error system splits an error message into 4 main categories:
+ *     '`type`: `function class`_`function name`(): `message`'. This
+ *     enum holds options for the `type` category. 
+ */
 typedef enum {
-    REGION_ERROR_TYPE_NONE, 
-    REGION_ERROR_TYPE_INVALID_ARGUMENT, 
-    REGION_ERROR_TYPE_NO_MEMORY,
-    REGION_ERROR_TYPE_UNKNOWN, 
+    REGION_ERROR_TYPE_NONE,             /** No error has occurred */
+    REGION_ERROR_TYPE_INVALID_ARGUMENT, /** Function argument is `NULL` or has invalid value*/
+    REGION_ERROR_TYPE_NO_MEMORY,        /** Failed to allocate memory */
+    REGION_ERROR_TYPE_UNKNOWN,          /** If none of the above matches the error type*/
 } RegionErrorType;
 
+/**
+ * @brief Represents a class of functions depending on a type they work with
+ * 
+ * @typedef RegionErrorClass
+ * 
+ * @details
+ *     The error system splits an error message into 4 main categories:
+ *     '`type`: `function class`_`function name`(): `message`'. This
+ *     enum holds options for the `function class` category. 
+ */
 typedef enum {
-    REGION_ERROR_CLASS_REGION,
-    REGION_ERROR_CLASS_STACK_REGION
+    REGION_ERROR_CLASS_REGION,      /** Class for all the `region_<name>` functions*/
+    REGION_ERROR_CLASS_STACK_REGION /** Class for all the `stack_region_<name>` functions*/
 } RegionErrorClass;
 
+/**
+ * @brief Represents a class-agnostic function name that has occured an error 
+ * 
+ * @typedef RegionErrorFunction
+ * 
+ * @details
+ *     The error system splits an error message into 4 main categories:
+ *     '`type`: `function class`_`function name`(): `message`'. This
+ *     enum holds options for the `function name` category. 
+ */
 typedef enum {
     REGION_ERROR_FUNCTION_ALLOC,
 
@@ -133,28 +286,68 @@ typedef enum {
     REGION_ERROR_FUNCTION_SWAP
 } RegionErrorFunction;
 
+/**
+ * @brief Provides opcodes which represent an error message
+ * 
+ * @typedef RegionErrorMessage
+ * 
+ * @details
+ *     The error system splits an error message into 4 main categories:
+ *     '`type`: `function class`_`function name`(): `message`'. This
+ *     enum holds options for the `message` category. 
+ */
 typedef enum {
-    REGION_ERROR_MESSAGE_ARG_LARGE_CAPACITY,
-    REGION_ERROR_MESSAGE_ARG_LARGE_SIZE,
-    REGION_ERROR_MESSAGE_ARG_SMALL_SIZE,
-    REGION_ERROR_MESSAGE_ARG_NULLPTR,
+    REGION_ERROR_MESSAGE_ARG_LARGE_CAPACITY,              /** The value of `capacity` is equal to `SIZE_MAX`       */
+    REGION_ERROR_MESSAGE_ARG_LARGE_SIZE,                  /** The value of `size` is equal to `SIZE_MAX`           */
+    REGION_ERROR_MESSAGE_ARG_SMALL_SIZE,                  /** The value of `size` is equal to `0`                  */
+    REGION_ERROR_MESSAGE_ARG_NULLPTR,                     /** The value of one of the arguments is equal to `NULL` */
 
-    REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION,
-    REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_DATA,
+    REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION,           /** Failed to allocate the `Region` type                 */
+    REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_DATA,      /** Failed to allocate data for the `Region` type        */
 
-    REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_ARRAY,
-    REGION_ERROR_MESSAGE_MALLOC_FAILURE_TEMPORARY_BUFFER,
+    REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_ARRAY,     /** Failed to allocate an array of `Region` types        */
+    REGION_ERROR_MESSAGE_MALLOC_FAILURE_TEMPORARY_BUFFER, /** Failed to allocate a temporary chunk of memory       */
 
-    REGION_ERROR_MESSAGE_CORRUPTED_STACK_REGION_DATA
+    REGION_ERROR_MESSAGE_CORRUPTED_STACK_REGION_DATA      /** The `StackRegion` type's data is in invalid state    */
 } RegionErrorMessage;
 
+/**
+ * @brief Represents an error that may occur during a function's execution
+ * 
+ * @typedef RegionError
+ * 
+ *     This type is used in all the functions that may fail and is treated as
+ *     optional which lets a caller to provide a `NULL` pointer if the error
+ *     is guaranteed not to happen or is not important. 
+ * 
+ *     The type also contains a member of type `RegionLocation`. This subtype
+ *     is used for a proper error logging. A caller needs to init its
+ *     values before a function call. This is done via the `REGION_ERROR_INIT`
+ *     macro. See code examples.
+ * 
+ * @code{.c}
+ * 
+ *     RegionError error = REGION_ERROR_INIT;
+ * 
+ *     Region *region - region_alloc(SIZE_MAX, &error);
+ * 
+ *     if (error.type == REGION_ERROR_TYPE_NONE) {
+ *         region_free(&region);
+ *         return 0;
+ *     }
+ * 
+ *     region_error_print(error);
+ *     return 1;
+ *     
+ * @endcode
+ */
 typedef struct {
     RegionLocation location;
 
-    RegionErrorType type;
-    RegionErrorClass function_class;
-    RegionErrorFunction function;
-    RegionErrorMessage message;
+    REGION_UINT8 type;
+    REGION_UINT8 function_class;
+    REGION_UINT8 function;
+    REGION_UINT8 message;
 } RegionError;
  
 #define REGION_GET_CURRENT_FILE_LOCATION (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}
