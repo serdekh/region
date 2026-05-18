@@ -2,10 +2,13 @@
 
 - Big tasks (Should be Implemented as soon as all the daily tasks are complete)
 
-1 Complete documenting the main region.h file
+1: Complete documenting the main region.h file
     1.1 Provide documentation for the function declarations
-    1.2 Add a Doxygen file for generating a web page
-2: Integrate Docker to publish the project on DockerHub 
+    1.2 Provide documentation for the test environment
+    1.3 Add a Doxygen file for generating a web page
+
+2: Introduce a `docs` folder with guidance to the project 
+3: Integrate Docker to publish the project on DockerHub 
 
 - Final tasks (Not essential, but would be a great contribution to the project)
 
