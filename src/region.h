@@ -327,26 +327,71 @@ typedef struct {
     REGION_UINT8 function;
     REGION_UINT8 message;
 } RegionError;
- 
-#define REGION_GET_CURRENT_FILE_LOCATION (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}       
-#define REGION_ERROR_INIT (RegionError){.function = 0, .function_class = 0, .message = 0, .type = 0, .location = REGION_GET_CURRENT_FILE_LOCATION }
-
-#define REGION_RESET_OPTION_SOFT                0  /** Resets the occupated size in each node to zero              */
-#define REGION_RESET_OPTION_HARD                1  /** Frees all the nodes expect the 1st and puts resets its size */
-
-#define REGION_MERGE_OPTION_DEFAULT             0  /** All the data gets merged disregarding the the taken size    */
-#define REGION_MERGE_OPTION_CONDENSE            1  /** Only the taken part of a region data gets merged            */
-
-#define REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT 0  /** Only the root node gets its capacity shrinked               */
-#define REGION_SHRINK_CAPACITY_OPTION_ALL       1  /** All subsequent nodes get their capacity shrinked            */
-
-#define REGION_GET_LAST_NODE_OPTION_DEFAULT     0  /** Get the last node (next points to `NULL`)                   */
-#define REGION_GET_LAST_NODE_OPTION_NON_EMPTY   1  /** Get the last node whose data has been taken                 */
 
 REGION_EXTERN_C_BEGIN
 
-// Region
+/**
+ * @brief Returns a newly allocated region.
+ *
+ * @param[in]      capacity Number of bytes for region data.
+ * @param[in, out] error Optional error output.
+ * 
+ * @return 
+ *     Pointer to a newly allocated `Region` struct. 
+ *     Ownership is passed to the caller.
+ *     Must be freed with the `region_free` function.
+ * 
+ * @warning Memory leak if the returned pointer is not freed with the `region_free` function.
+ * 
+ * @note 
+ *     Region fields are initialized to
+ *     - `0`    for `numeric` types.
+ *     - `NULL` for pointers.
+ * 
+ * @note 
+ *     The value of `capacity` can have a value of `0`. In this case, a region
+ *     is still being allocated but its `data` is going to be empty. Other 
+ *     functions will try to allocate the memory if they need it. For example,
+ *     the `region_push(... size, ...)` function accepts a `size` argument and
+ *     a region to allocate into. If the `data` is `NULL`, it'll try to 
+ *     allocate that memory instead. 
+ *
+ *     This is usually not the best option since other functions only allocate
+ *     the requested size and therefore additional nodes would need to be 
+ *     created to push more items. 
+ *
+ * @retval 
+ *    If any errors occur, the `error` argument will be initialized as follows:
+ *    - `type`           = REGION_ERROR_TYPE_INVALID_ARGUMENT (If capacity is too large)
+ *                         REGION_ERROR_TYPE_NO_MEMORY        (If failed to allocate a region or its data)
+ * 
+ *    - `function_class` = REGION_ERROR_CLASS_REGION
+ * 
+ *    - `function`       = REGION_ERROR_FUNCTION_ALLOC
+ * 
+ *    - `message`        = REGION_ERROR_MESSAGE_ARG_LARGE_CAPACITY         (If capacity is too large)
+ *                         REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION      (If failed to allocate a region)
+ *                         REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_DATA (If failed to allocate data for the region)
+ * 
+ * @code{.c}
+ *     size_t capacity = 4 * sizeof(int);
+ *
+ *     RegionError error = REGION_ERROR_INIT;
+ *
+ *     Region *region = region_alloc(capacity, &error);
+ *     
+ *     if (error.type != REGION_ERROR_TYPE_NONE) {
+ *         region_error_print(error);
+ *         return 1;
+ *     }
+ *     
+ *     region_free(&region);
+ *     return 0;
+ * @endcode
+ */
 REGION_API Region *region_alloc(size_t capacity, RegionError *error);
+REGION_API void region_free(Region **region);
+REGION_API void region_reset(Region *region, int option);
 
 REGION_API size_t region_get_capacity(Region *region);
 REGION_API size_t region_get_size(Region *region);
@@ -362,12 +407,10 @@ REGION_API float *region_push_float(Region **region, float value, RegionError *e
 REGION_API double *region_push_double(Region **region, double value, RegionError *error);
 REGION_API char *region_push_char(Region **region, char value, RegionError *error);
 
-REGION_API void region_reset(Region *region, int option);
-REGION_API void region_free(Region **region);
 REGION_API void region_shrink_capacity(Region *region, int option, RegionError *error);
 
-// Stack Region
 REGION_API StackRegion *stack_region_alloc(size_t capacity, RegionError *error);
+REGION_API void stack_region_free(StackRegion **stack);
 
 REGION_API size_t stack_region_get_capacity(StackRegion *region);
 REGION_API size_t stack_region_get_size(StackRegion *region);
@@ -379,26 +422,40 @@ REGION_API float *stack_region_push_float(StackRegion **stack, float value, Regi
 REGION_API double *stack_region_push_double(StackRegion **stack, double value, RegionError *error);
 REGION_API char *stack_region_push_char(StackRegion **stack, char value, RegionError *error);
 
-REGION_API StackRegionFrame stack_region_peek(StackRegion *stack, RegionError *error);
-REGION_API StackRegionFrame stack_region_peek_at(StackRegion *stack, size_t index, RegionError *error);
 REGION_API StackRegionFrame stack_region_pop(StackRegion *stack, RegionError *error);
-
 REGION_API int *stack_region_pop_int(StackRegion *stack, RegionError *error);
 REGION_API float *stack_region_pop_float(StackRegion *stack, RegionError *error);
 REGION_API double *stack_region_pop_double(StackRegion *stack, RegionError *error);
 REGION_API char *stack_region_pop_char(StackRegion *stack, RegionError *error);
 
-REGION_API void stack_region_swap(StackRegion *stack, RegionError *error);
-REGION_API void stack_region_free(StackRegion **stack);
+REGION_API StackRegionFrame stack_region_peek(StackRegion *stack, RegionError *error);
+REGION_API StackRegionFrame stack_region_peek_at(StackRegion *stack, size_t index, RegionError *error);
 
-// Error
+REGION_API void stack_region_swap(StackRegion *stack, RegionError *error);
+
 REGION_API void region_error_print_to(REGION_FILE *stream, RegionError error);
 REGION_API void region_error_print(RegionError error);
 
-#define REGION_IS_EMPTY(region)\
-    region_get_capacity(region) == 0 && region_get_size(region) == 0;
+#define REGION_RESET_OPTION_SOFT                0  /** Resets the occupated size in each node to zero              */
+#define REGION_RESET_OPTION_HARD                1  /** Frees all the nodes expect the 1st and puts resets its size */
 
-// ----- * -----
+#define REGION_MERGE_OPTION_DEFAULT             0  /** All the data gets merged disregarding the the taken size    */
+#define REGION_MERGE_OPTION_CONDENSE            1  /** Only the taken part of a region data gets merged            */
+
+#define REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT 0  /** Only the root node gets its capacity shrinked               */
+#define REGION_SHRINK_CAPACITY_OPTION_ALL       1  /** All subsequent nodes get their capacity shrinked            */
+
+#define REGION_GET_LAST_NODE_OPTION_DEFAULT     0  /** Get the last node (next points to `NULL`)                   */
+#define REGION_GET_LAST_NODE_OPTION_NON_EMPTY   1  /** Get the last node whose data has been taken                 */
+
+/** Returns `true` if `capacity` and `size` members are equal to `0`. Returns `false` otherwise */
+#define REGION_IS_EMPTY(region) region_get_capacity(region) == 0 && region_get_size(region) == 0;
+
+/** Returns an initialized `RegionLocation` object for the current file, line and function */
+#define REGION_GET_CURRENT_FILE_LOCATION (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}       
+
+/** Returns a `RegionError` object (`location` is set to the current location, all other fields are set to `0`) */
+#define REGION_ERROR_INIT (RegionError){.function = 0, .function_class = 0, .message = 0, .type = 0, .location = REGION_GET_CURRENT_FILE_LOCATION }
 
 #ifdef REGION_IMPLEMENTATION
 
@@ -425,46 +482,6 @@ typedef struct __StackRegion { REGION_CORE_FIELDS } StackRegion;
         (error)->message = _message;                                      \
     }                                                                    \
 
-/**
- * @brief Returns a newly allocated region.
- *
- * @param capacity Number of bytes for region data
- * @param error Optional error output
- * 
- * @return Pointer to allocated `Region` struct. Ownership is passed to the caller.
- * Must be freed with `region_free`
- * 
- * @warning Memory leak if returned pointer is not freed
- * 
- * @note Region fields are initialized to
- *  `0`    - for `numeric` types..
- *  `NULL` - for pointers.
- * 
- * @note If `capacity` equals to zero, then `data` gets initialized to `NULL`
- * and other functions that modify `data` will try to allocate memory to this
- * field. It's recommended to preallocate enough memory to avoid extra nodes
- * creation when new data gets pushed.
- * 
- * @note If any errors occur, the `error` fields will be initialized as follows:
- *  - `type`           = REGION_ERROR_TYPE_INVALID_ARGUMENT (If capacity is too large)
- *                       REGION_ERROR_TYPE_NO_MEMORY (If failed to allocate a region or its data)
- * 
- *  - `function_class` = REGION_ERROR_CLASS_REGION
- * 
- *  - `function`       = REGION_ERROR_FUNCTION_ALLOC
- * 
- *  - `message`        = REGION_ERROR_MESSAGE_ARG_LARGE_CAPACITY (If capacity is too large)
- *                       REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION (If failed to allocate a region)
- *                       REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_DATA (If failed to allocate data for the region)
- * 
- * @code{.c}
- * Region *region = region_alloc(4 *sizeof(int), NULL);
- * if (!region) {
- *      // error handling...
- * }
- * region_free(&region);
- * @endcode
- */
 Region *region_alloc(size_t capacity, RegionError *error)
 {
     if (capacity > REGION_SIZE_MAX - sizeof(Region)) {
