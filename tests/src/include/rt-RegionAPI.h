@@ -56,9 +56,9 @@ typedef Region *(*FuncPtr_region_alloc)(size_t, RegionError*);
 typedef size_t (*FuncPtr_region_get_capacity)(Region *region);
 typedef size_t (*FuncPtr_region_get_size)(Region *region);
 
-typedef Region *(*FuncPtr_region_get_last_node)(Region *region, RegionGetLastNodeOption option);
+typedef Region *(*FuncPtr_region_get_last_node)(Region *region, int option);
 typedef Region *(*FuncPtr_region_clone)(Region *region, RegionError *error);
-typedef Region *(*FuncPtr_region_merge)(Region *region, RegionMergeOption option, RegionError *error);
+typedef Region *(*FuncPtr_region_merge)(Region *region, int option, RegionError *error);
 typedef Region **(*FuncPtr_region_collect)(Region *region, size_t *collected_size, RegionError *error);
 
 typedef void *(*FuncPtr_region_push)(Region **region, size_t size, RegionError *error);
@@ -67,7 +67,7 @@ typedef float *(*FuncPtr_region_push_float)(Region **region, float value, Region
 typedef double *(*FuncPtr_region_push_double)(Region **region, double value, RegionError *error);
 typedef char *(*FuncPtr_region_push_char)(Region **region, char value, RegionError *error);
 
-typedef void (*FuncPtr_region_shrink_capacity)(Region *region, RegionShrinkCapacityOption option, RegionError *error);
+typedef void (*FuncPtr_region_shrink_capacity)(Region *region, int option, RegionError *error);
 typedef void (*FuncPtr_region_free)(Region **region);
 
 typedef StackRegion *(*FuncPtr_stack_region_alloc)(size_t capacity, RegionError *error);

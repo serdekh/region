@@ -165,27 +165,17 @@ typedef struct _StackRegionFrame {
 
 } StackRegionFrame;
 
-// TODO: Replace these enums with macros
-typedef enum {
-    REGION_RESET_OPTION_SOFT = 0,
-    REGION_RESET_OPTION_HARD = 1,
-} RegionResetOption;
+#define REGION_RESET_OPTION_SOFT                0  /** Resets the occupated size in each node to zero              */
+#define REGION_RESET_OPTION_HARD                1  /** Frees all the nodes expect the 1st and puts resets its size */
 
-typedef enum {
-    REGION_MERGE_OPTION_DEFAULT = 0,
-    REGION_MERGE_OPTION_CONDENSE
-} RegionMergeOption;
+#define REGION_MERGE_OPTION_DEFAULT             0  /** All the data gets merged disregarding the the taken size    */
+#define REGION_MERGE_OPTION_CONDENSE            1  /** Only the taken part of a region data gets merged            */
 
-typedef enum {
-    REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT = 0,
-    REGION_SHRINK_CAPACITY_OPTION_ALL
-} RegionShrinkCapacityOption;
+#define REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT 0  /** Only the root node gets its capacity shrinked               */
+#define REGION_SHRINK_CAPACITY_OPTION_ALL       1  /** All subsequent nodes get their capacity shrinked            */
 
-typedef enum {
-    REGION_GET_LAST_NODE_OPTION_DEFAULT = 0,
-    REGION_GET_LAST_NODE_OPTION_NON_EMPTY
-} RegionGetLastNodeOption;
-
+#define REGION_GET_LAST_NODE_OPTION_DEFAULT     0  /** Get the last node (next points to `NULL`)                   */
+#define REGION_GET_LAST_NODE_OPTION_NON_EMPTY   1  /** Get the last node whose data has been taken                 */
 
 /**
  * @brief 
@@ -363,8 +353,8 @@ REGION_API size_t region_get_capacity(Region *region);
 REGION_API size_t region_get_size(Region *region);
 
 REGION_API Region *region_clone(Region *region, RegionError *error);
-REGION_API Region *region_merge(Region *region, RegionMergeOption option, RegionError *error);
-REGION_API Region *region_get_last_node(Region *region, RegionGetLastNodeOption option);
+REGION_API Region *region_merge(Region *region, int option, RegionError *error);
+REGION_API Region *region_get_last_node(Region *region, int option);
 REGION_API Region **region_collect(Region *region, size_t *collected_size, RegionError *error);
 
 REGION_API void *region_push(Region **region, size_t size, RegionError *error);
@@ -373,9 +363,9 @@ REGION_API float *region_push_float(Region **region, float value, RegionError *e
 REGION_API double *region_push_double(Region **region, double value, RegionError *error);
 REGION_API char *region_push_char(Region **region, char value, RegionError *error);
 
-REGION_API void region_reset(Region *region, RegionResetOption option);
+REGION_API void region_reset(Region *region, int option);
 REGION_API void region_free(Region **region);
-REGION_API void region_shrink_capacity(Region *region, RegionShrinkCapacityOption option, RegionError *error);
+REGION_API void region_shrink_capacity(Region *region, int option, RegionError *error);
 
 // Stack Region
 REGION_API StackRegion *stack_region_alloc(size_t capacity, RegionError *error);
@@ -678,7 +668,7 @@ char *region_push_char(Region **region, char value, RegionError *error)
     return NULL;
 }
 
-void region_reset(Region *region, RegionResetOption option)
+void region_reset(Region *region, int option)
 {
     if (!region) return;
 
@@ -714,7 +704,7 @@ void __region_shrink_capacity_helper(Region *region, RegionError *error)
     region->data = shrinked_buffer;
 }
 
-void region_shrink_capacity(Region *region, RegionShrinkCapacityOption option, RegionError *error)
+void region_shrink_capacity(Region *region, int option, RegionError *error)
 {
     if (!region) return;
 
@@ -816,7 +806,7 @@ Region *region_clone(Region *region, RegionError *error)
     return clone;
 }
 
-Region *region_merge(Region *region, RegionMergeOption option, RegionError *error)
+Region *region_merge(Region *region, int option, RegionError *error)
 {
     if (!region) return NULL;
 
@@ -872,7 +862,7 @@ Region *region_merge(Region *region, RegionMergeOption option, RegionError *erro
     return merged_region;
 }
 
-Region *region_get_last_node(Region *region, RegionGetLastNodeOption option)
+Region *region_get_last_node(Region *region, int option)
 {
     if (!region) return NULL;
 
