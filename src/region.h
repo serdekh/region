@@ -165,18 +165,6 @@ typedef struct _StackRegionFrame {
 
 } StackRegionFrame;
 
-#define REGION_RESET_OPTION_SOFT                0  /** Resets the occupated size in each node to zero              */
-#define REGION_RESET_OPTION_HARD                1  /** Frees all the nodes expect the 1st and puts resets its size */
-
-#define REGION_MERGE_OPTION_DEFAULT             0  /** All the data gets merged disregarding the the taken size    */
-#define REGION_MERGE_OPTION_CONDENSE            1  /** Only the taken part of a region data gets merged            */
-
-#define REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT 0  /** Only the root node gets its capacity shrinked               */
-#define REGION_SHRINK_CAPACITY_OPTION_ALL       1  /** All subsequent nodes get their capacity shrinked            */
-
-#define REGION_GET_LAST_NODE_OPTION_DEFAULT     0  /** Get the last node (next points to `NULL`)                   */
-#define REGION_GET_LAST_NODE_OPTION_NON_EMPTY   1  /** Get the last node whose data has been taken                 */
-
 /**
  * @brief 
  *     Collection of data to represent the exact location 
@@ -340,9 +328,20 @@ typedef struct {
     REGION_UINT8 message;
 } RegionError;
  
-#define REGION_GET_CURRENT_FILE_LOCATION (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}
-#define REGION_ERROR_INIT_LOCATION(error) (error)->location = REGION_GET_CURRENT_FILE_LOCATION          
+#define REGION_GET_CURRENT_FILE_LOCATION (RegionLocation){.file_name = __FILE__, .line = __LINE__, .func_name = __func__}       
 #define REGION_ERROR_INIT (RegionError){.function = 0, .function_class = 0, .message = 0, .type = 0, .location = REGION_GET_CURRENT_FILE_LOCATION }
+
+#define REGION_RESET_OPTION_SOFT                0  /** Resets the occupated size in each node to zero              */
+#define REGION_RESET_OPTION_HARD                1  /** Frees all the nodes expect the 1st and puts resets its size */
+
+#define REGION_MERGE_OPTION_DEFAULT             0  /** All the data gets merged disregarding the the taken size    */
+#define REGION_MERGE_OPTION_CONDENSE            1  /** Only the taken part of a region data gets merged            */
+
+#define REGION_SHRINK_CAPACITY_OPTION_ONLY_ROOT 0  /** Only the root node gets its capacity shrinked               */
+#define REGION_SHRINK_CAPACITY_OPTION_ALL       1  /** All subsequent nodes get their capacity shrinked            */
+
+#define REGION_GET_LAST_NODE_OPTION_DEFAULT     0  /** Get the last node (next points to `NULL`)                   */
+#define REGION_GET_LAST_NODE_OPTION_NON_EMPTY   1  /** Get the last node whose data has been taken                 */
 
 REGION_EXTERN_C_BEGIN
 
