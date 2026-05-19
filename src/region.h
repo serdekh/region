@@ -390,6 +390,21 @@ REGION_EXTERN_C_BEGIN
  * @endcode
  */
 REGION_API Region *region_alloc(size_t capacity, RegionError *error);
+
+/**
+ * @brief 
+ *     Frees the `Region` struct previously 
+ *     allocated via the `region_alloc` function.
+ * 
+ * @details
+ *     Alongside the `Region` struct, its corresponding
+ *     data also gets deallocated and the `region` 
+ *     argument is set to point to the `NULL` reference.
+ * 
+ * @note if `region` equals to `NULL`, the function returns.
+ * 
+ * @param[in, out] region a pointer to the region to deallocate.
+ */
 REGION_API void region_free(Region **region);
 REGION_API void region_reset(Region *region, int option);
 
