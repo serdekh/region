@@ -396,16 +396,95 @@ REGION_API Region *region_alloc(size_t capacity, RegionError *error);
  *     Frees the `Region` struct previously 
  *     allocated via the `region_alloc` function.
  * 
+ * @param[in, out] region 
+ *     The pointer to the `Region` struct to deallocate.
+ *     If `region` is equal to `NULL` the function 
+ *     perfoms an early return and does nothing.
+ * 
  * @details
  *     Alongside the `Region` struct, its corresponding
  *     data also gets deallocated and the `region` 
  *     argument is set to point to the `NULL` reference.
  * 
- * @note if `region` equals to `NULL`, the function returns.
+ * @code{.c}
  * 
- * @param[in, out] region a pointer to the region to deallocate.
+ * #define N 1
+ * 
+ *     RegionError error = REGION_ERROR_INIT;
+ * 
+ *     Region *region = region_alloc(N, &error);
+ * 
+ *     if (error.type != REGION_ERROR_TYPE_NONE) {
+ *         region_error_print(error);
+ *         return 1;
+ *     }
+ * 
+ *     region_free(&region);
+ *     return 0;
+ * 
+ * @endcode
  */
 REGION_API void region_free(Region **region);
+
+/**
+ * @brief Resets the data inside the `Region` struct.
+ * 
+ * @param[in, out] region 
+ *     The target region that will be reset.
+ *     If the `region` argument is equal to
+ *     `NULL` the function performs an early
+ *     return and does nothing.
+ * 
+ * @param[in] option 
+ *     Additional parameters on how to reset the region. Here are
+ *     the values that the function expects to work with:
+ * 
+ *     - REGION_RESET_OPTION_SOFT 
+ * 
+ *         Goes through each node of the region and sets
+ *         their `size` values back to `0`.
+ * 
+ *     - REGION_RESET_OPTION_HARD
+ * 
+ *         Frees all the nodes except the first one. 
+ *         The value of `size` in the root node is
+ *         set to `0`.
+ * 
+ * @details
+ *    Every instance of the `Region` struct holds a reference to
+ *    the data it works with. When a chunk of data gets allocated
+ *    the value of the `size` field gets increased by that amount.
+ *    This function performs setting the value of `size` back to
+ *    zero. Physically the data is still in memory but it is now
+ *    accessible by any other consumers. 
+ * 
+ * @code{.c}
+ * 
+ *#define unwrap if (error.type == REGION_ERROR_TYPE_NONE) goto error
+ * 
+ *    RegionError error = REGION_ERROR_INIT;
+ * 
+ *    Region *region = region_alloc(sizeof(int), &error); unwrap;
+ * 
+ *    int *pushed = region_push_int(&region, &error); unwrap;
+ * 
+ *    printf("Value: %d, Size: %zu\n",
+ *        pushed, region_get_size(region));
+ * 
+ *    region_reset(region, REGION_RESET_OPTION_SOFT);
+ * 
+ *    printf("Value: %d, Size: %zu\n",
+ *        pushed, region_get_size(region));
+ * 
+ *    printf("The value of `size` have changed but the data remained the same\n");
+ *    return 0;
+ * 
+ *error:
+ *    region_error_print(error);
+ *     return 1;
+ * 
+ * @endcode
+ */
 REGION_API void region_reset(Region *region, int option);
 
 REGION_API size_t region_get_capacity(Region *region);
