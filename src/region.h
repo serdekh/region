@@ -503,8 +503,80 @@ REGION_API void region_reset(Region *region, int option);
  *     value of `0` is returned.
  * 
  * @return the length of the `data` array
+ * 
+ * @code{.c}
+ * 
+ *#define N 5
+ *
+ *    RegionError error = REGION_ERROR_INIT;
+ * 
+ *    Region *region = region_alloc(N, &error);
+ * 
+ *    if (error.type != REGION_ERROR_TYPE_NONE) {
+ *        region_error_print(error);
+ *        return 1;
+ *    }
+ * 
+ *    size_t capacity = region_get_capacity(region);
+ * 
+ *    printf("Actual: %zu, Expected: %zu\n", capacity, N);
+ * 
+ *    region_free(&region);
+ * 
+ *    return 0;
+ * 
+ * @endcode
  */
 REGION_API size_t region_get_capacity(Region *region);
+
+/**
+ * @brief Returns the amount of bytes that are taken in the `region` `data`.
+ * 
+ * @details
+ *     When a `Region` data type gets allocated with a 
+ *     certain capacity, initially, the `data` member
+ *     is initialized with the `0` value. When an
+ *     allocation inside the region occurs, the value
+ *     of `size` gets increased by that same amount.
+ *     Its value is always in this range: `[0; capacity]`.
+ * 
+ * @param region 
+ *     The target to get the size from.
+ *     If the `region` points to `NULL`,
+ *     The value of `0` is returned.
+ * 
+ * @return The amont of the taken bytes in the `data` array
+ * 
+ * @code{.c}
+ * 
+ *#define N 6
+ *#define N_TAKEN N / 2
+ *
+ *#define unwrap if (error.type != REGION_ERROR_TYPE_NONE) goto error
+ *
+ *    RegionError error = REGION_ERROR_INIT;
+ * 
+ *    Region *region = region_alloc(N, &error); unwrap;
+ * 
+ *    region_push(&region, N_TAKEN, &error); unwrap;
+ * 
+ *    size_t size = region_get_size(region);
+ *    size_t capacity = region_get_capacity(region);
+ * 
+ *    printf("Actual size: %zu, Expected size: %zu, Capacity: %zu\n",
+ *        size, N_TAKEN, capacity);
+ * 
+ *    region_free(&region);
+ * 
+ *    return 0;
+ * 
+ * error:
+ *     region_free(&region);
+ *     region_error_print(error);
+ *     return 1;
+ * 
+ * @endcode  
+ */
 REGION_API size_t region_get_size(Region *region);
 
 REGION_API Region *region_clone(Region *region, RegionError *error);
