@@ -487,6 +487,23 @@ REGION_API void region_free(Region **region);
  */
 REGION_API void region_reset(Region *region, int option);
 
+/**
+ * @brief Returns the amount of bytes allocated for the `region` `data`.
+ * 
+ * @details
+ *     The standard implementation of the `Region`
+ *     data type contains a member called `capacity`.
+ *     It stores the amount of bytes that are 
+ *     allocated for the `data` member. `capacity`
+ *     is always bigger or equal to the `size` member.
+ * 
+ * @param[in] region 
+ *     The target to get the capacity from.
+ *     If `region` points to `NULL`, the 
+ *     value of `0` is returned.
+ * 
+ * @return the length of the `data` array
+ */
 REGION_API size_t region_get_capacity(Region *region);
 REGION_API size_t region_get_size(Region *region);
 
