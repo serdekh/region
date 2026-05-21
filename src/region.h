@@ -579,6 +579,50 @@ REGION_API size_t region_get_capacity(Region *region);
  */
 REGION_API size_t region_get_size(Region *region);
 
+/**
+ * @brief 
+ *     Allocates a copy of the `region` including
+ *     all the following nodes.
+ * 
+ * @details
+ *     The function iterates through the entire
+ *     list and performs an alloction for each
+ *     node. If at any point a node allocation
+ *     fails, then the entire clone gets freed.
+ *     The `data` in each cloned node is also
+ *     copied and filled with the original 
+ *     `data`. Other type members are also
+ *     initialized with the original node value.
+ * 
+ * @warning 
+ *     The returned value has to be freed in
+ *     order to avoid a memory leak
+ * 
+ * @param[in] region
+ *     The target region to read and allocate
+ *     a copy from. If it points to `NULL`, 
+ *     the function returns early with the
+ *     value of `NULL`.
+ * 
+ * @param[in, out] error
+ *     The optional error output. 
+ * 
+ * @retval 
+ *    In case of any errors, the `error` argument
+ *    will be initialized. The standard implementation
+ *    relies on the `region_alloc` function which is
+ *    used internally inside the `region_clone` function.
+ *    Therefore, all the values for the `error` type
+ *    members are identical to the `region_alloc` failure
+ *    cases, except the `RegionError.function` member. 
+ *    It's set to `REGION_ERROR_FUNCTION_CLONE`.
+ * 
+ * @return 
+ *     A pointer to the beginning of a newly 
+ *     allocated region. Ownership is passed
+ *     to the caller. Must be freed using the
+ *     `region_free` function.
+ */
 REGION_API Region *region_clone(Region *region, RegionError *error);
 REGION_API Region *region_merge(Region *region, int option, RegionError *error);
 REGION_API Region *region_get_last_node(Region *region, int option);
