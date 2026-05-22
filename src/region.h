@@ -622,9 +622,136 @@ REGION_API size_t region_get_size(Region *region);
  *     allocated region. Ownership is passed
  *     to the caller. Must be freed using the
  *     `region_free` function.
+ * 
+ * @code{.c}
+ * 
+ * #define N sizeof(int)
+ * #define VALUE 42
+ * 
+ * #define unwrap if (error.type != REGION_ERROR_TYPE_NONE) goto error
+ * 
+ *     RegionError error = REGION_ERROR_INIT;
+ * 
+ *     Region *region = NULL;
+ *     Region *clone = NULL;
+ * 
+ *     region = region_alloc(N, &error); unwrap;
+ * 
+ *     region_push_int(&region, VALUE, &error); unwrap;
+ * 
+ *     clone = region_clone(region, &error); unwrap;
+ * 
+ *     int original = *((int *)region->data);
+ *     int cloned = *((int *)clone->data);
+ * 
+ *     printf("Original: %d\n, Cloned: %d\n", original, clone);
+ * 
+ *     region_free(&region);
+ *     region_free(&clone);
+ * 
+ * error: 
+ *     region_free(&region);
+ *     region_free(&clone);
+ * 
+ *     return 1;
+ * 
+ * @endcode
  */
 REGION_API Region *region_clone(Region *region, RegionError *error);
+
+/**
+ * @brief 
+ *    Iterates through the entire `region`
+ *    and allocates a new one with combined
+ *    `data` and `capacity` or `size`.
+ *  
+ * @details 
+ *     The standard implementation revolves
+ *     iterating the entire region list,
+ *     collecting its nodes and allocating
+ *     a new region with its `data` being 
+ *     a concatenation of the original nodes
+ *     `data`.
+ * 
+ * @param[in] region
+ *     The target to read the nodes from. If
+ *     `region` points to `NULL`, the function
+ *     returns early with the value of `NULL`.
+ * 
+ * @param[in] option 
+ *     Defines the way how the `data` of each
+ *     node has to be concatenated in the final
+ *     `Region`. Here is the list of all the
+ *     possible values:
+ * 
+ *     - REGION_MERGE_OPTION_DEFAULT
+ *         The final `region` will have its
+ *         `data` equal to the sum of each
+ *         node's `capacity`. 
+ * 
+ *     - REGION_MERGE_OPTION_CONDENSE
+ *         The final `region` will have its
+ *         `data` equal to the sum of each
+ *         node's `size`. 
+ * 
+ * @param[in, out] error 
+ *    The optional error output.
+ * 
+ * @retval
+ *     If any errors occur, the value of 
+ *     `error->function` will be set to 
+ *     `REGION_ERROR_FUNCTION_MERGE`. Other
+ *     fields will be initialized with the
+ *     corrresponding values of the 
+ *     `region_collect` function
+ *     (if failed to collect the nodes array)
+ *     or the `region_alloc` function
+ *     (if failed to allocate the result).
+ * 
+ * @return 
+ *    A newly allocated region with the merged `data`. 
+ *    This Ownership is passed to the caller.
+ *    Must be freed with the `region_free` function.
+ * 
+ * @code{.c}
+ * 
+ * #define CAPACITY sizeof(int)
+ * 
+ * #define unwrap if (error.type != REGION_ERROR_TYPE_NONE) goto error
+ * 
+ *     RegionError error = REGION_ERROR_INIT;
+ * 
+ *     Region *two_nodes = NULL;
+ *     Region *one_node = NULL;
+ * 
+ *     two_nodes = region_alloc(CAPACITY, &error); unwrap;
+ *     
+ *     region_push_int(&two_nodes, 10, &error); unwrap;
+ *     region_push_int(&two_nodes, 20, &error); unwrap;
+ *
+ *     one_node = region_merge(region, REGION_MERGE_OPTION_DEFAULT, &error); unwrap;
+ * 
+ *     printf("Merged node values: { ");
+ * 
+ *     for (size_t i = 0; i < region_get_capacity(one_node) / sizeof(int); i++) {
+ *         printf("%d ", *(int *)(one_node->data + sizeof(int) * i));
+ *     }
+ * 
+ *     printf("}\n");
+ * 
+ *     region_free(&two_nodes);
+ *     region_free(&one_node); 
+ *     return 0;
+ * 
+ * error:
+ *     region_free(&two_nodes);
+ *     region_free(&one_node); 
+ *     return 1;
+ * 
+ * @endcode
+ */
 REGION_API Region *region_merge(Region *region, int option, RegionError *error);
+
 REGION_API Region *region_get_last_node(Region *region, int option);
 REGION_API Region **region_collect(Region *region, size_t *collected_size, RegionError *error);
 
