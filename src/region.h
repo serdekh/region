@@ -752,7 +752,65 @@ REGION_API Region *region_clone(Region *region, RegionError *error);
  */
 REGION_API Region *region_merge(Region *region, int option, RegionError *error);
 
+/**
+ * @brief Returns a pointer to the last node.
+ * 
+ * @param[in] region 
+ *     The root of the region.
+ *  
+ * @param[in] option 
+ *    Additional parameters for determining the last node.
+ *    The attributes include:
+ * 
+ *    - REGION_GET_LAST_NODE_OPTION_DEFAULT 
+ *        Iterates through the entire list 
+ *        and returns the very last node 
+ *        (`next` points to `NULL`).
+ * 
+ *    - REGION_GET_LAST_NODE_OPTION_NON_EMPTY
+ *        Iterates through the entire list
+ *        and returns the first node that 
+ *        has the value of `size` equal to
+ *        `0`. In other words, the node 
+ *        that has not been allocated.
+ * 
+ * @retval
+ *     - Region* - if the input argument (`region`) is not `NULL`.
+ *     - `NULL` - if the input argument (`region`) points to `NULL`.
+ *  
+ * @return Region* - pointer to the last node.
+ * 
+ * @code{.c} 
+ * 
+ * #define N sizeof(int)
+ * 
+ * #define unwrap if (error.type != REGION_ERROR_TYPE_NONE) goto error
+ * 
+ *     RegionError error = REGION_ERROR_INIT;
+ * 
+ *     Region *region = region_alloc(N, &error); unwrap;
+ * 
+ *     region_push_int(&region, 1, &error); unwrap;
+ *     region_push_int(&region, 2, &error); unwrap;
+ * 
+ *     Region *last_node = region_get_last_node(
+ *         region, REGION_GET_LAST_NODE_OPTION_DEFAULT);
+ * 
+ *     printf("Last node integer: %d\n",
+ *         *(int *)last_node->data);
+ * 
+ *     region_free(&region);
+ * 
+ *     return 0;
+ * 
+ * error:
+ *     region_free(&region);
+ *     return 1;
+ * 
+ * @endcode
+ */
 REGION_API Region *region_get_last_node(Region *region, int option);
+
 REGION_API Region **region_collect(Region *region, size_t *collected_size, RegionError *error);
 
 REGION_API void *region_push(Region **region, size_t size, RegionError *error);
