@@ -811,6 +811,86 @@ REGION_API Region *region_merge(Region *region, int option, RegionError *error);
  */
 REGION_API Region *region_get_last_node(Region *region, int option);
 
+/**
+ * @brief 
+ *    Returns a dynamic array of `Region` nodes.
+ * 
+ * @param[in] region 
+ *    The target to read the nodes from.
+ * 
+ * @param[in, out] collected_size 
+ *    Used for returning the final size
+ *    of the nodes collection.
+ * 
+ * @param[in, out] error 
+ *    Optional error output.
+ * 
+ * @details
+ *    This function goes through all the nodes
+ *    from the `region` and allocates a 
+ *    dynamic array of type `Region**`. The
+ *    final size of the array is written into
+ *    the `collected_size` argument. In case
+ *    of any errors, the `error` value is modifed.
+ * 
+ * @retval
+ *    - `NULL` - if `region` points to `NULL`.
+ * 
+ *    In case of any errors, the value of
+ *    the `error` argument (if it is not `NULL`)
+ *    is set to:
+ * 
+ *    - error->type = REGION_ERROR_TYPE_INVALID_ARGUMENT 
+ *          if the `collected_size` argument was
+ *          not provided.
+ *   
+ *    - error->type = REGION_ERROR_TYPE_NO_MEMORY
+ *          if failed to allocate memory for
+ *          the collection.
+ * 
+ * @warning 
+ *     Possible memory leak if the returned value is not freed.
+ *  
+ * @return 
+ *     A pointer to the `Region` nodes array.
+ *     Ownership is passed down to the caller.
+ *     Must be freed with `REGION_FREE`.
+ * 
+ * @code{.c}
+ * 
+ * #define N sizeof(int)
+ * #define ITER_COUNT 10
+ * 
+ * #define unwrap if (error.type != REGION_ERROR_TYPE_NONE) goto error
+ * 
+ *     RegionError error = REGION_ERROR_INIT;
+ * 
+ *     Region *region = NULL;
+ *     Region **collection = NULL;
+ * 
+ *     size_t collected_size = 0;
+ * 
+ *     region = region_alloc(N, &error); unwrap;
+ * 
+ *     for (int i = 0; i < ITER_COUNT; i++) {
+ *         region_push_int(&region, i, &error); unwrap;
+ *     }
+ * 
+ *     collection = region_collect(region, &collected_size, &error); unwrap;
+ * 
+ *     printf("Total amount of nodes: %zu\n", collected_size);
+ * 
+ *     region_free(&region);
+ *     REGION_FREE(collection);
+ *     return 0;
+ * 
+ * error:
+ *     region_free(&region);
+ *     if (collection) REGION_FREE(collection);
+ *     return 1;
+ * 
+ * @endcode
+ */
 REGION_API Region **region_collect(Region *region, size_t *collected_size, RegionError *error);
 
 REGION_API void *region_push(Region **region, size_t size, RegionError *error);
@@ -1176,7 +1256,7 @@ Region **region_collect(Region *region, size_t *collected_size, RegionError *err
 
     if (!collection) {
         REGION_ERROR_SET(error, 
-            REGION_ERROR_TYPE_INVALID_ARGUMENT, 
+            REGION_ERROR_TYPE_NO_MEMORY, 
             REGION_ERROR_CLASS_REGION, 
             REGION_ERROR_FUNCTION_COLLECT, 
             REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_ARRAY);
