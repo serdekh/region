@@ -893,6 +893,118 @@ REGION_API Region *region_get_last_node(Region *region, int option);
  */
 REGION_API Region **region_collect(Region *region, size_t *collected_size, RegionError *error);
 
+/**
+ * @brief 
+ *     Appends allocated `region` `data` by `size` 
+ *     and returns a pointer to the pushed item.
+ * 
+ * @details
+ *     Allocation is performed by appending the
+ *     value of the `size` argument to the 
+ *     `region->size` type member (last node). 
+ *     And a pointer to that area is returned. 
+ *     If the `region` has enough capacity, 
+ *     then pushing does not allocate extra memory 
+ *     and only marks the existing `data` as taken. 
+ *     The only exception is when the last node
+ *     does not have enough capacity for a new item.
+ *     In this case, a new node is allocated with
+ *     `size` being twice as large as the previous
+ *     node + the `size` argument. 
+ * 
+ * @param[in, out] region 
+ *     The target to push the data into.
+ * 
+ *     If `region` points to `NULL`, 
+ *     nothing is pushed and `NULL`
+ *     is returned.
+ * 
+ *     If dereferenced `region` points
+ *     to `NULL`, the function will try
+ *     to allocate a `Region` with
+ *     `capacity` and `size` members 
+ *     being equal to the `size` argument.
+ * 
+ * @param[in] size 
+ *     The amount of bytes to allocate.
+ * 
+ *     If `size` is equal to `0`,
+ *     nothing is pushed and the function
+ *     returns `NULL`.
+ * 
+ * @retval
+ *     `NULL` - if `size` equals `0` (No error)
+ * 
+ *     If ane errors occur, the value of the
+ *     `error` argument will be set to the 
+ *     following values:
+ * 
+ *     - `error->type` =
+ * 
+ *         `REGION_ERROR_TYPE_INVALID_ARGUMENT`
+ *             (If the value of `size` is too large)
+ * 
+ *         `REGION_ERROR_TYPE_NO_MEMORY`
+ *             (If failed to allocate a node)
+ * 
+ *     - `error->function_class` = `REGION_ERROR_CLASS_REGION`
+ * 
+ *     - `error->function` = `REGION_ERROR_FUNCTION_ALLOC`
+ * 
+ *     - `error->message` =
+ * 
+ *         `REGION_ERROR_MESSAGE_ARG_LARGE_CAPACITY`
+ *             (Derives from the `region_alloc` function
+ *              that is used internally. If the `size`
+ *              argument is large enough, then additional
+ *              bytes for the new node may cause this
+ *              error.)
+ * 
+ *         `REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION`
+ *             (If failed to allocate a new node)
+ * 
+ *         `REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION_DATA`
+ *             (If failed to allocate data for the new
+ *              node. Derives from the `region_alloc` function)
+ * 
+ * @param[in, out] error 
+ *     The optional error output.
+ * 
+ * @return A pointer to the newly allocated memory.
+ * 
+ * @code{.c}
+ * 
+ *#define HELLO "hello "
+ *#define HELLO_N sizeof(HELLO) - 1
+ *#define WORLD "world!\n"
+ *#define WORLD_N sizeof(WORLD)
+ *
+ *#define unwrap if (error.type != REGION_ERROR_TYPE_NONE) goto error
+ *
+ *int main()
+ *{
+ *   RegionError error = REGION_ERROR_INIT;
+ *
+ *  Region *region = NULL;
+ *
+ *  char *str = (char *)region_push(&region, HELLO_N + WORLD_N, &error); unwrap;
+ *
+ *  REGION_MEMCPY(str, HELLO, HELLO_N);
+ *  REGION_MEMCPY(str + HELLO_N, WORLD, WORLD_N);
+ *
+ *  printf("%s", str);
+ *
+ *  region_free(&region);
+ *  return 0;
+ *
+ *error:
+ *  region_error_print(error);
+ *  region_free(&region);
+ *  return 1;
+ *}
+ *     
+ * @endcode
+ */
 REGION_API void *region_push(Region **region, size_t size, RegionError *error);
 REGION_API int *region_push_int(Region **region, int value, RegionError *error);
 REGION_API float *region_push_float(Region **region, float value, RegionError *error);
@@ -1078,7 +1190,7 @@ void *region_push(Region **region, size_t size, RegionError *error)
 
         if (!current->data) {
             REGION_ERROR_SET(error,
-            REGION_ERROR_TYPE_INVALID_ARGUMENT,
+            REGION_ERROR_TYPE_NO_MEMORY,
             REGION_ERROR_CLASS_REGION,
             REGION_ERROR_FUNCTION_PUSH,
             REGION_ERROR_MESSAGE_MALLOC_FAILURE_REGION);
