@@ -1006,7 +1006,78 @@ REGION_API Region **region_collect(Region *region, size_t *collected_size, Regio
  * @endcode
  */
 REGION_API void *region_push(Region **region, size_t size, RegionError *error);
+
+/**
+ * @brief 
+ *     Pushes an integer `value` to the `region` data
+ * 
+ * @param[in, out] region 
+ *     The region to push the data into.
+ *     If it points to `NULL`, nothing
+ *     is pushed and `NULL` is returned.
+ * 
+ * @param[in] value 
+ *     The value that will be written
+ *     into `region` `data`.
+ * 
+ * @param[in, out] error 
+ *     The optional error output.
+ * 
+ * @retval 
+ *    - `NULL` - if `region` points to `NULL`,
+ *         otherwise a pointer to the allocated
+ *         data is returned.
+ * 
+ *    If any errors occur, the values of the
+ *    `error` argument fields will be set to the 
+ *    ones used by the `region_push` function 
+ *    except the `error->function` field. Its 
+ *    value will be `REGION_ERROR_FUNCTION_PUSH_INT`.
+ * 
+ * @return A pointer to an allocated integer
+ * 
+ * @code{.c}
+ *
+ * #define N 10
+ *
+ *#define unwrap if (error.type != REGION_ERROR_TYPE_NONE) goto error
+ *
+ *int main()
+ *{
+ *  RegionError error = REGION_ERROR_INIT;
+ * 
+ *  Region *region = NULL;
+ *
+ *  for (int i = 0; i < N; i++) {
+ *      region_push_int(&region, i + 1, &error); unwrap;
+ *  }
+ *
+ *  printf("{ ");
+ *
+ *  for (Region *t = region; t; t = t->next) {
+ *      int items_count = t->size / sizeof(int); 
+ *
+ *      for (int i = 0; i < items_count; i++) {
+ *          int value = *(int *)(t->data + i * sizeof(int));
+ *          printf("%d ", value);
+ *      }
+ *  }
+ *
+ *  printf("}\n");
+ *
+ *  region_free(&region);
+ *  return 0;
+ *
+ *error:
+ *  region_error_print(error);
+ *  region_free(&region);
+ *  return 1;
+ *}
+ * 
+ * @endcode
+ */
 REGION_API int *region_push_int(Region **region, int value, RegionError *error);
+
 REGION_API float *region_push_float(Region **region, float value, RegionError *error);
 REGION_API double *region_push_double(Region **region, double value, RegionError *error);
 REGION_API char *region_push_char(Region **region, char value, RegionError *error);
@@ -1226,12 +1297,10 @@ void *region_push(Region **region, size_t size, RegionError *error)
 
 int *region_push_int(Region **region, int value, RegionError *error)
 {
-    if (!region) return NULL;
-
-    int *result = (int *)region_push(region, sizeof(int), error);
+    int *result = region_push(region, sizeof(int), error);
 
     if (result) {
-        *result = value;
+        *(int *)result = value;
         return result;
     }
 
